@@ -1,0 +1,38 @@
+import RIBs
+import RxSwift
+import UIKit
+
+
+/// Collection of methods which ``ManagementTeamScopeViewController`` can invoke, to perform business logic.
+///
+/// The `PresentableListener` protocol is responsible to bridge UI events to business logic.  
+/// When an interaction with the UI is performed (e.g., pressed a button), ``ManagementTeamScopeViewController`` **MAY**
+/// call method(s) declared here to notify the `Interactor` to perform any associated logics.
+///
+/// Conformance of this protocol is **EXCLUSIVE** to ``ManagementTeamScopeInteractor`` (internal use).
+/// ``ManagementTeamScopeViewController``, in turn, can invoke methods declared in this protocol 
+/// via its ``ManagementTeamScopeViewController/presentableListener`` attribute.
+protocol ManagementTeamScopePresentableListener: AnyObject {}
+
+
+/// The UI of `ManagementTeamScopeRIB`.
+final class ManagementTeamScopeViewController: UIViewController, ManagementTeamScopePresentable, ManagementTeamScopeViewControllable {
+    
+    
+    /// The reference to ``ManagementTeamScopeInteractor``.
+    /// 
+    /// The word 'presentableListener' is a convention used in RIBs, which refer to the `Interactor`
+    /// who reacts to UI events from their descendants. (It 'listens' to them).
+    weak var presentableListener: ManagementTeamScopePresentableListener?
+    
+    
+    override func viewDidLoad() {
+        view.backgroundColor = .cyan
+    }
+    
+}
+
+
+/// Extension to conform ``ManagementTeamScopeViewController`` with other RIBs' `ViewControllable` protocols.
+/// By conforming to them, you allow for ``ManagementTeamScopeViewController`` to be manipulated by their respective `Router`.
+extension ManagementTeamScopeViewController {}
