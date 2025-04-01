@@ -110,11 +110,11 @@ extension PairRouter: PairRouting {
     
     func walkBackFromEntryRequestForm () {
         guard let entryRequestFormRouting else { return }
-        self.detachChild(entryRequestFormRouting)
-        self.entryRequestFormRouting = nil
-        
         guard let navcon = self.viewController.uiviewController as? UINavigationController else { return }
         navcon.popToRootViewController(animated: true)
+        
+        self.detachChild(entryRequestFormRouting)
+        self.entryRequestFormRouting = nil
         
         FPLogger.log("Detached EntryRequestFormRIB")
     }

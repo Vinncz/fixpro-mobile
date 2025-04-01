@@ -1,0 +1,1915 @@
+openapi: 3.0.0
+servers:
+  - description: Mocking Server
+    url: 'https://localhost:9191/api/v1'
+info:
+  version: 1.0.0
+  title: FixPro Backend Endpoints Declaration
+  description: 'An open-standard declaration, protected by OAuth v2.'
+security:
+  - ApprovalBaseOAuth:
+      - member
+      - crew
+      - management
+paths:
+  /entry/check:
+    get:
+      summary: Checks whether the applicant has their application been given a verdict.
+      tags: []
+      responses:
+        '200':
+          description: 'Returns an authentication_code upon entry approval, null otherwise.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 6d45s7g3gr6er
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: 2nhv8nihv2ekr
+                    properties:
+                      authentication_code:
+                        type: string
+                        x-stoplight:
+                          id: 4jqib4riomck3
+                        nullable: true
+              examples:
+                Response example:
+                  value:
+                    message: You are granted access to the Area. Use the following code and exchange them for access and refresh token.
+                    data:
+                      authentication_code: 'zserfvbhuik,.;['
+        '403':
+          $ref: '#/components/responses/Forbidden403'
+      operationId: checkForEntryVerdict
+      parameters:
+        - $ref: '#/components/parameters/application_id'
+      security: []
+  /entry/form:
+    get:
+      summary: Retrieves all the necessary fields whose issuer had made necessary.
+      tags: []
+      responses:
+        '200':
+          description: |-
+            Returns the fields of the form to be filled, and a nonce.
+            This nonce must be included upon the form submission, otherwise will result in failure.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: hshkgckug2xyb
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: o7ypyd9z660ry
+                    properties:
+                      form_fields:
+                        type: array
+                        x-stoplight:
+                          id: jp0bqajqs9p7f
+                        items:
+                          x-stoplight:
+                            id: 7ftf0jpcomrrz
+                          type: object
+                          properties:
+                            field_label:
+                              type: string
+                              x-stoplight:
+                                id: lypbvghydqild
+                            field_type:
+                              x-stoplight:
+                                id: tg8qhe5jbobh6
+                              enum:
+                                - NUMBER
+                                - TEXT
+                                - EMAIL
+                      nonce:
+                        type: string
+                        x-stoplight:
+                          id: oh8l3zi3oitok
+              examples:
+                Response example:
+                  value:
+                    message: All the required fields and a nonce to be used for submission.
+                    data:
+                      form_fields:
+                        - field_label: name
+                          field_type: STRING
+                        - field_label: phone_number
+                          field_type: NUMBER
+                        - field_label: whatsapp-registered_phone_number
+                          field_type: NUMBER
+                      nonce: '12345678901234567890123456789012'
+        '403':
+          $ref: '#/components/responses/Forbidden403'
+      operationId: getEntryFormFields
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ajc_reference_tracking_identifier'
+    post:
+      summary: Submits the filled form fields.
+      tags: []
+      responses:
+        '200':
+          description: |-
+            Returns an application_id, used to track the applicant's approval/rejection status.
+            Said value must be included with the query to check, otherwise will result in forbidden error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: efhiy0m760al8
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: tqbx5qh5a3hpv
+                    properties:
+                      application_id:
+                        type: string
+                        x-stoplight:
+                          id: 48x5n839se63s
+          headers: {}
+        '400':
+          description: Request does not contain ALL of the required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request wasn't accompanied with a valid nonce.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      operationId: submitEntryForm
+      parameters:
+        - $ref: '#/components/parameters/nonce'
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nonce:
+                  type: string
+                  x-stoplight:
+                    id: vaf9dl5i65qbk
+                data:
+                  type: array
+                  x-stoplight:
+                    id: vufvr37zzctfg
+                  items:
+                    x-stoplight:
+                      id: vt5io689qrhbc
+                    type: object
+                    properties:
+                      field_label:
+                        type: string
+                        x-stoplight:
+                          id: vc2u9enc3cze3
+                      field_value:
+                        type: string
+                        x-stoplight:
+                          id: ooolxw2g5rem2
+            examples:
+              Request example:
+                value:
+                  nonce: '12345678901234567890123456789012'
+                  data:
+                    - field_label: name
+                      field_value: Andrew
+                    - field_label: phone_number
+                      field_value: '081287771135'
+                    - field_label: whatsapp-registered_number
+                      field_value: '081287771135'
+        description: 'Every fields and their answers, plus a nonce.'
+    parameters: []
+  /tickets:
+    get:
+      summary: Lists every IssueTickets owned or associated with the requestor; showing only required information.
+      tags: []
+      responses:
+        '200':
+          description: A list of every IssueTickets owned or associated with the requestor; showing only the bare-bone information.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 3qjxzb3zffsmv
+                  data:
+                    type: array
+                    x-stoplight:
+                      id: nzld35vy32dxz
+                    items:
+                      $ref: '#/components/schemas/MINIMAL_IssueTicket'
+              examples:
+                Response example:
+                  value:
+                    message: string
+                    data:
+                      - ticket_id: ALSUBVIPOYDSGIUBORWL
+                        issue_type: Plumbing
+                        response_level: 'Urgent, emergency'
+                        raised_on: '2019-08-24T14:15:22Z'
+                        status: Open
+                        closed_on: null
+                      - ticket_id: AKJBCVOUYVWEUVWRLBUV
+                        issue_type: Engineering
+                        response_level: 'Urgent, emergency'
+                        raised_on: '2019-08-24T14:15:22Z'
+                        status: Open
+                        closed_on: null
+      operationId: getTickets
+      parameters: []
+    post:
+      summary: Raises new Issue Ticket associated with a requestor identified through the access token.
+      tags: []
+      responses:
+        '201':
+          description: The full object of the raised IssueTicket.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: bjui13qathj5p
+                  data:
+                    $ref: '#/components/schemas/MINIMAL_IssueTicket'
+              examples:
+                Response example:
+                  value:
+                    message: Successfully raised a new ticket.
+                    data:
+                      ticket_id: APISNVPIBROYBVFBUWCOI
+                      issue_type: Plumbing
+                      response_level: 'Urgent, emergency'
+                      raised_on: '2019-08-24T14:15:22Z'
+                      status: Open
+                      closed_on: null
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+      operationId: raiseTicket
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TOBEMADE_IssueTicket'
+            examples:
+              Example 1:
+                value:
+                  issue_type: Plumbing
+                  response_level: 'Urgent, emergency'
+                  stated_issue: string
+                  location:
+                    stated_location: string
+                    gps_location:
+                      latitude: 0
+                      longitude: 0
+                  supportive_documents:
+                    - id: string
+                      resource_type: Plumbing
+                      resource_name: UNNAMED_RESOURCE
+                      resource_size: 147 KB
+                      owner:
+                        name: string
+                        phone_number: string
+                        email: string
+                        whatsapp-registered_number: string
+                      previewable_on: 'http://example.com'
+    parameters: []
+  '/ticket/{ticket_id}':
+    parameters:
+      - schema:
+          type: string
+        name: ticket_id
+        in: path
+        required: true
+    get:
+      summary: Retrieves specific Issue Ticket which can be identified by the given ticket_id.
+      tags: []
+      responses:
+        '200':
+          description: The IssueTicket object of the given id.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 1ruhxvy0pwue0
+                  data:
+                    $ref: '#/components/schemas/IssueTicket'
+              examples:
+                '200':
+                  value:
+                    message: The IssueTicket object of the given id.
+                    data:
+                      ticket_id: ABC123
+                      issue_type:
+                        label: Plumbing
+                      response_level:
+                        label: 'Urgent, emergency'
+                      raised_on: '2019-08-24T14:15:22Z'
+                      status:
+                        label: Open
+                      stated_issue: string
+                      location:
+                        stated_location: string
+                        gps_location:
+                          latitude: 0
+                          longitude: 0
+                      supportive_documents:
+                        - id: string
+                          type: IMAGE
+                          filename: string
+                          size: string
+                          owner:
+                            name: string
+                            phone_number: string
+                            email: string
+                            whatsapp-registered_number: string
+                      issuer:
+                        name: string
+                        phone_number: string
+                        email: string
+                        whatsapp-registered_number: string
+                      logs:
+                        - log_id: string
+                          owning_ticket_id: string
+                          issuer:
+                            name: string
+                            phone_number: string
+                            email: string
+                            whatsapp-registered_number: string
+                          recorded_on: '2019-08-24T14:15:22Z'
+                          news: string
+                          attachment:
+                            - id: string
+                              type: IMAGE
+                              filename: string
+                              size: string
+                              owner:
+                                name: string
+                                phone_number: string
+                                email: string
+                                whatsapp-registered_number: string
+                          actionable:
+                            genus: SEGUE
+                            species: TICKET_LOG
+                            segue_destination: string
+                      handlers:
+                        - name: string
+                          phone_number: string
+                          email: string
+                          whatsapp-registered_number: string
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+      operationId: getTicket
+    delete:
+      summary: Closes a specific Issue Ticket which can be identified by the given ticket_id.
+      tags: []
+      responses:
+        '200':
+          description: A successful closure of the specified ticket.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: lvuhqvla1bcsl
+                  data:
+                    $ref: '#/components/schemas/MINIMAL_IssueTicket'
+              examples:
+                '200':
+                  value:
+                    message: Successfully closed the specified ticket.
+                    data: null
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+      operationId: closeTicket
+    patch:
+      summary: Patches some information to the Issue Ticket which can be identified by the given ticket_id.
+      tags: []
+      responses:
+        '202':
+          description: A successful update the details of the specified ticket.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: k1vc2x9x20pyc
+                  data:
+                    $ref: '#/components/schemas/MINIMAL_IssueTicket'
+              examples:
+                '202':
+                  value:
+                    message: Did update the details of the specified ticket.
+                    data: null
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+      operationId: patchTicket
+  '/ticket/{ticket_id}/logs':
+    parameters:
+      - schema:
+          type: string
+        name: ticket_id
+        in: path
+        required: true
+    get:
+      summary: Lists every IssueTicketLog an IssueTicket may have.
+      tags: []
+      responses:
+        '200':
+          description: A list of every IssueTicketLogs owned by the specified IssueTicket through its id.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: h6bzwe1l40x6q
+                  data:
+                    type: array
+                    x-stoplight:
+                      id: s22j1c2wg4qhw
+                    items:
+                      $ref: '#/components/schemas/IssueTicketLog'
+      operationId: getTicketLogs
+    post:
+      summary: Contributes a new Log to an Issue Ticket.
+      tags: []
+      responses:
+        '201':
+          description: The full object of the made IssueTicketLog.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 3oa1aixztsx91
+                  data:
+                    $ref: '#/components/schemas/IssueTicketLog'
+              examples:
+                '201':
+                  value:
+                    message: Successfully added a new log into the specified Ticket
+                    data:
+                      log_id: string
+                      owning_ticket_id: string
+                      log_type: Assessment
+                      issuer:
+                        name: string
+                        phone_number: string
+                        email: string
+                        whatsapp-registered_number: string
+                      recorded_on: '2019-08-24T14:15:22Z'
+                      news: string
+                      attachment:
+                        - id: string
+                          type: IMAGE
+                          filename: string
+                          size: string
+                          owner:
+                            name: string
+                            phone_number: string
+                            email: string
+                            whatsapp-registered_number: string
+                      actionable:
+                        genus: SEGUE
+                        species: TICKET_LOG
+                        segue_destination: string
+      operationId: contributeToTicket
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      security:
+        - ApprovalBaseOAuth:
+            - crew
+  '/ticket/{ticket_id}/handlers':
+    parameters:
+      - schema:
+          type: string
+        name: ticket_id
+        in: path
+        required: true
+    get:
+      summary: Lists all TicketHandlers who's been assigned to an IssueTicket.
+      tags: []
+      responses:
+        '200':
+          description: A list of every Handlers who are associated with the specified IssueTicket.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: ctdl6epxfbrqs
+                  data:
+                    type: array
+                    x-stoplight:
+                      id: d86snv98g0x6y
+                    items:
+                      $ref: '#/components/schemas/ContactInformation'
+              examples:
+                '200':
+                  value:
+                    message: A list of every Handlers who are associated with the specified IssueTicket.
+                    data:
+                      - name: Herry Budjiono
+                        phone_number: '081197777221'
+                        email: null
+                        whatsapp-registered_number: '081197777221'
+      operationId: getTicketHandlers
+    post:
+      summary: Delegates and assigns somebody to handle an IssueTicket.
+      tags: []
+      responses:
+        '201':
+          description: A successful association of the specified people with the specified IssueTicket.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: yzactdryx9jkd
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: k0n8n51j5bf5w
+                    nullable: true
+              examples:
+                '201':
+                  value:
+                    message: 'Did associate the specified people with the specified IssueTicket,'
+                    data: null
+      operationId: delegateIssueTicket
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_member_id:
+                  type: string
+                  x-stoplight:
+                    id: c8afxe3lwkb5x
+  '/ticket/{ticket_id}/report':
+    parameters:
+      - schema:
+          type: string
+        name: ticket_id
+        in: path
+        required: true
+    get:
+      summary: Downloads the pdf of the report of the ticket with given id.
+      tags: []
+      responses:
+        '200':
+          description: 'The pdf file of the report of the specified Ticket, in base64 format.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 20mvd86lbwwmm
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: les9glhtwf4px
+                    properties:
+                      base64file:
+                        type: string
+                        x-stoplight:
+                          id: 11vpntmbhnnpj
+      operationId: getTicketReport
+  /inbox:
+    get:
+      summary: Lists all EventNotifications whose recipient is the requestor.
+      tags: []
+      responses:
+        '200':
+          description: 'A list of every EventNotifications ever sent to the requestor, up to specified limit.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 6i4a4jh1l76e9
+                  data:
+                    type: array
+                    x-stoplight:
+                      id: vk6oma39j4t39
+                    items:
+                      $ref: '#/components/schemas/EventNotification'
+              examples: {}
+      operationId: getInbox
+      parameters:
+        - schema:
+            type: integer
+          in: header
+          name: limit
+          description: The upper limit of the number of EventNotification objects to be returned. Defaults to 20.
+  /calendar:
+    get:
+      summary: Lists all Events from the team calendar which involves the requestor.
+      tags: []
+      responses:
+        '200':
+          description: A list of every CalendarEvent associated with the requestor; bound with the specified parameter.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: p46kp7ircnkry
+                  data:
+                    type: array
+                    x-stoplight:
+                      id: pz395sj60i3qg
+                    items:
+                      $ref: '#/components/schemas/CalendarEvent'
+        '403':
+          $ref: '#/components/responses/Forbidden403'
+      operationId: getCalendarEvents
+      security:
+        - ApprovalBaseOAuth:
+            - management
+            - maintenance-crew
+      parameters:
+        - schema:
+            type: string
+            format: date
+          in: query
+          name: range_lower-bound
+          description: The starting date of every CalendarEvent to query. Defaults to the previous week from request's time.
+        - schema:
+            type: string
+          in: query
+          description: The end date of every CalendarEvent to query. Defaults to the next 2 weeks from request's time.
+          name: range_upper-bound
+  /notification:
+    get:
+      summary: Retrieves the Area's copy of GoogleService-Info.plist to enable push notifications on the mobile client.
+      tags: []
+      responses:
+        '200':
+          description: The JSON representation of the FixPro Backend's GoogleService-Info.plist--used to enable push notification on the requesting FixPro Mobile.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: utwz5trfdegkc
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: 7lhhfadz7ellv
+                    properties:
+                      API_KEY:
+                        type: string
+                        x-stoplight:
+                          id: t090t9zzkeo6a
+                      GCM_SENDER_ID:
+                        type: string
+                        x-stoplight:
+                          id: 36ve9ntl9qt85
+                      BUNDLE_ID:
+                        type: string
+                        x-stoplight:
+                          id: lkegsfr9ci024
+                      PROJECT_ID:
+                        type: string
+                        x-stoplight:
+                          id: 9lece4pb7vh39
+                      STORAGE_BUCKET:
+                        type: string
+                        x-stoplight:
+                          id: ufsbf7fw8x47n
+                      IS_GCM_ENABLED:
+                        type: boolean
+                        x-stoplight:
+                          id: goeq8ftsg0icr
+                      GOOGLE_APP_ID:
+                        type: string
+                        x-stoplight:
+                          id: im1h5xdejaqer
+              examples:
+                Response example:
+                  value:
+                    message: 'Use the following data to setup firebase''s messaging service, so you can receive push notifications.'
+                    data:
+                      API_KEY: KEYKEYKEYKEYKEYKEYKEYKEY
+                      GCM_SENDER_ID: SENDERIDSENDERIDSENDERIDSENDERID
+                      BUNDLE_ID: BUNDLEIDBUNDLEIDBUNLDEIDBUNDLEID
+                      PROJECT_ID: PROJECTIDPROJECTIDPROJECTIDPROJECTID
+                      STORAGE_BUCKET: BUCKETBUCKETBUCKETBUCKET
+                      IS_GCM_ENABLED: true
+                      GOOGLE_APP_ID: APPIDAPPIDAPPIDAPPID
+      operationId: getNotificationPairingInformation
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: enkey
+          description: 'A single-use, public key of the requestor, used to encrypt each value of the response back.'
+          required: true
+    put:
+      summary: Updates FixPro Backend's list regarding the requestor's push notification address.
+      tags: []
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: efnn947e3fp33
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: 3p83t56rswbr5
+                    nullable: true
+              examples:
+                Example 1:
+                  value:
+                    message: Successfully recorded the new push-notification address.
+                    data: null
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+      operationId: putFCMAddressToken
+      description: |-
+        A Firebase Cloud Messaging Token or FCM Token works like an address; 
+        allowing FixPro Backend to ensure that each notifications arrive at their intended recipient.
+
+        If no FCM Token is initially present, it works like the POST method--writing one down.
+    parameters: []
+  /area:
+    get:
+      summary: Retrieves general information about the Area where the requestor is affiliated with.
+      tags: []
+      responses:
+        '200':
+          description: The general information about the Area with which the requestor is affiliated with.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 9zn9quu27iz7a
+                  data:
+                    $ref: '#/components/schemas/AreaInformation'
+              examples:
+                Response example:
+                  value:
+                    message: 'Your Area''s information,'
+                    data:
+                      name: Bali Indah Beach
+                      join_policy: OPEN
+                      member_count: 37
+                      pending_member_count: 12
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: getAreaInformation
+      security:
+        - ApprovalBaseOAuth:
+            - management
+  /area/join-code:
+    get:
+      summary: 'Displays the Area Join Code, encoded in QRCode. If there are none active, generate one instead.'
+      tags: []
+      responses:
+        '200':
+          description: 'The string representation of the Area Join Code, which then can be transformed into a qr-code form.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: j5v2mpziv2u9z
+                  data:
+                    $ref: '#/components/schemas/AreaJoinCode'
+              examples:
+                Response example:
+                  value:
+                    message: string
+                    data:
+                      endpoint: 'http://192.168.10.17:8080/api'
+                      referral_tracking_identifier: BONDYWENTUPTHEHILLANDDIDN'TCOMEBACK
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: getAreaJoinCode
+      description: Only one Area Join Code can be active at any given time.
+      security:
+        - ApprovalBaseOAuth:
+            - management
+    delete:
+      summary: Revokes the active Area Join Code.
+      tags: []
+      responses:
+        '200':
+          description: A successful revoke of the active Area Join Code.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: f5wrgsgbsniyc
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: aaxqyeizqbs1b
+                    nullable: true
+              examples:
+                '200':
+                  value:
+                    message: Did revoke the active Area Join Code.
+                    data: null
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: revokeAreaJoinCode
+      security:
+        - ApprovalBaseOAuth:
+            - management
+    parameters: []
+  /area/members:
+    get:
+      summary: Lists out every members enrolled within an Area.
+      tags: []
+      responses:
+        '200':
+          description: A list of every enrolled members of an Area.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: y37939tvlak63
+                  data:
+                    type: array
+                    x-stoplight:
+                      id: 4cz2wictl4wfe
+                    items:
+                      $ref: '#/components/schemas/AreaMember'
+              examples:
+                Response example:
+                  value:
+                    message: string
+                    data:
+                      - name: Abby Brown
+                        phone_number: '087791123350'
+                        email: null
+                        whatsapp-registered_number: '087791123350'
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: getAreaMembers
+      security:
+        - ApprovalBaseOAuth:
+            - management
+    post:
+      summary: Admits the specified applicant to an Area.
+      tags: []
+      responses:
+        '200':
+          description: A successful admission for the specified applicant.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: e7lni1egmsqut
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: 6r1xwc48f8op0
+                    nullable: true
+              examples:
+                Response example:
+                  value:
+                    message: Successfully admitted the specified applicant.
+                    data: null
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: admitsApplicantById
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - application_id
+                - role
+              properties:
+                application_id:
+                  type: string
+                  x-stoplight:
+                    id: ffgmw2xzeg9b8
+                role:
+                  $ref: '#/components/schemas/AreaMemberRole'
+                specialization:
+                  $ref: '#/components/schemas/IssueType'
+                title:
+                  type: string
+                  x-stoplight:
+                    id: 1q26yf2mdr5dh
+                  description: |-
+                    The title of the holder.
+
+                    Examples include:
+                    Chief of Engineering Dept
+                    Janitor
+                    Head of Emergency Plumbing Team
+                  nullable: true
+      security:
+        - ApprovalBaseOAuth:
+            - management
+  '/area/member/{member_id}':
+    parameters:
+      - schema:
+          type: string
+        name: member_id
+        in: path
+        required: true
+    get:
+      summary: Retrieves full information regarding the member with the given id.
+      tags: []
+      responses:
+        '200':
+          description: The full information regarding the specified member.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: m3ay2de6rarqg
+                  data:
+                    $ref: '#/components/schemas/AreaMember'
+              examples:
+                Response example:
+                  value:
+                    message: The full information regarding the member with id of ASBHCIPBEPGILCKN-1285898714.
+                    data:
+                      id: ASBHCIPBEPGILCKN-1285898714
+                      name: Zyzzx Yelta
+                      role: Crew
+                      speciality: Plumbing
+                      title: Chief of Plumbing Division
+                      member_since: '2019-08-24T14:15:22Z'
+                      member_until: null
+                      contact_information:
+                        phone_number: '102865972938'
+                        email: null
+                        whatsapp-registered_number: null
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: getAreaMember
+      security:
+        - ApprovalBaseOAuth:
+            - management
+    delete:
+      summary: Removes a member with the given id from an Area.
+      tags: []
+      responses:
+        '200':
+          description: A successful kick for the specified member from an Area.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: z9zd12iudvfkz
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: t9uvz1d57zpxi
+                    nullable: true
+              examples:
+                Response example:
+                  value:
+                    message: Successfully kicked the specified member from an Area.
+                    data: null
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: removeMember
+      security:
+        - ApprovalBaseOAuth:
+            - management
+  /area/members/pending:
+    get:
+      summary: Lists out every applicant who requested to join an Area.
+      tags: []
+      responses:
+        '200':
+          description: A list of every applicant whose application is awaiting assessment.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: mbpip41lo7ckd
+                  data:
+                    type: array
+                    x-stoplight:
+                      id: 6kugw5wddx5h5
+                    items:
+                      $ref: '#/components/schemas/AreaEntryApplication'
+              examples: {}
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: getPendingMembers
+      security:
+        - ApprovalBaseOAuth:
+            - management
+  '/area/members/pending/{application_id}':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+    get:
+      summary: Retrieves full information regarding this applicant's join request.
+      tags: []
+      responses:
+        '200':
+          description: The full information regarding the specified applicant's application.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: cbj7thmo6mz4j
+                  data:
+                    $ref: '#/components/schemas/AreaEntryApplication'
+              examples: {}
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: getApplicationOfAPendingMember
+      security:
+        - ApprovalBaseOAuth:
+            - management
+    delete:
+      summary: Rejects the specified applicant from joining an Area.
+      tags: []
+      responses:
+        '200':
+          description: A successful rejection of an application.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 4s7s6cezolgz6
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: pdyjqsoeigfji
+                    nullable: true
+              examples:
+                '200':
+                  value:
+                    message: Successfully rejected an applicant.
+                    data: null
+        '403':
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      operationId: rejectApplication
+      security:
+        - ApprovalBaseOAuth:
+            - management
+components:
+  schemas:
+    ErrorResponse:
+      title: ErrorResponse
+      type: object
+      x-examples:
+        Unauthorized401:
+          error_genus: MISSING
+          error_species: CREDENTIALS
+          error_message: Access token wasn't provided.
+          error_resolution: Include them inside your request header.
+        Forbidden403:
+          error_genus: EXPIRED
+          error_species: CREDENTIALS
+          error_message: Expired access token.
+          error_resolution: Use your refresh token to get a new one.
+        BadRequest400:
+          error_genus: ILLEGAL
+          error_species: ARGUMENTS
+          error_message: Argument of 'id' should be string.
+      required:
+        - genus
+        - species
+      properties:
+        genus:
+          x-stoplight:
+            id: 7bs47kwe9eq3q
+          enum:
+            - MISSING
+            - INVALID
+            - EXPIRED
+            - ILLEGAL
+        species:
+          enum:
+            - CREDENTIALS
+            - ARGUMENTS
+        message:
+          type: string
+          x-stoplight:
+            id: bjmdle7oi5ld0
+        resolution:
+          type: string
+          x-stoplight:
+            id: su5gl3j63a9fy
+      description: A type which outlines the information of an error to be returned to the requestor.
+    SuccessResponse:
+      title: SuccessResponse
+      type: object
+      x-examples:
+        SingularObjectResponse:
+          data:
+            id: 1
+            name: Abby Brown
+            dob: '20000101'
+          message: Successfully retrieved user information with the id of 1
+        ArrayOfObjectsResponse:
+          data:
+            - id: 1
+              name: Abby Brown
+              dob: '20000101'
+            - id: 2
+              name: Charlie Destin
+              dob: '20000202'
+          message: Successfully listed all users.
+        ArrayOfArraysResponse:
+          data:
+            - - id: 1
+                name: Abby Brown
+                dob: '20000101'
+              - id: 2
+                name: Charlie Destin
+                dob: '20000202'
+            - - id: 3
+                name: Edwin Frank
+                dob: '20000303'
+              - id: 4
+                name: Gerald Hank
+                dob: '20000404'
+          message: Successfully joined the user table of production and development databases.
+        NullResponse:
+          data: null
+          message: string
+      description: A type which get instantiated upon a successful process of a request.
+      required:
+        - message
+      properties:
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/ArrayOfObjectsResponse'
+            - $ref: '#/components/schemas/SingularObjectResponse'
+            - $ref: '#/components/schemas/ArrayOfArraysResponse'
+            - x-stoplight:
+                id: 7kguqxvvkltcs
+              type: object
+              nullable: true
+        message:
+          type: string
+          x-stoplight:
+            id: o3mssj6ze2xn8
+    ArrayOfObjectsResponse:
+      title: ArrayResponse
+      type: object
+      description: 'A type of response object, which contains an array of data objects.'
+      properties:
+        data:
+          type: array
+          items:
+            oneOf: []
+    SingularObjectResponse:
+      title: ObjectResponse
+      type: object
+      description: 'A type of response object, which contains singular data object.'
+      properties:
+        data:
+          oneOf: []
+    ArrayOfArraysResponse:
+      title: ArraysOfArrayResponse
+      type: object
+      description: 'A type of response object, which contains an array of arrays object.'
+      properties:
+        data:
+          type: array
+          x-stoplight:
+            id: wkwofr6f8q4a4
+          items:
+            type: array
+            items:
+              oneOf: []
+    EventNotification:
+      title: EventNotification
+      type: object
+      properties:
+        notification_id:
+          type: string
+        title:
+          type: string
+          x-stoplight:
+            id: zlkegxzhmhlxn
+        body:
+          type: string
+          x-stoplight:
+            id: mfbjmvhkycqzg
+        actionable:
+          $ref: '#/components/schemas/Actionable'
+    IssueTicket:
+      title: IssueTicket
+      type: object
+      description: Transport layer-representation of an IssueTicket.
+      x-examples:
+        Example 1:
+          ticket_id: XYZ
+          issue_type:
+            label: Plumbing
+          response_level:
+            label: 'Urgent, emergency'
+          raised_on: '2019-08-24T14:15:22Z'
+          status:
+            label: Open
+          stated_issue: string
+          location:
+            stated_location: string
+            gps_location:
+              latitude: 0
+              longitude: 0
+          supportive_documents:
+            - id: string
+              type: IMAGE
+              filename: string
+              size: string
+              owner:
+                name: string
+                phone_number: string
+                email: string
+                whatsapp-registered_number: string
+          issuer:
+            name: string
+            phone_number: string
+            email: string
+            whatsapp-registered_number: string
+          logs:
+            - log_id: string
+              owning_ticket_id: string
+              issuer:
+                name: string
+                phone_number: string
+                email: string
+                whatsapp-registered_number: string
+              recorded_on: '2019-08-24T14:15:22Z'
+              news: string
+              attachment:
+                - id: string
+                  type: IMAGE
+                  filename: string
+                  size: string
+                  owner:
+                    name: string
+                    phone_number: string
+                    email: string
+                    whatsapp-registered_number: string
+              actionable:
+                genus: SEGUE
+                species: TICKET_LOG
+                segue_destination: string
+          handlers:
+            - name: string
+              phone_number: string
+              email: string
+              whatsapp-registered_number: string
+      properties:
+        ticket_id:
+          type: string
+          description: Filled by the server. Client sends empty.
+          nullable: true
+        issue_type:
+          $ref: '#/components/schemas/IssueType'
+        response_level:
+          $ref: '#/components/schemas/ResponseLevel'
+        raised_on:
+          type: string
+          x-stoplight:
+            id: gldoj8nekdrl1
+          format: date-time
+          description: Indicates when was this Ticket raised.
+        status:
+          $ref: '#/components/schemas/IssueTicketStatus'
+        stated_issue:
+          type: string
+          x-stoplight:
+            id: tkyavo2qudwdq
+          description: One's claim of the issue present.
+        location:
+          $ref: '#/components/schemas/IssueTicketLocation'
+        supportive_documents:
+          type: array
+          x-stoplight:
+            id: hllem6dtuu2ir
+          items:
+            $ref: '#/components/schemas/IssueTicketResource'
+        issuer:
+          $ref: '#/components/schemas/ContactInformation'
+        logs:
+          type: array
+          x-stoplight:
+            id: msf8bxatdrpxt
+          description: 'Only the 4 latest Ticket Logs. To get more, hit another endpoint.'
+          items:
+            $ref: '#/components/schemas/IssueTicketLog'
+        handlers:
+          type: array
+          x-stoplight:
+            id: dzisgx1jebvto
+          items:
+            $ref: '#/components/schemas/ContactInformation'
+        closed_on:
+          type: string
+          x-stoplight:
+            id: ftthiwn8tmxto
+          format: date-time
+          description: A present value indicates that this Ticket has been resolved.
+          nullable: true
+    MINIMAL_IssueTicket:
+      title: MINIMAL_IssueTicket
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          description: Filled by the server. Client sends empty.
+          nullable: true
+        issue_type:
+          $ref: '#/components/schemas/IssueType'
+        response_level:
+          $ref: '#/components/schemas/ResponseLevel'
+        raised_on:
+          type: string
+          x-stoplight:
+            id: gldoj8nekdrl1
+          format: date-time
+          description: Indicates when was this Ticket raised.
+        status:
+          $ref: '#/components/schemas/IssueTicketStatus'
+        closed_on:
+          type: string
+          x-stoplight:
+            id: ftthiwn8tmxto
+          format: date-time
+          description: A present value indicates that this Ticket has been resolved.
+          nullable: true
+    TOBEMADE_IssueTicket:
+      title: TOBEMADE_IssueTicket
+      type: object
+      properties:
+        issue_type:
+          $ref: '#/components/schemas/IssueType'
+        response_level:
+          $ref: '#/components/schemas/ResponseLevel'
+        stated_issue:
+          type: string
+          x-stoplight:
+            id: hmk7r06c84zx4
+        location:
+          $ref: '#/components/schemas/IssueTicketLocation'
+        supportive_documents:
+          type: array
+          x-stoplight:
+            id: lngemuhk9qszo
+          items:
+            $ref: '#/components/schemas/TOBEMADE_IssueTicketResource'
+    IssueTicketStatus:
+      title: TicketStatus
+      enum:
+        - Open
+        - In Assessment
+        - On Progress
+        - Work Evaluation
+        - Closed
+        - Cancelled
+        - Rejected
+      description: The status component of an IssueTicket.
+    IssueTicketLocation:
+      title: IssueLocation
+      type: object
+      properties:
+        stated_location:
+          type: string
+        gps_location:
+          type: object
+          x-stoplight:
+            id: optd2i8kolo62
+          properties:
+            latitude:
+              type: number
+              x-stoplight:
+                id: 2zhhdq8zzjd5m
+            longitude:
+              type: number
+              x-stoplight:
+                id: kyy7hdhe5clrn
+      description: The location component of an IssueTicket.
+    IssueType:
+      title: IssueType
+      enum:
+        - Plumbing
+        - Housekeeping
+        - Social
+        - Facility
+        - Engineering
+        - Security
+    IssueTicketResource:
+      title: IssueTicketResource
+      type: object
+      properties:
+        id:
+          type: string
+        resource_type:
+          $ref: '#/components/schemas/ResourceType'
+        resource_name:
+          type: string
+          x-stoplight:
+            id: 1engr9tx00hwr
+          default: UNNAMED_RESOURCE
+        resource_size:
+          type: string
+          x-stoplight:
+            id: 76n9z66eox4v1
+          example: 147 KB
+          nullable: true
+        owner:
+          $ref: '#/components/schemas/ContactInformation'
+        previewable_on:
+          type: string
+          x-stoplight:
+            id: 4j6c2ryiqe2uf
+          format: uri
+    IssueTicketLog:
+      title: IssueTicketLog
+      type: object
+      description: Transport layer-representation of a Ticket Log.
+      required:
+        - issuer
+        - recorded_on
+        - news
+      properties:
+        id:
+          type: string
+        owning_ticket_id:
+          type: string
+          x-stoplight:
+            id: 987roi8seshqa
+          description: Whence this TicketLog is part of.
+        log_type:
+          $ref: '#/components/schemas/IssueLogType'
+        issuer:
+          $ref: '#/components/schemas/ContactInformation'
+        recorded_on:
+          type: string
+          x-stoplight:
+            id: jk4e1rs5emqpq
+          format: date-time
+        news:
+          type: string
+          x-stoplight:
+            id: q93l43wxil5l1
+          description: The logged information of what happened.
+        attachment:
+          type: array
+          x-stoplight:
+            id: tt5p4hr9gizas
+          items:
+            $ref: '#/components/schemas/IssueTicketResource'
+        actionable:
+          $ref: '#/components/schemas/Actionable'
+    TOBEMADE_IssueTicketResource:
+      title: TOBEMADE_IssueTicketResource
+      type: object
+      properties:
+        resource_type:
+          $ref: '#/components/schemas/ResourceType'
+        resource_name:
+          type: string
+          x-stoplight:
+            id: wjvosqvm2zlxv
+        resource_size:
+          type: number
+          x-stoplight:
+            id: 0osk6dolbxv7o
+          description: The size of the resource in bytes.
+        resource_content:
+          type: string
+          x-stoplight:
+            id: ajbfcucc7tmsr
+          description: Base64 representation of the resource content.
+    IssueLogType:
+      title: IssueLogType
+      enum:
+        - Assessment
+        - Work Progress
+        - Work Evaluation Request
+        - Work Evaluation
+        - Activity Log
+    ContactInformation:
+      title: ContactInformation
+      type: object
+      description: Transport layer-representation of a contact information object.
+      properties:
+        name:
+          type: string
+          x-stoplight:
+            id: dzxkl06d3ur9z
+        phone_number:
+          type: string
+          x-stoplight:
+            id: 2r37lqv0ojmz2
+          nullable: true
+        email:
+          type: string
+          x-stoplight:
+            id: fuip14rzmt0pg
+          nullable: true
+        whatsapp-registered_number:
+          type: string
+          x-stoplight:
+            id: dr7flje8qz75e
+          nullable: true
+    Actionable:
+      title: Actionable
+      type: object
+      description: 'Transport layer-representation of an instruction which to be executed, once a coresponding TicketLog or Notification object is opened.'
+      properties:
+        genus:
+          x-stoplight:
+            id: uux7m9f887l3y
+          enum:
+            - SEGUE
+            - CONTENT_AVAILABLE
+            - INERT
+        species:
+          x-stoplight:
+            id: kuelguo8l05zh
+          enum:
+            - TICKET_LOG
+            - TICKET
+            - INERT
+        segue_destination:
+          type: string
+          x-stoplight:
+            id: ptxrjpl0bt874
+          description: The id of the resource to be displayed.
+          nullable: true
+    ResponseLevel:
+      title: ResponseLevel
+      enum:
+        - 'Urgent, emergency'
+        - Urgent
+        - Normal
+    CalendarEvent:
+      title: CalendarEvent
+      type: object
+      properties:
+        id:
+          type: string
+    AreaInformation:
+      title: Area
+      type: object
+      properties:
+        name:
+          type: string
+          x-stoplight:
+            id: xru4b747ggdc1
+          description: The name of the Area which the requestor is affiliated with.
+        join_policy:
+          x-stoplight:
+            id: ewmubtr35fiag
+          enum:
+            - OPEN
+            - APROVAL-NEEDED
+            - CLOSED
+        member_count:
+          type: number
+          x-stoplight:
+            id: g9vaqybucen1y
+          description: A number that tells the number of heads enrolled within this Area.
+          default: 0
+          example: 37
+        pending_member_count:
+          type: number
+          x-stoplight:
+            id: dtlwo371uly5j
+          description: A number that tells the number of heads pending to be admitted into this Area.
+          default: 0
+          example: 12
+    AreaMemberRole:
+      title: Role
+      enum:
+        - Member
+        - Crew
+        - Management
+    AreaMember:
+      title: Member
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          x-stoplight:
+            id: v6yjrbdv7jjxd
+        role:
+          $ref: '#/components/schemas/AreaMemberRole'
+        speciality:
+          $ref: '#/components/schemas/IssueType'
+        title:
+          type: string
+          x-stoplight:
+            id: 6rpinmlg35vsw
+        member_since:
+          type: string
+          x-stoplight:
+            id: angpuxjn83nst
+          format: date-time
+        member_until:
+          type: string
+          x-stoplight:
+            id: cukfz6qd9lvm8
+          format: date-time
+          nullable: true
+        contact_information:
+          type: object
+          x-stoplight:
+            id: pkniic08q0wnw
+          properties:
+            phone_number:
+              type: string
+              x-stoplight:
+                id: ve3pcogx1julb
+              nullable: true
+            email:
+              type: string
+              x-stoplight:
+                id: cfpigw3mrw9i6
+              nullable: true
+            whatsapp-registered_number:
+              type: string
+              x-stoplight:
+                id: 13arfc13ca858
+              nullable: true
+    AreaEntryApplication:
+      title: Application
+      type: object
+      properties:
+        id:
+          type: string
+    AreaJoinCode:
+      title: AreaJoinCode
+      type: object
+      properties:
+        endpoint:
+          type: string
+          description: Where the Area's FixPro Backend is hosted.
+        referral_tracking_identifier:
+          type: string
+          x-stoplight:
+            id: gogrhqc9wfmgy
+          description: A unique code that identifies this particular code.
+    ResourceType:
+      title: ResourceType
+      enum:
+        - Plumbing
+        - Housekeeping
+        - Social
+        - Facility
+        - Engineering
+        - Security
+  securitySchemes:
+    ApprovalBaseOAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: 'https://localhost:9191/api/v1/auth/authorize'
+          tokenUrl: 'https://localhost:9191/api/v1/auth/exchange'
+          refreshUrl: 'https://localhost:9191/api/v1/auth/refresh'
+          scopes:
+            member: ''
+            crew: ''
+            management: ''
+  responses:
+    Ok200:
+      description: Request performed successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+          examples: {}
+        text/html:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+          examples:
+            Example 1:
+              value: 'hlvSOduyvfbpoyuiaverlgfvbap fbup ubawfiubaeriporgubesriupbgpina[object Object]'
+    Created201:
+      description: Did create resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+          examples:
+            Successful Raising of Issue Ticket:
+              value:
+                data:
+                  created_ticket:
+                    ticket_attr: ''
+                message: Successfully raised your ticket.
+    BadRequest400:
+      description: Request doesn't provide all the required information.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Example 1:
+              value:
+                genus: MISSING
+                species: ARGUMENTS
+                message: Some fields are missing.
+                resolution: Try to include the XXX and XXX field inside your request.
+    Unauthorized401:
+      description: No identification.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Example 1:
+              value:
+                genus: MISSING
+                species: CREDENTIALS
+                message: Access token isn't provided
+                resolution: string
+    Forbidden403:
+      description: No permission.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Example 1:
+              value:
+                genus: MISSING
+                species: CREDENTIALS
+                message: string
+                resolution: string
+    Forbidden403ForNonManagement:
+      description: A type of error which can be encountered if some AreaMember attempted an operation outside of their scope.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            '403':
+              value:
+                genus: INVALID
+                species: CREDENTIALS
+                message: You are not allowed to perform this action.
+                resolution: Make sure you are part of the management to perform this action.
+    NotFound404:
+      description: No such path.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    IllegalMethod405:
+      description: Illegal method.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError500:
+      description: Unable to process the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  parameters:
+    application_id:
+      name: application_id
+      in: query
+      required: false
+      schema:
+        type: string
+      description: A string of characters which uniquely identifies one applicant's application from the next. One is issued after submitting a join form.
+    ajc_reference_tracking_identifier:
+      name: ref
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Referral Tracking Number of the qrcode which points to this url.
+    nonce:
+      name: nonce
+      in: query
+      required: false
+      schema:
+        type: string
+      description: 'A single-use string of characters, issued for some single purpose. One example include this being issued after retrieving form fields.'

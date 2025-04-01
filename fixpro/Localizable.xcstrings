@@ -1,0 +1,72 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    "By joinning, you agree to our Terms of Service and Privacy Policy." : {
+
+    },
+    "Check or delete the existing entry before writing a new one." : {
+
+    },
+    "Check whether a camera is present, and make sure its not in use." : {
+
+    },
+    "Check whether a microphone is present, and make sure its not in use." : {
+
+    },
+    "Check whether the identifier is correct, and you're looking in the right place." : {
+
+    },
+    "Device has no suitable camera." : {
+
+    },
+    "Device has no suitable microphone." : {
+
+    },
+    "FixPro" : {
+
+    },
+    "Go to settings and enable the camera permission for the app." : {
+
+    },
+    "Go to settings and enable the microphone permission for the app." : {
+
+    },
+    "Join an Area" : {
+
+    },
+    "No entry found." : {
+
+    },
+    "No permission to access the camera." : {
+
+    },
+    "No permission to access the microphone." : {
+
+    },
+    "Preexisting entry found. Stopped before overwriting." : {
+
+    },
+    "Refused to overwrite an existing entry." : {
+
+    },
+    "The device has no camera or any compatible camera is in use." : {
+
+    },
+    "The device has no microphone or any compatible microphone is in use." : {
+
+    },
+    "The requested entry does not exist." : {
+
+    },
+    "The user has denied the permission, disabled the permission, or has yet to grant permission." : {
+
+    },
+    "You'll be automatically redirected once a fitting code has been found." : {
+
+    }
+  },
+  "version" : "1.0"
+}

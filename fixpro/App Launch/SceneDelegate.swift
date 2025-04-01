@@ -14,7 +14,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var rootRouter: LaunchRouting?
     
     
-    /// Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
+    /// Configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
     /// If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
     /// 
     /// This delegate does not imply the connecting scene or session are new.
@@ -25,7 +25,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: wscene)
         self.window = window
         
-        let rootRouter = RootBuilder(dependency: RootEmptyComponent()).build()
+        let keychainService = FPKeychainQueristService()
+        let service         = FPSessionCredentialsStorageService(storage: keychainService)
+        let rootRouter      = RootBuilder().build()
         
         self.rootRouter = rootRouter
              rootRouter.launch(from: window)
@@ -57,7 +59,6 @@ extension SceneDelegate {
     /// Called as the scene transitions from the background to the foreground.
     /// Use this method to undo the changes made on entering the background.
     func sceneWillEnterForeground(_ scene: UIScene) {
-        CredentialRegistry.global.unlock()
     }
     
     
@@ -65,7 +66,6 @@ extension SceneDelegate {
     /// Use this method to save data, release shared resources, and store enough scene-specific state information
     /// to restore the scene back to its current state.
     func sceneDidEnterBackground(_ scene: UIScene) {
-        CredentialRegistry.global.lock()
     }
     
 }

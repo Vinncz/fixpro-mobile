@@ -66,34 +66,34 @@ final class RootRouter: LaunchRouter<RootInteractable, RootViewControllable> {
 extension RootRouter: RootRouting {
     
     func transitionToPairedFlow () {
+        FPLogger.log("Attached mainframeRouting")
         let mainframeRouting  = mainframeBuilder.build(withListener: self.interactor)
         self.mainframeRouting = mainframeRouting
         
         self.attachChild(mainframeRouting)
-        FPLogger.log("Attached mainframeRouting")
     }
     
     func transitionToUnpairedFlow () {
+        FPLogger.log("Attached onboardingRouting")
         let onboardingRouting = onboardingBuilder.build(withListener: self.interactor)
         self.onboardingRouting = onboardingRouting
         
         self.attachChild(onboardingRouting)
-        FPLogger.log("Attached onboardingRouting")
     }
     
     func detachAnyFlow () {
         if let mainframeRouting {
+            FPLogger.log("Detached mainframeRouting")
             self.detachChild(mainframeRouting)
             mainframeRouting.cleanupViews()
             self.mainframeRouting = nil
-            FPLogger.log("Detached mainframeRouting")
         }
         
         if let onboardingRouting {
+            FPLogger.log("Detached onboardingRouting")
             self.detachChild(onboardingRouting)
             viewController.cleanupFlow(from: onboardingRouting.viewControllable)
             self.onboardingRouting = nil
-            FPLogger.log("Detached onboardingRouting")
         }
     }
     

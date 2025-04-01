@@ -62,7 +62,6 @@ final class OutboundJoinRequestBuilder: Builder<OutboundJoinRequestDependency>, 
         return OutboundJoinRequestRouter (
             interactor    : interactor, 
             viewController: viewController
-            // TODO: Pass grandchildren's builders here
         )
     }
     

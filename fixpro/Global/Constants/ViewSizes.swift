@@ -65,31 +65,34 @@ indirect enum ViewSize : AssociableWithValue {
 /// Extension for set sizes of icons.
 extension ViewSize {
     
-    /// Used for sizing icons. Equates to ``.medium``.
-    static var iCallout    : ViewSize = .medium
+    /// Used for sizing icons. Equates to ``ViewSize/medium``.
+    static var iCallout: ViewSize = .medium
     
-    /// Used for sizing icons. Equates to ``.big``.
-    static var iBody       : ViewSize = .big
+    /// Used for sizing icons. Equates to ``ViewSize/big``.
+    static var iBody: ViewSize = .big
     
-    /// Used for sizing icons. Equates to ``.big + .xxSmall``.
-    static var iHeadline   : ViewSize = .composite(.big + .xxSmall)
+    /// Used for sizing icons. Equates to ``ViewSize/big`` + ``ViewSize/xxSmall``.
+    static var iHeadline: ViewSize = .composite(.big + .xxSmall)
     
-    /// Used for sizing icons. Equates to ``.xxBig + .xxSmall``.
-    static var iTitle      : ViewSize = .composite(.xxBig + .xxSmall)
+    /// Used for sizing icons. Equates to ``ViewSize/xxBig`` + ``ViewSize/xxSmall``.
+    static var iTitle: ViewSize = .composite(.xxBig + .xxSmall)
     
-    /// Used for sizing icons. Equates to ``.xBig + .normal + .xxSmall``.
-    static var iLargeTitle : ViewSize = .composite(.xBig + .normal + .xxSmall)
+    /// Used for sizing icons. Equates to ``ViewSize/xBig`` + ``ViewSize/normal`` + ``ViewSize/xxSmall``.
+    static var iLargeTitle: ViewSize = .composite(.xBig + .normal + .xxSmall)
     
 }
 
 /// Extensions for set sizes of container breakpoints.
 extension ViewSize {
     
-    static var cCompact : ViewSize = .constant(393)
+    /// Used as width-clamping constants. Equates to 393 points.
+    static var cCompact: ViewSize = .constant(393)
     
-    static var cLoose : ViewSize = .constant(768)
+    /// Used as width-clamping constants. Equates to 768 points.
+    static var cLoose: ViewSize = .constant(768)
     
-    static var cWide  : ViewSize = .constant(1080)
+    /// Used as width-clamping constants. Equates to 1080 points.
+    static var cWide: ViewSize = .constant(1080)
     
 }
 

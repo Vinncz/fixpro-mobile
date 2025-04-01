@@ -56,7 +56,6 @@ final class MainframeInteractor: Interactor, MainframeInteractable {
     override func didBecomeActive () {
         super.didBecomeActive()
         
-        
         router?.attachRoleAppropriationFlow()
     }
     

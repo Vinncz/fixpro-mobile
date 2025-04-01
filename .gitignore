@@ -1,0 +1,6 @@
+Base.lproj
+GoogleService-Info.plist
+build/
+DS_Store
+*.xcbkptlist
+*.xcworkspace

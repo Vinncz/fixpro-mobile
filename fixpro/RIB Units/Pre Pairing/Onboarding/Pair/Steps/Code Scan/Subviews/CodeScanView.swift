@@ -7,7 +7,7 @@ struct CodeScanView: View {
     
     var body: some View {
         ScrollView {
-            ScannerView ([.captureMode: .wrap(ScannerView.CaptureMode.continuous), .debounce: .wrap(TimeInterval(integerLiteral: 3))], error: $viewModel.scannerError) { result in
+            ScannerView ([.captureMode: .wrap(ScannerView.CaptureMode.continuous), .debounce: .wrap(TimeInterval(integerLiteral: 3))], error: $viewModel.scannerError, isScanning: $viewModel.isScanning) { result in
                 viewModel.didScan?(result)
             }
                 .background(.primary)
@@ -34,6 +34,13 @@ struct CodeScanView: View {
                 }
                 .foregroundStyle(.secondary)
             }
+        }
+        .onDisappear {
+            viewModel.isScanning = false
+            viewModel.scannerError = .EMPTY
+        }
+        .onAppear {
+            viewModel.isScanning = true
         }
     }
 }

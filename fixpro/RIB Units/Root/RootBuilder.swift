@@ -1,6 +1,9 @@
 import RIBs
 
 
+extension EmptyComponent: RootDependency {}
+
+
 /// Collection of types whose instances are necessary for `RootRIB` to function.
 /// 
 /// This protocol may be used externally of `RootRIB`.
@@ -25,21 +28,19 @@ protocol RootDependency: Dependency {}
 /// In this case, the ``RootBuilder`` is responsible to make an instance of ``RootComponent``
 /// which then populates the properties of ``RootDependency``.
 final class RootComponent: Component<RootDependency>, 
-                           MainframeDependency
+                           MainframeDependency,
+                           OnboardingDependency 
 {
-    var mainframeViewController: MainframeViewControllable {
+    var mainframeViewController: MainframeViewControllable { 
         rootViewController
+    }
+    var sessionService: FPSessionCredentialsStorageService { 
+        shared { FPSessionCredentialsStorageService(storage: FPKeychainQueristService()) }
     }
     
     fileprivate let rootViewController = RootViewController()
-}
-
-
-/// A ready-made `Component` that has no dependencies. 
-/// 
-/// Used by the ancestral RIB to initiate the RIB hierarchy.
-final class RootEmptyComponent: Component<EmptyDependency>, RootDependency {
-    init () { super.init(dependency: EmptyComponent()) }
+    
+    init() { super.init(dependency: EmptyComponent()) }
 }
 
 
@@ -64,31 +65,19 @@ protocol RootBuildable: Buildable {
 /// Meaning, this `Builder` should supply the `Builder` of a grandchildren, to its children.
 final class RootBuilder: Builder<RootDependency>, RootBuildable {
     
-    override init (dependency: RootDependency) {
-        super.init(dependency: dependency)
+    init () {
+        super.init(dependency: EmptyComponent())
     }
     
     func build () -> LaunchRouting {
-        let component  = RootComponent(dependency: dependency)
+        let component  = RootComponent()
         let interactor = RootInteractor(presenter: component.rootViewController)
-        
-        let mainframeDependency: MainframeDependency = {
-            class MfD: MainframeDependency {                
-                var mainframeViewController: any MainframeViewControllable
-                init (_ mvc: MainframeViewControllable) { self.mainframeViewController = mvc } 
-            }
-            return MfD(component.rootViewController)
-        }()
-        let onboarding: OnboardingDependency = {
-            class ObD: OnboardingDependency {}
-            return ObD()
-        }()
         
         return RootRouter (
             interactor       : interactor, 
             viewController   : component.rootViewController,
-            mainframeBuilder : MainframeBuilder(dependency: mainframeDependency),
-            onboardingBuilder: OnboardingBuilder(dependency: onboarding)
+            mainframeBuilder : MainframeBuilder(dependency: component),
+            onboardingBuilder: OnboardingBuilder(dependency: component)
         )
     }
     

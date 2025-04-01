@@ -33,13 +33,15 @@ protocol InformationPresentable: Presentable {
 /// 
 /// By conforming to this, the parent RIB declares that it is willing
 /// to receive and handle events coming from ``InformationInteractor``.
-protocol InformationListener: AnyObject {}
+protocol InformationListener: AnyObject {
+    func didDissapear()
+}
 
 
 /// Handles business logic and coordinates with other RIBs.
 /// 
 /// The `Interactor` class are responsible for handling business logic, and bridging between the `Presenter` (view) and `Router`.
-final class InformationInteractor: PresentableInteractor<InformationPresentable>, InformationInteractable, InformationPresentableListener {
+final class InformationInteractor: PresentableInteractor<InformationPresentable>, InformationInteractable {
     
     
     /// The reference to the Router where self resides on.
@@ -71,6 +73,14 @@ final class InformationInteractor: PresentableInteractor<InformationPresentable>
     override func willResignActive () {
         super.willResignActive()
         // TODO: Pause any business logic.
+    }
+    
+}
+
+extension InformationInteractor: InformationPresentableListener {
+    
+    func didDissapear() {
+        listener?.didDissapear()
     }
     
 }

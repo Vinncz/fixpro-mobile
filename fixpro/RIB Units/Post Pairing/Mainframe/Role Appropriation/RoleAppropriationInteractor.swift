@@ -78,7 +78,7 @@ extension RoleAppropriationInteractor {
     
     /// 
     func determineRole() -> Role {
-        .crew
+        .member
     }
     
     

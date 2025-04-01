@@ -83,16 +83,16 @@ extension CodeScanInteractor: CodeScanPresentableListener {
     
     /// Responsible in making sure the scanned code is valid before passing it on to ``PairInteractor``.
     func viewDidScanAreaJoinCode (withDigestOf stringReadFromQRCode: String) {
-        guard stringReadFromQRCode.hasPrefix("K") else {
-            self.viewModel?.scannerError = "Isn't a valid URL"
-            return
-        }
-        
-        switch AreaJoinCode.make(fromDigest: stringReadFromQRCode) {
+        switch AreaJoinCode.make(fromJsonString: stringReadFromQRCode) {
             case .success(let areaJoinCode):
                 self.listener?.didScanAreaJoinCode(withDigestOf: areaJoinCode)
             case .failure(let error):
-                FPLogger.log(tag: .error, error)
+                switch error {
+                    case .TYPE_MISMATCH, .MALFORMED:
+                        self.viewModel?.scannerError = "Code was damaged."
+                    default:
+                        self.viewModel?.scannerError = "FixPro cannot recognize what code you scanned."
+                }
         }
     }
     

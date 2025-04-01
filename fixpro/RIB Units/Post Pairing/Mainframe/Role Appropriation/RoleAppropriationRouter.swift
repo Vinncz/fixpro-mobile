@@ -11,9 +11,9 @@ import UIKit
 /// Conform this protocol to other RIBs' `Listener` protocols, to mark ``RoleAppropriationInteractor`` 
 /// as able to receive and will handle events coming from its descendants. 
 protocol RoleAppropriationInteractable: Interactable,
-                                        MemberScopeListener,
-                                        MaintenanceCrewScopeListener,
-                                        ManagementTeamScopeListener
+                                        MemberScopedListener,
+                                        CrewScopedListener,
+                                        ManagementScopedListener
 {
     var router  : RoleAppropriationRouting? { get set }
     var listener: RoleAppropriationListener? { get set }
@@ -37,23 +37,23 @@ protocol RoleAppropriationViewControllable: ViewControllable {}
 /// Manages the UI of `RoleAppropriationRIB` and relation with another RIB.
 final class RoleAppropriationRouter: Router<RoleAppropriationInteractable> {
     
-    private let memberScopeBuilder: MemberScopeBuildable
-    private let maintenanceCrewScopeBuilder: MaintenanceCrewScopeBuildable
-    private let managementScopeBuilder: ManagementTeamScopeBuildable
+    private let memberScopeBuilder: MemberScopedBuildable
+    private let maintenanceCrewScopeBuilder: CrewScopedBuildable
+    private let managementScopeBuilder: ManagementScopedBuildable
     
     private var activeRouting: ViewableRouting? = nil
-    private var memberScopeRouting: MemberScopeRouting? = nil
-    private var maintenanceCrewScopeRouting: MaintenanceCrewScopeRouting? = nil
-    private var managementScopeRouting: ManagementTeamScopeRouting? = nil
+    private var memberScopeRouting: MemberScopedRouting? = nil
+    private var maintenanceCrewScopeRouting: CrewScopedRouting? = nil
+    private var managementScopeRouting: ManagementScopedRouting? = nil
     
     private var parentViewControllable: RoleAppropriationViewControllable?
     
     init (
         interactor: RoleAppropriationInteractable, 
         viewController: RoleAppropriationViewControllable,
-        memberScopeBuilder: MemberScopeBuildable,
-        maintenanceCrewScopeBuilder: MaintenanceCrewScopeBuildable,
-        managementScopeBuilder: ManagementTeamScopeBuildable
+        memberScopeBuilder: MemberScopedBuildable,
+        maintenanceCrewScopeBuilder: CrewScopedBuildable,
+        managementScopeBuilder: ManagementScopedBuildable
     ) {
         self.parentViewControllable = viewController
         self.memberScopeBuilder = memberScopeBuilder
@@ -78,49 +78,51 @@ extension RoleAppropriationRouter: RoleAppropriationRouting {
     
     /// 
     func attachMemberFlow() {
+        FPLogger.log("Attached memberScopeRouting")
         let memberScopeRouting = memberScopeBuilder.build(withListener: self.interactor)
         self.activeRouting = memberScopeRouting
         self.memberScopeRouting = memberScopeRouting
         
         self.attachChild(memberScopeRouting)
         (self.parentViewControllable?.uiviewController as? RootViewControllable)?.transitionFlow(to: memberScopeRouting.viewControllable)
-        FPLogger.log("Attached memberScopeRouting")
     }
     
     
     ///
     func attachMaintenanceCrewFlow() {
+        FPLogger.log("Attached crewRouting")
         let crewRouting = maintenanceCrewScopeBuilder.build(withListener: self.interactor)
         self.activeRouting = crewRouting
         self.maintenanceCrewScopeRouting = crewRouting
         
         self.attachChild(crewRouting)
         (self.parentViewControllable?.uiviewController as? RootViewControllable)?.transitionFlow(to: crewRouting.viewControllable)
-        FPLogger.log("Attached crewRouting")
     }
     
     
     /// 
     func attachManagementFlow() {
+        FPLogger.log("Attached managementRouting")
         let managementRouting = managementScopeBuilder.build(withListener: self.interactor)
         self.activeRouting = managementRouting
         self.managementScopeRouting = managementRouting
         
         self.attachChild(managementRouting)
         (self.parentViewControllable?.uiviewController as? RootViewControllable)?.transitionFlow(to: managementRouting.viewControllable)
-        FPLogger.log("Attached managementRouting")
     }
     
     
     /// 
     func detachAnyFlow() {
         guard let activeRouting else { return }
+        FPLogger.log("Detached any flow")
+        
         switch activeRouting {
-            case is MemberScopeRouting:
+            case is MemberScopedRouting:
                 memberScopeRouting = nil
-            case is MaintenanceCrewScopeRouting:
+            case is CrewScopedRouting:
                 maintenanceCrewScopeRouting = nil
-            case is ManagementTeamScopeRouting:
+            case is ManagementScopedRouting:
                 managementScopeRouting = nil
             default:
                 break

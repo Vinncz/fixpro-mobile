@@ -48,18 +48,18 @@ final class MainframeRouter: Router<MainframeInteractable>, MainframeRouting {
     }
     
     func cleanupViews () {
+        FPLogger.log("Detached roleAppropriationRouting")
         guard let roleAppropriationRouting else { return }
         roleAppropriationRouting.cleanupViews()
         self.detachChild(roleAppropriationRouting)
         self.roleAppropriationRouting = nil
-        FPLogger.log("Detached roleAppropriationRouting")
     }
     
     func attachRoleAppropriationFlow() {
+        FPLogger.log("Attached roleAppropriationRouting")
         let roleAppropriationRouting = self.roleAppropriationBuildable.build(withListener: self.interactor)
         self.roleAppropriationRouting = roleAppropriationRouting
         self.attachChild(roleAppropriationRouting)
-        FPLogger.log("Attached roleAppropriationRouting")
     }
     
 }

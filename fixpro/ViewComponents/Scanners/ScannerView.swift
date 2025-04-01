@@ -5,6 +5,7 @@ import SwiftUI
 
 struct ScannerView : Configurable, UIViewControllerRepresentable {
     
+    var isScanning: Binding<Bool>?
     var config  : confdt
     var callback: ((String) -> Void)?
     var error   : Binding<String>?
@@ -12,10 +13,12 @@ struct ScannerView : Configurable, UIViewControllerRepresentable {
     init ( 
         _ incomingConfig: confdt = [:], 
           error         : Binding<String>?, 
-        _ callback      : ((String) -> Void)? = nil 
+          isScanning    : Binding<Bool>?,
+        _ callback      : ((String) -> Void)? = nil
     ) {
         self.error    = error
         self.callback = callback
+        self.isScanning = isScanning
         
         self.config = mergeDictionaries(defaultConfig, incomingConfig)
     }
@@ -31,7 +34,13 @@ struct ScannerView : Configurable, UIViewControllerRepresentable {
         Coordinator(config, error, callback)
     }
     
-    func updateUIViewController ( _ uiViewController: ScannerViewController, context: Context ) {}
+    func updateUIViewController ( _ uiViewController: ScannerViewController, context: Context ) {
+        if let isScanning {
+            isScanning.wrappedValue ? 
+                DispatchQueue.global().async { uiViewController.captureSession.startRunning() }
+                : DispatchQueue.global().async { uiViewController.captureSession.stopRunning() }
+        } 
+    }
     
     let defaultConfig : confdt = [
         .debounce        : .wrap(0.25),

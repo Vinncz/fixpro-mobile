@@ -24,7 +24,14 @@ protocol OnboardingDependency: Dependency {}
 /// 
 /// In this case, the ``OnboardingBuilder`` is responsible to make an instance of ``OnboardingComponent``
 /// which then populates the properties of ``OnboardingDependency``.
-final class OnboardingComponent: Component<OnboardingDependency> {}
+final class OnboardingComponent: Component<OnboardingDependency>,
+                                 PairDependency,
+                                 InformationDependency
+{
+//    var pairingService: FPPairingService {
+//        shared { FPPairingService() }
+//    }
+}
 
 
 /// Collection of methods who defines what it takes to construct `OnboardingRIB`.
@@ -59,20 +66,11 @@ final class OnboardingBuilder: Builder<OnboardingDependency>, OnboardingBuildabl
         let interactor     = OnboardingInteractor(presenter: viewController)
             interactor.listener = listener
         
-        let pairDependency: PairDependency = {
-            class PD: PairDependency {}
-            return PD()
-        }()
-        let informationDependency: InformationDependency = {
-            class ID: InformationDependency {}
-            return ID()
-        }()
-        
         return OnboardingRouter (
-            interactor    : interactor, 
+            interactor: interactor, 
             viewController: viewController,
-            informationBuilder: InformationBuilder(dependency: informationDependency),
-            pairBuilder   : PairBuilder(dependency: pairDependency)
+            informationBuilder: InformationBuilder(dependency: component),
+            pairBuilder: PairBuilder(dependency: component)
         )
     }
     

@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		200AE1652D90623100E2C292 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 200AE1642D90623100E2C292 /* OpenAPIURLSession */; };
+		204F23342D8DB96F005FC2BE /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 204F23332D8DB96F005FC2BE /* OpenAPIRuntime */; };
+		2082F6662D829B1E0028BE25 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 2082F6652D829B1E0028BE25 /* FirebaseCore */; };
+		2082F6682D829B1E0028BE25 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 2082F6672D829B1E0028BE25 /* FirebaseMessaging */; };
+		20F9568F2D7342DE00813695 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 20F9568E2D7342DE00813695 /* SnapKit */; };
+		20F956922D7342F200813695 /* RIBs in Frameworks */ = {isa = PBXBuildFile; productRef = 20F956912D7342F200813695 /* RIBs */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		204301072D73410B003C42AD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +74,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2082F6682D829B1E0028BE25 /* FirebaseMessaging in Frameworks */,
+				20F956922D7342F200813695 /* RIBs in Frameworks */,
+				2082F6662D829B1E0028BE25 /* FirebaseCore in Frameworks */,
+				200AE1652D90623100E2C292 /* OpenAPIURLSession in Frameworks */,
+				204F23342D8DB96F005FC2BE /* OpenAPIRuntime in Frameworks */,
+				20F9568F2D7342DE00813695 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,12 +134,19 @@
 			buildRules = (
 			);
 			dependencies = (
+				200AE1672D90624700E2C292 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				204300F22D73410A003C42AD /* fixpro */,
 			);
 			name = fixpro;
 			packageProductDependencies = (
+				20F9568E2D7342DE00813695 /* SnapKit */,
+				20F956912D7342F200813695 /* RIBs */,
+				2082F6652D829B1E0028BE25 /* FirebaseCore */,
+				2082F6672D829B1E0028BE25 /* FirebaseMessaging */,
+				204F23332D8DB96F005FC2BE /* OpenAPIRuntime */,
+				200AE1642D90623100E2C292 /* OpenAPIURLSession */,
 			);
 			productName = fixpro;
 			productReference = 204300F02D73410A003C42AD /* fixpro.app */;
@@ -208,6 +230,14 @@
 			);
 			mainGroup = 204300E72D73410A003C42AD;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				20F9568D2D7342DE00813695 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				20F956902D7342F200813695 /* XCRemoteSwiftPackageReference "RIBs-iOS" */,
+				2082F6642D829B1E0028BE25 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				204F23312D8DB902005FC2BE /* XCRemoteSwiftPackageReference "swift-openapi-generator" */,
+				204F23322D8DB96F005FC2BE /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */,
+				200AE1632D90623100E2C292 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 204300F12D73410A003C42AD /* Products */;
 			projectDirPath = "";
@@ -269,6 +299,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		200AE1672D90624700E2C292 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 200AE1662D90624700E2C292 /* OpenAPIGenerator */;
+		};
 		204301082D73410B003C42AD /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 204300EF2D73410A003C42AD /* fixpro */;
@@ -287,16 +321,20 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = fixpro/fixpro.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = STU45DAFT2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = fixpro/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FixPro;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "FixPro needs camera access to scan for qr-codes and to capture supportive documents for a Ticket.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIMainStoryboardFile = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -315,16 +353,20 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = fixpro/fixpro.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = STU45DAFT2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = fixpro/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FixPro;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "FixPro needs camera access to scan for qr-codes and to capture supportive documents for a Ticket.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIMainStoryboardFile = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -397,6 +439,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -453,6 +496,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -569,6 +613,95 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		200AE1632D90623100E2C292 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-urlsession.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.2;
+			};
+		};
+		204F23312D8DB902005FC2BE /* XCRemoteSwiftPackageReference "swift-openapi-generator" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-generator";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.1;
+			};
+		};
+		204F23322D8DB96F005FC2BE /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-runtime";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.8.1;
+			};
+		};
+		2082F6642D829B1E0028BE25 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.9.0;
+			};
+		};
+		20F9568D2D7342DE00813695 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.1;
+			};
+		};
+		20F956902D7342F200813695 /* XCRemoteSwiftPackageReference "RIBs-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/uber/RIBs-iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		200AE1642D90623100E2C292 /* OpenAPIURLSession */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 200AE1632D90623100E2C292 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */;
+			productName = OpenAPIURLSession;
+		};
+		200AE1662D90624700E2C292 /* OpenAPIGenerator */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 204F23312D8DB902005FC2BE /* XCRemoteSwiftPackageReference "swift-openapi-generator" */;
+			productName = "plugin:OpenAPIGenerator";
+		};
+		204F23332D8DB96F005FC2BE /* OpenAPIRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 204F23322D8DB96F005FC2BE /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */;
+			productName = OpenAPIRuntime;
+		};
+		2082F6652D829B1E0028BE25 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2082F6642D829B1E0028BE25 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		2082F6672D829B1E0028BE25 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2082F6642D829B1E0028BE25 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		20F9568E2D7342DE00813695 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 20F9568D2D7342DE00813695 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
+		20F956912D7342F200813695 /* RIBs */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 20F956902D7342F200813695 /* XCRemoteSwiftPackageReference "RIBs-iOS" */;
+			productName = RIBs;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 204300E82D73410A003C42AD /* Project object */;
 }

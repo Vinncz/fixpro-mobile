@@ -66,6 +66,10 @@ final class OnboardingInteractor: PresentableInteractor<OnboardingPresentable>, 
     }
     
     
+    func didDissapear() {
+        router?.detachInformationFlow()
+    }
+    
 }
 
 
@@ -83,7 +87,7 @@ extension OnboardingInteractor: OnboardingPresentableListener {
     
     
     // MARK: -- Conformance to Listener
-    func didFinishPairing (isImmidiatelyAccepted: Bool) {
+    func didFinishPairing(isImmidiatelyAccepted: Bool) {
         router?.detachPairingFlow()
         
         if isImmidiatelyAccepted {

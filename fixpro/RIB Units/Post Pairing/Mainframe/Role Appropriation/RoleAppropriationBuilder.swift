@@ -18,6 +18,7 @@ import RIBs
 protocol RoleAppropriationDependency: Dependency {
     /// The view which `RoleAppropriationRIB` will be able to manipulate.
     var roleAppropriationViewController: RoleAppropriationViewControllable { get }
+    var sessionService: FPSessionCredentialsStorageService { get }
 }
 
 
@@ -27,11 +28,19 @@ protocol RoleAppropriationDependency: Dependency {
 /// 
 /// In this case, the ``RoleAppropriationBuilder`` is responsible to make an instance of ``RoleAppropriationComponent``
 /// which then populates the properties of ``RoleAppropriationDependency``.
-final class RoleAppropriationComponent: Component<RoleAppropriationDependency> {
+final class RoleAppropriationComponent: Component<RoleAppropriationDependency>,
+                                        MemberScopedDependency,
+                                        CrewScopedDependency,
+                                        ManagementScopedDependency
+{
+    
+    var sessionService: FPSessionCredentialsStorageService { shared { dependency.sessionService } }
+    
     // Fileprivate attribute marks dependencies to be provided by self--and not some outside source.
     fileprivate var roleAppropriationViewController: RoleAppropriationViewControllable {
         return dependency.roleAppropriationViewController
     }
+    
 }
 
 
@@ -66,25 +75,12 @@ final class RoleAppropriationBuilder: Builder<RoleAppropriationDependency>, Role
         let interactor = RoleAppropriationInteractor()
             interactor.listener = listener
         
-        let msd: MemberScopeDependency = {
-            class MSD: MemberScopeDependency {}
-            return MSD()
-        }()
-        let mcsd: MaintenanceCrewScopeDependency = {
-            class MCsd: MaintenanceCrewScopeDependency {}
-            return MCsd()
-        }()
-        let mgsd: ManagementTeamScopeDependency = {
-            class MGsd: ManagementTeamScopeDependency {}
-            return MGsd()
-        }()
-        
         return RoleAppropriationRouter (
             interactor: interactor, 
             viewController: component.roleAppropriationViewController,
-            memberScopeBuilder: MemberScopeBuilder(dependency: msd),
-            maintenanceCrewScopeBuilder: MaintenanceCrewScopeBuilder(dependency: mcsd),
-            managementScopeBuilder: ManagementTeamScopeBuilder(dependency: mgsd)
+            memberScopeBuilder: MemberScopedBuilder(dependency: component),
+            maintenanceCrewScopeBuilder: CrewScopedBuilder(dependency: component),
+            managementScopeBuilder: ManagementScopedBuilder(dependency: component)
         )
     }
     

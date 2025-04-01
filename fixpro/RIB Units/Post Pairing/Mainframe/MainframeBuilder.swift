@@ -18,6 +18,7 @@ import RIBs
 protocol MainframeDependency: Dependency {
     /// The view which `MainframeRIB` will be able to manipulate.
     var mainframeViewController: MainframeViewControllable { get }
+    var sessionService: FPSessionCredentialsStorageService { get }
 }
 
 
@@ -27,7 +28,13 @@ protocol MainframeDependency: Dependency {
 /// 
 /// In this case, the ``MainframeBuilder`` is responsible to make an instance of ``MainframeComponent``
 /// which then populates the properties of ``MainframeDependency``.
-final class MainframeComponent: Component<MainframeDependency> {
+final class MainframeComponent: Component<MainframeDependency>,
+                                RoleAppropriationDependency
+{
+    var roleAppropriationViewController: any RoleAppropriationViewControllable { dependency.mainframeViewController }
+    
+    var sessionService: FPSessionCredentialsStorageService { dependency.sessionService }
+    
     // Fileprivate attribute marks dependencies to be provided by self--and not some outside source.
     fileprivate var mainframeViewController: MainframeViewControllable {
         return dependency.mainframeViewController
@@ -66,20 +73,10 @@ final class MainframeBuilder: Builder<MainframeDependency>, MainframeBuildable {
         let interactor = MainframeInteractor()
             interactor.listener = listener
         
-        let roleAppropriationDependency: RoleAppropriationDependency = {
-            class RADependency: RoleAppropriationDependency {
-                var roleAppropriationViewController: any RoleAppropriationViewControllable
-                init(_ roleAppro: any RoleAppropriationViewControllable) {
-                    self.roleAppropriationViewController = roleAppro
-                }
-            }
-            return RADependency(component.mainframeViewController)
-        }()
-        
         return MainframeRouter (
             interactor: interactor, 
             viewController: component.mainframeViewController,
-            roleAppropriationBuilder: RoleAppropriationBuilder(dependency: roleAppropriationDependency)
+            roleAppropriationBuilder: RoleAppropriationBuilder(dependency: component)
         )
     }
     

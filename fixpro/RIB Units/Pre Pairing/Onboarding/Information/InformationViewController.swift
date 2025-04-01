@@ -12,7 +12,9 @@ import UIKit
 /// Conformance of this protocol is **EXCLUSIVE** to ``InformationInteractor`` (internal use).
 /// ``InformationViewController``, in turn, can invoke methods declared in this protocol 
 /// via its ``InformationViewController/presentableListener`` attribute.
-protocol InformationPresentableListener: AnyObject {}
+protocol InformationPresentableListener: AnyObject {
+    func didDissapear()
+}
 
 
 /// The UI of `InformationRIB`.
@@ -29,6 +31,11 @@ final class InformationViewController: UIViewController, InformationPresentable,
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .systemBackground
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        presentableListener?.didDissapear()
     }
     
 }

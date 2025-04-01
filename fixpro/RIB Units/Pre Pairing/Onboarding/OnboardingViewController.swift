@@ -4,6 +4,7 @@ import RxSwift
 import SnapKit
 import UIKit
 
+
 /// Collection of methods which ``OnboardingViewController`` can invoke, to perform business logic.
 ///
 /// The `PresentableListener` protocol is responsible to bridge UI events to business logic.  
@@ -89,9 +90,8 @@ extension OnboardingViewController {
         self.hostingController = featureViewController
     }
     
-    @objc func didTapPairButton() {
-        guard presentedFlow == nil else { return }
-        presentableListener?.quePairingFlow()
-    }
-    
+}
+
+#Preview {
+    OnboardingViewController()
 }

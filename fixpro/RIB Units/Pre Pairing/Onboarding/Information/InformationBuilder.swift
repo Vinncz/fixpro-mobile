@@ -54,7 +54,6 @@ final class InformationBuilder: Builder<InformationDependency>, InformationBuild
     }
 
     func build (withListener listener: InformationListener) -> InformationRouting {
-        let component      = InformationComponent(dependency: dependency)
         let viewController = InformationViewController()
         let interactor     = InformationInteractor(presenter: viewController)
             interactor.listener = listener
@@ -62,7 +61,6 @@ final class InformationBuilder: Builder<InformationDependency>, InformationBuild
         return InformationRouter (
             interactor    : interactor, 
             viewController: viewController
-            // TODO: Pass grandchildren's builders here
         )
     }
     

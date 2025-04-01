@@ -1,9 +1,22 @@
 import SwiftUI
+import OpenAPIRuntime
+import OpenAPIURLSession
 
 struct OnboardingView: View {
     
     let onButtonClick: () -> Void
     let onInfoClick: () -> Void
+    
+    private let client: Client
+    
+    init(onButtonClick: @escaping () -> Void, onInfoClick: @escaping () -> Void) {
+        self.onButtonClick = onButtonClick
+        self.onInfoClick = onInfoClick
+        self.client = Client(
+            serverURL: try! Servers.PairedAreaAddress.url(),
+            transport: URLSessionTransport()
+        )
+    }
     
     var body: some View {
         NavigationStack {
