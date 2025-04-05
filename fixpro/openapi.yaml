@@ -43,7 +43,7 @@ paths:
                   value:
                     message: You are granted access to the Area. Use the following code and exchange them for access and refresh token.
                     data:
-                      authentication_code: 'zserfvbhuik,.;['
+                      authentication_code: qwertyuiop-asdfghjkl-zxcvbnm
         '403':
           $ref: '#/components/responses/Forbidden403'
       operationId: checkForEntryVerdict
@@ -86,13 +86,6 @@ paths:
                               type: string
                               x-stoplight:
                                 id: lypbvghydqild
-                            field_type:
-                              x-stoplight:
-                                id: tg8qhe5jbobh6
-                              enum:
-                                - NUMBER
-                                - TEXT
-                                - EMAIL
                       nonce:
                         type: string
                         x-stoplight:
@@ -142,6 +135,12 @@ paths:
                         type: string
                         x-stoplight:
                           id: 48x5n839se63s
+              examples:
+                Response example:
+                  value:
+                    message: Successfully submitted an application. Use the following string to check periodically of your application status.
+                    data:
+                      application_id: qwertyuiop-asdfghjkl-zxcvbnm
           headers: {}
         '400':
           description: Request does not contain ALL of the required fields.
@@ -165,10 +164,6 @@ paths:
             schema:
               type: object
               properties:
-                nonce:
-                  type: string
-                  x-stoplight:
-                    id: vaf9dl5i65qbk
                 data:
                   type: array
                   x-stoplight:
@@ -186,10 +181,14 @@ paths:
                         type: string
                         x-stoplight:
                           id: ooolxw2g5rem2
+                encryption_key:
+                  type: string
+                  x-stoplight:
+                    id: np03zkv8vrfl0
+                  description: Public key used to encrypt the to-be-returned application_id.
             examples:
               Request example:
                 value:
-                  nonce: '12345678901234567890123456789012'
                   data:
                     - field_label: name
                       field_value: Andrew
@@ -197,7 +196,11 @@ paths:
                       field_value: '081287771135'
                     - field_label: whatsapp-registered_number
                       field_value: '081287771135'
-        description: 'Every fields and their answers, plus a nonce.'
+                  encryptionKey: QWERTYUIOP-QWERTYUOP-QWERTYUIOP-ZXCVBNM-ZXCVBNM
+        description: |-
+          Every fields and their answers, plus a one-time encryption public key, used to encrypt the response.
+
+          Nonce is supplied via parameter.
     parameters: []
   /tickets:
     get:
@@ -277,7 +280,7 @@ paths:
             schema:
               $ref: '#/components/schemas/TOBEMADE_IssueTicket'
             examples:
-              Example 1:
+              Request example:
                 value:
                   issue_type: Plumbing
                   response_level: 'Urgent, emergency'
@@ -407,10 +410,16 @@ paths:
                   data:
                     $ref: '#/components/schemas/MINIMAL_IssueTicket'
               examples:
-                '200':
+                Response example:
                   value:
                     message: Successfully closed the specified ticket.
-                    data: null
+                    data:
+                      ticket_id: QWERTYUIOP-ASDFGHJKL-ZXCVBNMM
+                      issue_type: Plumbing
+                      response_level: 'Urgent, emergency'
+                      raised_on: '2019-08-24T14:15:22Z'
+                      status: Open
+                      closed_on: '2019-08-24T14:26:57Z'
         '400':
           $ref: '#/components/responses/BadRequest400'
       operationId: closeTicket
@@ -432,13 +441,24 @@ paths:
                   data:
                     $ref: '#/components/schemas/MINIMAL_IssueTicket'
               examples:
-                '202':
+                Response example:
                   value:
-                    message: Did update the details of the specified ticket.
-                    data: null
+                    message: string
+                    data:
+                      ticket_id: string
+                      issue_type: Plumbing
+                      response_level: 'Urgent, emergency'
+                      raised_on: '2019-08-24T14:15:22Z'
+                      status: On Assessment
+                      closed_on: null
         '400':
           $ref: '#/components/responses/BadRequest400'
       operationId: patchTicket
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueTicket'
   '/ticket/{ticket_id}/logs':
     parameters:
       - schema:
@@ -467,6 +487,31 @@ paths:
                       id: s22j1c2wg4qhw
                     items:
                       $ref: '#/components/schemas/IssueTicketLog'
+              examples:
+                Response example:
+                  value:
+                    message: Every logs owned by the specified ticket.
+                    data:
+                      - id: string
+                        owning_ticket_id: string
+                        log_type: Assessment
+                        issuer:
+                          name: string
+                          phone_number: string
+                          email: string
+                          whatsapp-registered_number: string
+                        recorded_on: '2019-08-24T14:15:22Z'
+                        news: string
+                        attachment:
+                          - id: string
+                            resource_type: IMAGE
+                            resource_name: UNNAMED_RESOURCE
+                            resource_size: 147 KB
+                            previewable_on: 'http://example.com'
+                        actionable:
+                          genus: SEGUE
+                          species: TICKET_LOG
+                          segue_destination: string
       operationId: getTicketLogs
     post:
       summary: Contributes a new Log to an Issue Ticket.
@@ -486,11 +531,11 @@ paths:
                   data:
                     $ref: '#/components/schemas/IssueTicketLog'
               examples:
-                '201':
+                Response example:
                   value:
-                    message: Successfully added a new log into the specified Ticket
+                    message: string
                     data:
-                      log_id: string
+                      id: string
                       owning_ticket_id: string
                       log_type: Assessment
                       issuer:
@@ -502,14 +547,10 @@ paths:
                       news: string
                       attachment:
                         - id: string
-                          type: IMAGE
-                          filename: string
-                          size: string
-                          owner:
-                            name: string
-                            phone_number: string
-                            email: string
-                            whatsapp-registered_number: string
+                          resource_type: IMAGE
+                          resource_name: UNNAMED_RESOURCE
+                          resource_size: 147 KB
+                          previewable_on: 'http://example.com'
                       actionable:
                         genus: SEGUE
                         species: TICKET_LOG
@@ -803,6 +844,16 @@ paths:
         allowing FixPro Backend to ensure that each notifications arrive at their intended recipient.
 
         If no FCM Token is initially present, it works like the POST method--writing one down.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fcmToken:
+                  type: string
+                  x-stoplight:
+                    id: gtvhiaqzcdn6g
     parameters: []
   /area:
     get:
@@ -890,7 +941,7 @@ paths:
                       id: aaxqyeizqbs1b
                     nullable: true
               examples:
-                '200':
+                Response example:
                   value:
                     message: Did revoke the active Area Join Code.
                     data: null
@@ -926,12 +977,19 @@ paths:
               examples:
                 Response example:
                   value:
-                    message: string
+                    message: Every information regarding the specified member.
                     data:
-                      - name: Abby Brown
-                        phone_number: '087791123350'
-                        email: null
-                        whatsapp-registered_number: '087791123350'
+                      - id: ZXCVBNM-ASDFGHJKL-QWERTYUIOP
+                        name: Abby Brown
+                        role: Member
+                        speciality: ''
+                        title: ''
+                        member_since: '2019-08-24T14:15:22Z'
+                        member_until: null
+                        contact_information:
+                          phone_number: '1242189235214'
+                          email: example@gmail.com
+                          whatsapp-registered_number: '1242189235214'
         '403':
           $ref: '#/components/responses/Forbidden403ForNonManagement'
       operationId: getAreaMembers
@@ -1099,7 +1157,19 @@ paths:
                       id: 6kugw5wddx5h5
                     items:
                       $ref: '#/components/schemas/AreaEntryApplication'
-              examples: {}
+              examples:
+                Response example:
+                  value:
+                    message: 'Every pending applications, waiting to be approved.'
+                    data:
+                      - application_id: QWERTYUIOP-ASDFGHJKL-ZXCVBNM
+                        form_answer:
+                          - field_label: Name
+                            field_value: Anne Beaty
+                      - application_id: ASDFGHJKL-ZXCVBNM-QWERTYUIOP
+                        form_answer:
+                          - field_label: Name
+                            field_value: Charlie Denver
         '403':
           $ref: '#/components/responses/Forbidden403ForNonManagement'
       operationId: getPendingMembers
@@ -1130,7 +1200,15 @@ paths:
                       id: cbj7thmo6mz4j
                   data:
                     $ref: '#/components/schemas/AreaEntryApplication'
-              examples: {}
+              examples:
+                Response example:
+                  value:
+                    message: Detailed information regarding this applicant's application.
+                    data:
+                      application_id: QWERTYUIOP-ASDFGHJKL-ZXCVBNM
+                      form_answer:
+                        - field_label: Name
+                          field_value: Anne Beaty
         '400':
           $ref: '#/components/responses/BadRequest400'
         '403':
@@ -1160,7 +1238,7 @@ paths:
                       id: pdyjqsoeigfji
                     nullable: true
               examples:
-                '200':
+                Response example:
                   value:
                     message: Successfully rejected an applicant.
                     data: null
@@ -1170,6 +1248,149 @@ paths:
       security:
         - ApprovalBaseOAuth:
             - management
+  /auth/exchange:
+    post:
+      summary: Exchanges authentication_code for access and refresh tokens.
+      tags: []
+      responses:
+        '200':
+          description: A successful exchange.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: unybi9ldm993o
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: k1w4a5u0i11tl
+                    properties:
+                      access_token:
+                        type: string
+                        x-stoplight:
+                          id: 291stljadfm36
+                      access_expiry_interval:
+                        type: integer
+                        x-stoplight:
+                          id: vinjxk3shyfrs
+                      refresh_token:
+                        type: string
+                        x-stoplight:
+                          id: kzpnqevv88oc0
+                      refresh_expiry_interval:
+                        type: integer
+                        x-stoplight:
+                          id: 06dgd6vxa3tto
+                      token_type:
+                        type: string
+                        x-stoplight:
+                          id: d7uw0zjtl5bbv
+              examples:
+                Response example:
+                  value:
+                    message: Successfully exchanged for tokens. The used authentication_code has now been revoked.
+                    data:
+                      access_token: QWERTIOP-ASDFGHJKL-ZXCVBNM
+                      access_expiry_interval: 7200
+                      refresh_token: 1234567890-0987654321-123567890
+                      refresh_expiry_interval: 7200
+                      token_type: Bearer
+        '403':
+          $ref: '#/components/responses/Forbidden403'
+      operationId: exchangeAuthenticationCodeForAccessAndRefreshTokens
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                authentication_code:
+                  type: string
+                  x-stoplight:
+                    id: d6wbmz4dtudaj
+                grant_type:
+                  type: string
+                  x-stoplight:
+                    id: 2qacq70mfi73s
+            examples:
+              Request example:
+                value:
+                  authentication_code: QWERTUOP-ASDFGHJKL-ZXCVBNM
+                  grant_type: authorization_code
+  /auth/refresh:
+    post:
+      summary: Refreshes access token with refresh token.
+      tags: []
+      responses:
+        '200':
+          description: 'A successful refresh. In situation where necessary, the new refresh token may be included aswel.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: unybi9ldm993o
+                  data:
+                    type: object
+                    x-stoplight:
+                      id: k1w4a5u0i11tl
+                    properties:
+                      access_token:
+                        type: string
+                        x-stoplight:
+                          id: 291stljadfm36
+                      access_expiry_interval:
+                        type: integer
+                        x-stoplight:
+                          id: vinjxk3shyfrs
+                      refresh_token:
+                        type: string
+                        x-stoplight:
+                          id: kzpnqevv88oc0
+                        nullable: true
+                      refresh_expiry_interval:
+                        type: integer
+                        x-stoplight:
+                          id: 189rruz7alglc
+                        nullable: true
+                      token_type:
+                        type: string
+                        x-stoplight:
+                          id: d7uw0zjtl5bbv
+              examples:
+                Response example:
+                  value:
+                    message: Successfully refreshed your access token.
+                    data:
+                      access_token: qazwsxedcrfvtgbyhnujimkolp
+                      access_expiry_interval: 7200
+                      refresh_token: null
+                      refresh_expiry_interval: null
+                      token_type: Bearer
+        '403':
+          $ref: '#/components/responses/Forbidden403'
+      operationId: refreshAccessTokenWithRefreshToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+                  x-stoplight:
+                    id: 4vzlrnp6ui1rc
+            examples:
+              Request example:
+                value:
+                  refresh_token: AZQWSXECDRFVTGBYHNUJMIKOL
 components:
   schemas:
     ErrorResponse:
@@ -1457,6 +1678,14 @@ components:
           format: date-time
           description: A present value indicates that this Ticket has been resolved.
           nullable: true
+      x-examples:
+        Response example:
+          ticket_id: string
+          issue_type: Plumbing
+          response_level: 'Urgent, emergency'
+          raised_on: '2019-08-24T14:15:22Z'
+          status: Open
+          closed_on: null
     TOBEMADE_IssueTicket:
       title: TOBEMADE_IssueTicket
       type: object
@@ -1536,8 +1765,6 @@ components:
             id: 76n9z66eox4v1
           example: 147 KB
           nullable: true
-        owner:
-          $ref: '#/components/schemas/ContactInformation'
         previewable_on:
           type: string
           x-stoplight:
@@ -1608,7 +1835,7 @@ components:
         - Work Progress
         - Work Evaluation Request
         - Work Evaluation
-        - Activity Log
+        - Activity
     ContactInformation:
       title: ContactInformation
       type: object
@@ -1658,6 +1885,15 @@ components:
             id: ptxrjpl0bt874
           description: The id of the resource to be displayed.
           nullable: true
+      x-examples:
+        Example 1:
+          genus: SEGUE
+          species: TICKET
+          segue_destination: string
+        Example 2:
+          genus: CONTENT_AVAILABLE
+          species: TICKET_LOG
+          segue_destination: string
     ResponseLevel:
       title: ResponseLevel
       enum:
@@ -1671,7 +1907,7 @@ components:
         id:
           type: string
     AreaInformation:
-      title: Area
+      title: AreaInformation
       type: object
       properties:
         name:
@@ -1680,12 +1916,7 @@ components:
             id: xru4b747ggdc1
           description: The name of the Area which the requestor is affiliated with.
         join_policy:
-          x-stoplight:
-            id: ewmubtr35fiag
-          enum:
-            - OPEN
-            - APROVAL-NEEDED
-            - CLOSED
+          $ref: '#/components/schemas/AreaJoinPolicy'
         member_count:
           type: number
           x-stoplight:
@@ -1701,13 +1932,13 @@ components:
           default: 0
           example: 12
     AreaMemberRole:
-      title: Role
+      title: AreaMemberRole
       enum:
         - Member
         - Crew
         - Management
     AreaMember:
-      title: Member
+      title: AreaMember
       type: object
       properties:
         id:
@@ -1756,11 +1987,28 @@ components:
                 id: 13arfc13ca858
               nullable: true
     AreaEntryApplication:
-      title: Application
+      title: AreaEntryApplication
       type: object
       properties:
-        id:
+        application_id:
           type: string
+        form_answer:
+          type: array
+          x-stoplight:
+            id: uaek75j9vp18u
+          items:
+            x-stoplight:
+              id: zk7423jwws2yu
+            type: object
+            properties:
+              field_label:
+                type: string
+                x-stoplight:
+                  id: h5n4jul822zgj
+              field_value:
+                type: string
+                x-stoplight:
+                  id: fkglq7jzxme08
     AreaJoinCode:
       title: AreaJoinCode
       type: object
@@ -1776,12 +2024,17 @@ components:
     ResourceType:
       title: ResourceType
       enum:
-        - Plumbing
-        - Housekeeping
-        - Social
-        - Facility
-        - Engineering
-        - Security
+        - IMAGE
+        - VIDEO
+        - SOUND
+        - DOCUMENT
+        - ARCHIVE
+    AreaJoinPolicy:
+      title: AreaJoinPolicy
+      enum:
+        - OPEN
+        - APROVAL-NEEDED
+        - CLOSED
   securitySchemes:
     ApprovalBaseOAuth:
       type: oauth2

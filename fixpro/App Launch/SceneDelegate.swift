@@ -26,7 +26,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         self.window = window
         
         let keychainService = FPKeychainQueristService()
-        let service         = FPSessionCredentialsStorageService(storage: keychainService)
+        let service         = DepFPSessionCredentialsStorageService(storage: keychainService)
         let rootRouter      = RootBuilder().build()
         
         self.rootRouter = rootRouter

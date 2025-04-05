@@ -4,10 +4,22 @@
     "" : {
 
     },
-    "By joinning, you agree to our Terms of Service and Privacy Policy." : {
+    "..." : {
+
+    },
+    "%@" : {
+
+    },
+    "By joinning, you agree to our [Terms of Service](https://www.notion.so/FixPro-1608e7ee3d0c801a8c3cf114d0a7eef1?pvs=4) and [Privacy Policy](https://www.notion.so/FixPro-1608e7ee3d0c801a8c3cf114d0a7eef1?pvs=4)." : {
 
     },
     "Check or delete the existing entry before writing a new one." : {
+
+    },
+    "Check the type of the value and the type of the key." : {
+
+    },
+    "Check the value and the type you are trying to derive it into." : {
 
     },
     "Check whether a camera is present, and make sure its not in use." : {
@@ -19,10 +31,16 @@
     "Check whether the identifier is correct, and you're looking in the right place." : {
 
     },
+    "Copy" : {
+
+    },
     "Device has no suitable camera." : {
 
     },
     "Device has no suitable microphone." : {
+
+    },
+    "Empty" : {
 
     },
     "FixPro" : {
@@ -34,7 +52,16 @@
     "Go to settings and enable the microphone permission for the app." : {
 
     },
+    "In the meantime, check out the [FixPro documentation](https://www.notion.so/FixPro-1608e7ee3d0c801a8c3cf114d0a7eef1?pvs=4) where you can find guides on doing things." : {
+
+    },
     "Join an Area" : {
+
+    },
+    "Keys which were expected or needed, were not found." : {
+
+    },
+    "Log the object you are trying to decode, and check the keys you are using." : {
 
     },
     "No entry found." : {
@@ -46,10 +73,19 @@
     "No permission to access the microphone." : {
 
     },
+    "Once approved, you can start using FixPro in your area. This step may span up to 2 days, so check back regularly." : {
+
+    },
+    "Perform a subsequent load operation and try again." : {
+
+    },
     "Preexisting entry found. Stopped before overwriting." : {
 
     },
     "Refused to overwrite an existing entry." : {
+
+    },
+    "Some key-value pairings were not found." : {
 
     },
     "The device has no camera or any compatible camera is in use." : {
@@ -61,10 +97,31 @@
     "The requested entry does not exist." : {
 
     },
+    "The requested entry hasn't yet been loaded into memory." : {
+
+    },
+    "The type of the value does not match the type of the key." : {
+
+    },
     "The user has denied the permission, disabled the permission, or has yet to grant permission." : {
 
     },
+    "The value could not be derived into the type." : {
+
+    },
+    "Type mismatch." : {
+
+    },
+    "Unsuccessfully derived a value into some type." : {
+
+    },
+    "Warning" : {
+
+    },
     "You'll be automatically redirected once a fitting code has been found." : {
+
+    },
+    "Your application will now go on review." : {
 
     }
   },

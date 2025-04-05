@@ -28,6 +28,10 @@ extension AreaJoinCode {
         } catch let error as FPError {
             return .failure(error)
             
+        } catch let error as DecodingError {
+            FPLogger.log(tag: .error, error)
+            return .failure(.MALFORMED)
+            
         } catch {
             FPLogger.log(tag: .error, error)
             return .failure(.UNKNOWN)

@@ -26,4 +26,16 @@ extension FPError {
         ]
     )
     
+    
+    /// 
+    static let INCOMPLETE_ARGUMENT = FPError(
+        code: 2001,
+        domain: .ValidationDomain,
+        userInfo: [
+            NSLocalizedDescriptionKey: NSLocalizedString("", comment: ""),
+            NSLocalizedFailureReasonErrorKey: NSLocalizedString("", comment: ""),
+            NSRecoveryAttempterErrorKey: NSLocalizedString("", comment: "")
+        ]
+    )
+    
 }

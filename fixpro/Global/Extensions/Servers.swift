@@ -7,7 +7,7 @@ extension Servers {
     enum PairedAreaAddress {
         internal static func url() throws -> Foundation.URL {
             try Foundation.URL(
-                validatingOpenAPIServerURL: "http://localhost:9195"
+                validatingOpenAPIServerURL: "http://192.168.1.3:9196"
             )
         }
     }

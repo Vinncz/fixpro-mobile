@@ -32,6 +32,7 @@ struct FPLogger {
                 let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "--", category: category)
                 
                 switch tag {
+                    case .critical: logger.critical("\(msg)")
                     case .error   : logger.error  ("\(msg)")
                     case .warning : logger.warning("\(msg)")
                     case .success : logger.info   ("\(msg)")
@@ -48,6 +49,7 @@ struct FPLogger {
 
 enum LogTag {
     
+    case critical
     case error
     case warning
     case success
@@ -58,6 +60,7 @@ enum LogTag {
     
     func label(category: String = "") -> String {
         switch self {
+            case .critical: return "🚨 CRITICAL-- \(category)"
             case .error   : return "🔴 ERROR-- \(category)"
             case .warning : return "🟠 WARNING-- \(category)"
             case .success : return "🟢 SUCCESS-- \(category)"

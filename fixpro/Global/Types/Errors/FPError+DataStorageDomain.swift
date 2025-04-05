@@ -22,4 +22,14 @@ extension FPError {
         ]
     )
     
+    static let UNLOADED_ENTRY = FPError(
+        code: 0b0001_0011,
+        domain: .DataStorageDomain,
+        userInfo: [
+            NSLocalizedDescriptionKey: NSLocalizedString("No entry found.", comment: ""),
+            NSLocalizedFailureReasonErrorKey: NSLocalizedString("The requested entry hasn't yet been loaded into memory.", comment: ""),
+            NSRecoveryAttempterErrorKey: NSLocalizedString("Perform a subsequent load operation and try again.", comment: "")
+        ]
+    )
+    
 }
