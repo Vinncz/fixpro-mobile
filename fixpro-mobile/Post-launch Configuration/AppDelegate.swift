@@ -1,10 +1,3 @@
-//
-//  AppDelegate.swift
-//  fixpro-mobile
-//
-//  Created by Vin on 10/04/25.
-//
-
 import UIKit
 
 @main

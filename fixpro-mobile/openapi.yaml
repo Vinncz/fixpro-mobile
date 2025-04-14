@@ -1,0 +1,2943 @@
+openapi: 3.0.0
+info:
+  title: FixPro Backend Endpoints Declaration
+  description: "An open-standard declaration, protected by OAuth v2."
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/yourmom/FPB/1.0.0
+  description: SwaggerHub API Auto Mocking
+security:
+- ApprovalBaseOAuth:
+  - member
+  - crew
+  - management
+paths:
+  /entry/check:
+    post:
+      tags: []
+      summary: Checks whether the applicant has their application been given a verdict.
+      operationId: checkForEntryVerdict
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/entry_check_body'
+      responses:
+        "200":
+          description: "Your application has been approved, proceed to exhange for tokens with the given code."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+              examples:
+                Response example:
+                  value:
+                    message: Your application has been approved. Use the following code to make exchange for tokens.
+                    data:
+                      authentication_code: AZQWSXEDCRFVTGBYHUNJIMKOLP
+                Mockoon:
+                  value:
+                    message: You are granted access to the Area. Use the following code and exchange them for access and refresh token.
+                    data:
+                      authentication_code: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
+        "204":
+          description: No approval yet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_204'
+              examples:
+                Response example:
+                  value:
+                    message: Your application has not been approved.
+        "400":
+          $ref: '#/components/responses/BadRequest400'
+        "403":
+          $ref: '#/components/responses/RejectedApplication403'
+  /entry/form:
+    get:
+      tags: []
+      summary: Retrieves all the necessary fields whose issuer had made necessary.
+      operationId: getEntryFormFields
+      parameters:
+      - name: ref
+        in: query
+        description: Referral Tracking Number of the qrcode which points to this url.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: |-
+            Returns the fields of the form to be filled, and a nonce.
+            This nonce must be included upon the form submission, otherwise will result in failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+              examples:
+                Response example:
+                  value:
+                    message: All the required fields and a nonce to be used for submission.
+                    data:
+                      area_name: Bali Indah Beach
+                      form_fields:
+                      - field_label: name
+                        field_type: STRING
+                      - field_label: phone_number
+                        field_type: NUMBER
+                      - field_label: whatsapp-registered_phone_number
+                        field_type: NUMBER
+                      nonce: "12345678901234567890123456789012"
+                Mockoon:
+                  value:
+                    message: All the required fields and a nonce to be used for submission.
+                    data:
+                      area_name: Bali Indah Beach
+                      form_fields:
+                      - field_label: Full Name
+                        field_type: STRING
+                      - field_label: Contactable Phone Number
+                        field_type: NUMBER
+                      - field_label: WhatsApp-registered Phone Number
+                        field_type: NUMBER
+                      nonce: "{{faker 'string.uuid'}}"
+        "400":
+          description: Request wasn't accompanied with a valid referral tracking identifier.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "403":
+          description: Area isn't accepting any new members.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_403'
+              examples:
+                Example 1:
+                  value:
+                    message: This area isn't accepting any new members for now.
+                    data: {}
+      security: []
+    post:
+      tags: []
+      summary: Submits the filled form fields.
+      operationId: submitEntryForm
+      parameters:
+      - name: nonce
+        in: query
+        description: "A single-use string of characters, issued for some single purpose. One example include this being issued after retrieving form fields."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        description: |-
+          Every fields and their answers, plus a one-time encryption public key, used to encrypt the response.
+
+          Nonce is supplied via parameter.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/entry_form_body'
+            examples:
+              Request example:
+                value:
+                  data:
+                  - field_label: name
+                    field_value: Andrew
+                  - field_label: phone_number
+                    field_value: "081287771135"
+                  - field_label: whatsapp-registered_number
+                    field_value: "081287771135"
+                  encryptionKey: QWERTYUIOP-QWERTYUOP-QWERTYUIOP-ZXCVBNM-ZXCVBNM
+      responses:
+        "200":
+          description: |-
+            Returns an application_id, used to track the applicant's approval/rejection status.
+            Said value must be included with the query to check, otherwise will result in forbidden error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_2'
+              examples:
+                Response example:
+                  value:
+                    message: Successfully submitted an application. Use the following string to check periodically of your application status.
+                    data:
+                      application_expiry_date: 2025-09-21T00:00Z
+                      application_id: qwertyuiop-asdfghjkl-zxcvbnm
+                Mockoon:
+                  value:
+                    message: Successfully submitted an application. Use the following string to check periodically of your application status.
+                    data:
+                      application_id: "{{faker 'string.uuid'}}"
+                      application_expiry_date: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=2}}"
+        "400":
+          description: Request does not contain ALL of the required fields and/or a valid-for-submission nonce.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: []
+  /tickets:
+    get:
+      tags: []
+      summary: Lists every IssueTickets owned or associated with the requestor; showing only required information.
+      operationId: getTickets
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A list of every IssueTickets owned or associated with the requestor; showing only the bare-bone information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_3'
+              examples:
+                Response example:
+                  value:
+                    message: A list containing every Tickets ever raised by the requestor (you).
+                    data:
+                    - ticket_id: ALSUBVIPOYDSGIUBORWL
+                      issue_type: Plumbing
+                      response_level: "Urgent, emergency"
+                      raised_on: 2019-08-24T14:15:22Z
+                      status: Open
+                    - ticket_id: AKJBCVOUYVWEUVWRLBUV
+                      issue_type: Engineering
+                      response_level: "Urgent, emergency"
+                      raised_on: 2019-08-24T14:15:22Z
+                      status: Open
+                Mockoon:
+                  value:
+                    message: A list containing every Tickets ever raised by the requestor (you).
+                    data:
+                    - ticket_id: "{{faker 'lorem.paragraph'}}"
+                      issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-1}}Z"
+                      status: "{{oneOf (array 'Open' 'In Assessment' 'On Progress' 'Work Evaluation' 'Closed' 'Cancelled' 'Rejected')}}"
+                    - ticket_id: "{{faker 'string.uuid'}}"
+                      issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=0}}Z"
+                      status: "{{oneOf (array 'Open' 'In Assessment' 'On Progress' 'Work Evaluation' 'Closed' 'Cancelled' 'Rejected')}}"
+                    - ticket_id: "{{faker 'string.uuid'}}"
+                      issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-3}}Z"
+                      status: "{{oneOf (array 'Open' 'In Assessment' 'On Progress' 'Work Evaluation' 'Closed' 'Cancelled' 'Rejected')}}"
+                      closed_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-1}}Z"
+                    - ticket_id: "{{faker 'string.uuid'}}"
+                      issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-6}}Z"
+                      status: "{{oneOf (array 'Open' 'In Assessment' 'On Progress' 'Work Evaluation' 'Closed' 'Cancelled' 'Rejected')}}"
+                      closed_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-3}}Z"
+    post:
+      tags: []
+      summary: Raises new Issue Ticket associated with a requestor identified through the access token.
+      operationId: raiseTicket
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TOBEMADE_IssueTicket'
+            examples:
+              Example 1:
+                value:
+                  issue_type: Plumbing
+                  response_level: "Urgent, emergency"
+                  stated_issue: string
+                  location:
+                    stated_location: string
+                    gps_location:
+                      latitude: 0
+                      longitude: 0
+                  supportive_documents:
+                  - resource_type: IMAGE
+                    resource_name: string
+                    resource_size: 0
+                    resource_content: string
+      responses:
+        "201":
+          description: The full object of the raised IssueTicket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_201'
+              examples:
+                Response example:
+                  value:
+                    message: Successfully raised a new ticket.
+                    data:
+                      ticket_id: APISNVPIBROYBVFBUWCOI
+                      issue_type: Plumbing
+                      response_level: "Urgent, emergency"
+                      raised_on: 2019-08-24T14:15:22Z
+                      status: Open
+                Mockoon:
+                  value:
+                    message: Successfully raised a new ticket
+                    data:
+                      ticket_id: "{{faker 'string.uuid'}}"
+                      issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss'}}Z"
+                      status: Open
+        "400":
+          $ref: '#/components/responses/BadRequest400'
+  /ticket/{ticket_id}:
+    get:
+      tags: []
+      summary: Retrieves specific Issue Ticket which can be identified by the given ticket_id.
+      operationId: getTicket
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The IssueTicket object of the given id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_4'
+              examples:
+                Response example:
+                  value:
+                    message: The IssueTicket object of the given id.
+                    data:
+                      ticket_id: ABC123
+                      issue_type:
+                        label: Plumbing
+                      response_level:
+                        label: "Urgent, emergency"
+                      raised_on: 2019-08-24T14:15:22Z
+                      status:
+                        label: Open
+                      stated_issue: string
+                      location:
+                        stated_location: string
+                        gps_location:
+                          latitude: 0
+                          longitude: 0
+                      supportive_documents:
+                      - id: string
+                        type: IMAGE
+                        filename: string
+                        size: string
+                        owner:
+                          name: string
+                          phone_number: string
+                          email: string
+                          whatsapp-registered_number: string
+                      issuer:
+                        name: string
+                        phone_number: string
+                        email: string
+                        whatsapp-registered_number: string
+                      logs:
+                      - log_id: string
+                        owning_ticket_id: string
+                        issuer:
+                          name: string
+                          phone_number: string
+                          email: string
+                          whatsapp-registered_number: string
+                        recorded_on: 2019-08-24T14:15:22Z
+                        news: string
+                        attachment:
+                        - id: string
+                          type: IMAGE
+                          filename: string
+                          size: string
+                          owner:
+                            name: string
+                            phone_number: string
+                            email: string
+                            whatsapp-registered_number: string
+                        actionable:
+                          genus: SEGUE
+                          species: TICKET_LOG
+                          segue_destination: string
+                      handlers:
+                      - name: string
+                        phone_number: string
+                        email: string
+                        whatsapp-registered_number: string
+                Mockoon:
+                  value:
+                    message: The IssueTicket object of the given id.
+                    data:
+                      ticket_id: "{{faker 'string.uuid'}}"
+                      issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-3}}Z"
+                      status: Open
+                      stated_issue: "{{faker 'lorem.paragraph'}}"
+                      location:
+                        stated_location: "{{faker 'location.secondaryAddress'}}"
+                        gps_location:
+                          latitude: {}
+                          longitude: {}
+                      supportive_documents:
+                      - id: "{{faker 'string.uuid'}}"
+                        resource_type: "{{oneOf (array 'IMAGE' 'VIDEO' 'SOUND' 'DOCUMENT' 'ARCHIVE')}}"
+                        resource_name: "{{faker 'system.commonFileName'}}"
+                        resource_size: "{{faker 'number.int' max=1024}} KB"
+                        previewable_on: "{{faker 'image.urlPicsumPhotos'}}"
+                      issuer:
+                        name: "{{faker 'person.fullName'}}"
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                      logs:
+                      - id: "{{faker 'string.uuid'}}"
+                        owning_ticket_id: "{{faker 'string.uuid'}}"
+                        log_type: "{{oneOf (array 'Assessment' 'Work Progress' 'Work Evaluation Request' 'Work Evaluation' 'Activity')}}"
+                        issuer:
+                          name: "{{faker 'person.fullName'}}"
+                          phone_number: "{{faker 'phone.number' style='international'}}"
+                          email: "{{faker 'internet.email'}}"
+                          whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                        recorded_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' hours=-18}}Z"
+                        news: "{{faker 'lorem.paragraph'}}"
+                        attachment:
+                        - id: "{{faker 'string.uuid'}}"
+                          resource_type: "{{oneOf (array 'IMAGE' 'VIDEO' 'SOUND' 'DOCUMENT' 'ARCHIVE')}}"
+                          resource_name: "{{faker 'system.commonFileName'}}"
+                          resource_size: "{{faker 'number.int' max=4096}} KB"
+                          previewable_on: "{{faker 'image.urlPicsumPhotos'}}"
+                        - id: "{{faker 'string.uuid'}}"
+                          resource_type: "{{oneOf (array 'IMAGE' 'VIDEO' 'SOUND' 'DOCUMENT' 'ARCHIVE')}}"
+                          resource_name: "{{faker 'system.commonFileName'}}"
+                          resource_size: "{{faker 'number.int' max=1024}} KB"
+                          previewable_on: "{{faker 'image.urlPicsumPhotos'}}"
+                        actionable:
+                          genus: SEGUE
+                          species: TICKET_LOG
+                          segue_destination: "{{faker 'string.uuid'}}"
+                      handlers:
+                      - name: "{{faker 'person.fullName'}}"
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                      - name: "{{faker 'person.fullName'}}"
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                      closed_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-1}}Z"
+        "400":
+          $ref: '#/components/responses/BadRequest400'
+    delete:
+      tags: []
+      summary: Closes a specific Issue Ticket which can be identified by the given ticket_id.
+      operationId: closeTicket
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A successful closure of the specified ticket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_5'
+              examples:
+                Response example:
+                  value:
+                    message: Successfully closed the specified ticket.
+                    data:
+                      ticket_id: QWERTYUIOP-ASDFGHJKL-ZXCVBNMM
+                      issue_type: Plumbing
+                      response_level: "Urgent, emergency"
+                      raised_on: 2019-08-24T14:15:22Z
+                      status: Open
+                      closed_on: 2019-08-24T14:26:57Z
+        "400":
+          $ref: '#/components/responses/BadRequest400'
+  /ticket/{ticket_id}/logs:
+    get:
+      tags: []
+      summary: Lists every IssueTicketLog an IssueTicket may have.
+      operationId: getTicketLogs
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A list of every IssueTicketLogs owned by the specified IssueTicket through its id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_6'
+              examples:
+                Response example:
+                  value:
+                    message: Every logs owned by the specified ticket.
+                    data:
+                    - id: string
+                      owning_ticket_id: string
+                      log_type: Assessment
+                      issuer:
+                        name: string
+                        phone_number: string
+                        email: string
+                        whatsapp-registered_number: string
+                      recorded_on: 2019-08-24T14:15:22Z
+                      news: string
+                      attachment:
+                      - id: string
+                        resource_type: IMAGE
+                        resource_name: UNNAMED_RESOURCE
+                        resource_size: 147 KB
+                        previewable_on: http://example.com
+                      actionable:
+                        genus: SEGUE
+                        species: TICKET_LOG
+                        segue_destination: string
+                Mockoon:
+                  value:
+                    message: A list of every Ticket Logs owned by the specified IssueTicket through its id.
+                    data:
+                    - id: "{{faker 'string.uuid'}}"
+                      owning_ticket_id: ""
+                      log_type: "{{oneOf (array 'Assessment' 'Work Progress' 'Work Evaluation Request' 'Work Evaluation' 'Activity')}}"
+                      issuer:
+                        name: "{{faker 'person.fullName'}}"
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                      recorded_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-1}}"
+                      news: "{{faker 'lorem.paragraph'}}"
+                      attachment:
+                      - id: "{{faker 'string.uuid'}}"
+                        resource_type: "{{oneOf (array 'IMAGE' 'VIDEO' 'SOUND' 'DOCUMENT' 'ARCHIVE')}}"
+                        resource_name: "{{faker 'system.commonFileName'}}"
+                        resource_size: 147 KB
+                        previewable_on: "{{faker 'image.urlPicsumPhotos'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: ""
+                    - id: "{{faker 'string.uuid'}}"
+                      owning_ticket_id: ""
+                      log_type: "{{oneOf (array 'Assessment' 'Work Progress' 'Work Evaluation Request' 'Work Evaluation' 'Activity')}}"
+                      issuer:
+                        name: "{{faker 'person.fullName'}}"
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                      recorded_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-2}}"
+                      news: "{{faker 'lorem.paragraph'}}"
+                      attachment:
+                      - id: "{{faker 'string.uuid'}}"
+                        resource_type: "{{oneOf (array 'IMAGE' 'VIDEO' 'SOUND' 'DOCUMENT' 'ARCHIVE')}}"
+                        resource_name: "{{faker 'system.commonFileName'}}"
+                        resource_size: 147 KB
+                        previewable_on: "{{faker 'image.urlPicsumPhotos'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: ""
+                    - id: "{{faker 'string.uuid'}}"
+                      owning_ticket_id: ""
+                      log_type: "{{oneOf (array 'Assessment' 'Work Progress' 'Work Evaluation Request' 'Work Evaluation' 'Activity')}}"
+                      issuer:
+                        name: "{{faker 'person.fullName'}}"
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                      recorded_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-3}}"
+                      news: "{{faker 'lorem.paragraph'}}"
+                      attachment:
+                      - id: "{{faker 'string.uuid'}}"
+                        resource_type: "{{oneOf (array 'IMAGE' 'VIDEO' 'SOUND' 'DOCUMENT' 'ARCHIVE')}}"
+                        resource_name: "{{faker 'system.commonFileName'}}"
+                        resource_size: 147 KB
+                        previewable_on: "{{faker 'image.urlPicsumPhotos'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: ""
+    post:
+      tags: []
+      summary: Contributes a new Log to an Issue Ticket.
+      operationId: contributeToTicket
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        "201":
+          description: The full object of the made IssueTicketLog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_201_1'
+              examples:
+                Response example:
+                  value:
+                    message: string
+                    data:
+                      id: string
+                      owning_ticket_id: string
+                      log_type: Assessment
+                      issuer:
+                        name: string
+                        phone_number: string
+                        email: string
+                        whatsapp-registered_number: string
+                      recorded_on: 2019-08-24T14:15:22Z
+                      news: string
+                      attachment:
+                      - id: string
+                        resource_type: IMAGE
+                        resource_name: UNNAMED_RESOURCE
+                        resource_size: 147 KB
+                        previewable_on: http://example.com
+                      actionable:
+                        genus: SEGUE
+                        species: TICKET_LOG
+                        segue_destination: string
+                Mockoon:
+                  value:
+                    message: A list of every Ticket Logs owned by the specified IssueTicket through its id.
+                    data:
+                      id: "{{faker 'string.uuid'}}"
+                      owning_ticket_id: ""
+                      log_type: "{{oneOf (array 'Assessment' 'Work Progress' 'Work Evaluation Request' 'Work Evaluation' 'Activity')}}"
+                      issuer:
+                        name: "{{faker 'person.fullName'}}"
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                      recorded_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-1}}"
+                      news: "{{faker 'lorem.paragraph'}}"
+                      attachment:
+                      - id: "{{faker 'string.uuid'}}"
+                        resource_type: "{{oneOf (array 'IMAGE' 'VIDEO' 'SOUND' 'DOCUMENT' 'ARCHIVE')}}"
+                        resource_name: "{{faker 'system.commonFileName'}}"
+                        resource_size: 147 KB
+                        previewable_on: "{{faker 'image.urlPicsumPhotos'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: ""
+      security:
+      - ApprovalBaseOAuth:
+        - crew
+  /ticket/{ticket_id}/handlers:
+    get:
+      tags: []
+      summary: Lists all TicketHandlers who's been assigned to an IssueTicket.
+      operationId: getTicketHandlers
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A list of every Handlers who are associated with the specified IssueTicket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_7'
+              examples:
+                "200":
+                  value:
+                    message: A list of every Handlers who are associated with the specified IssueTicket.
+                    data:
+                    - name: Herry Budjiono
+                      phone_number: "081197777221"
+                      whatsapp-registered_number: "081197777221"
+    post:
+      tags: []
+      summary: Delegates and assigns somebody to handle an IssueTicket.
+      operationId: delegateIssueTicket
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ticket_id_handlers_body'
+      responses:
+        "201":
+          description: A successful association of the specified people with the specified IssueTicket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_201_2'
+              examples:
+                "201":
+                  value:
+                    message: "Did associate the specified people with the specified IssueTicket,"
+  /ticket/{ticket_id}/report:
+    get:
+      tags: []
+      summary: Downloads the pdf of the report of the ticket with given id.
+      operationId: getTicketReport
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "The pdf file of the report of the specified Ticket, in base64 format."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_8'
+  /inbox:
+    get:
+      tags: []
+      summary: Lists all EventNotifications whose recipient is the requestor.
+      operationId: getInbox
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: header
+        description: The upper limit of the number of EventNotification objects to be returned. Defaults to 20.
+        required: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: "A list of every EventNotifications ever sent to the requestor, up to specified limit."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_9'
+              examples:
+                Mockoon:
+                  value:
+                    message: "A list of all EventNotifications that were sent to the requestor, up to specified limit."
+                    data:
+                    - notification_id: "{{faker 'string.uuid'}}"
+                      title: "{{faker 'lorem.sentence'}}"
+                      body: "{{faker 'lorem.paragraph'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: "{{faker 'string.uuid'}}"
+                    - notification_id: "{{faker 'string.uuid'}}"
+                      title: "{{faker 'lorem.sentence'}}"
+                      body: "{{faker 'lorem.paragraph'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: "{{faker 'string.uuid'}}"
+                    - notification_id: "{{faker 'string.uuid'}}"
+                      title: "{{faker 'lorem.sentence'}}"
+                      body: "{{faker 'lorem.paragraph'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: "{{faker 'string.uuid'}}"
+                    - notification_id: "{{faker 'string.uuid'}}"
+                      title: "{{faker 'lorem.sentence'}}"
+                      body: "{{faker 'lorem.paragraph'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: "{{faker 'string.uuid'}}"
+                    - notification_id: "{{faker 'string.uuid'}}"
+                      title: "{{faker 'lorem.sentence'}}"
+                      body: "{{faker 'lorem.paragraph'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: "{{faker 'string.uuid'}}"
+                    - notification_id: "{{faker 'string.uuid'}}"
+                      title: "{{faker 'lorem.sentence'}}"
+                      body: "{{faker 'lorem.paragraph'}}"
+                      actionable:
+                        genus: "{{oneOf (array 'SEGUE' 'CONTENT_AVAILABLE' 'INERT')}}"
+                        species: "{{oneOf (array 'TICKET_LOG' 'TICKET' 'INERT')}}"
+                        segue_destination: "{{faker 'string.uuid'}}"
+  /calendar:
+    get:
+      tags: []
+      summary: Lists all Events from the team calendar which involves the requestor.
+      operationId: getCalendarEvents
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      - name: range_lower-bound
+        in: query
+        description: The starting date of every CalendarEvent to query. Defaults to the previous week from request's time.
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: range_upper-bound
+        in: query
+        description: The end date of every CalendarEvent to query. Defaults to the next 2 weeks from request's time.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A list of every CalendarEvent associated with the requestor; bound with the specified parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_10'
+              examples:
+                Response example:
+                  value:
+                    message: Every events that are associated with the requestor (you).
+                    data:
+                    - id: ae37372d-2a94-4dd4-a1b9-7a2221594ec7
+                      title: Stella apparatus asperiores deinde nisi virgo calco valeo bellicus.
+                      description: Coniuratio itaque tutis subseco appello. Summisse alias asperiores. Contigo acceptus cribro.
+                      datetime: 2025-04-10T12:52:50+07:00
+                      duration_in_seconds: "3275"
+                      reminded_enabled: "false"
+                    - id: fda1f1ba-9f32-4ae8-a197-76079ef914c0
+                      title: Adduco placeat defero aestus minima dolorem.
+                      description: Adduco spoliatio cui appositus cunae apparatus. Umquam stillicidium crepusculum tubineus cur velit ver crebro curatio crudelis. Calamitas torqueo vere sequi architecto accusamus illo.
+                      datetime: 2025-04-10T20:22:47+07:00
+                      duration_in_seconds: "31937"
+                      reminded_enabled: "true"
+                Mockoon:
+                  value:
+                    message: string
+                    data:
+                    - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      title: string
+                      description: string
+                      datetime: 2019-08-24T14:15:22Z
+                      duration_in_seconds: 0
+                      reminder_enabled: true
+        "403":
+          $ref: '#/components/responses/Forbidden403'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+        - maintenance-crew
+  /notification:
+    get:
+      tags: []
+      summary: Retrieves the Area's copy of GoogleService-Info.plist to enable push notifications on the mobile client.
+      operationId: getNotificationPairingInformation
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      - name: enkey
+        in: query
+        description: "A single-use, public key of the requestor, used to encrypt each value of the response back."
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The JSON representation of the FixPro Backend's GoogleService-Info.plist--used to enable push notification on the requesting FixPro Mobile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_11'
+              examples:
+                Response example:
+                  value:
+                    message: "Use the following data to setup firebase's messaging service, so you can receive push notifications."
+                    data:
+                      API_KEY: KEYKEYKEYKEYKEYKEYKEYKEY
+                      GCM_SENDER_ID: SENDERIDSENDERIDSENDERIDSENDERID
+                      BUNDLE_ID: BUNDLEIDBUNDLEIDBUNLDEIDBUNDLEID
+                      PROJECT_ID: PROJECTIDPROJECTIDPROJECTIDPROJECTID
+                      STORAGE_BUCKET: BUCKETBUCKETBUCKETBUCKET
+                      IS_GCM_ENABLED: true
+                      GOOGLE_APP_ID: APPIDAPPIDAPPIDAPPID
+                Mockoon:
+                  value:
+                    message: The GoogleService-Info.plist of FixPro Backend's.
+                    data:
+                      API_KEY: "{{faker 'string.uuid'}}"
+                      GCM_SENDER_ID: "{{faker 'string.uuid'}}"
+                      BUNDLE_ID: "{{faker 'string.uuid'}}"
+                      PROJECT_ID: "{{faker 'string.uuid'}}"
+                      STORAGE_BUCKET: "{{faker 'string.uuid'}}"
+                      IS_GCM_ENABLED: {}
+                      GOOGLE_APP_ID: "{{faker 'string.uuid'}}"
+    put:
+      tags: []
+      summary: Updates FixPro Backend's list regarding the requestor's push notification address.
+      description: "A Firebase Cloud Messaging Token or FCM Token works like an address; \nallowing FixPro Backend to ensure that each notifications arrive at their intended recipient.\n\nIf no FCM Token is initially present, it works like the POST method--writing one down."
+      operationId: putFCMAddressToken
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/notification_body'
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_202'
+              examples:
+                Example 1:
+                  value:
+                    message: Successfully recorded the new push-notification address.
+        "400":
+          $ref: '#/components/responses/BadRequest400'
+  /area:
+    get:
+      tags: []
+      summary: Retrieves general information about the Area where the requestor is affiliated with.
+      operationId: getAreaInformation
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The general information about the Area with which the requestor is affiliated with.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_12'
+              examples:
+                Response example:
+                  value:
+                    message: "Your Area's information,"
+                    data:
+                      name: Bali Indah Beach
+                      join_policy: OPEN
+                      member_count: 37
+                      pending_member_count: 12
+                Mockoon:
+                  value:
+                    message: The general information about the Area with which the requestor (you) are affiliated with.
+                    data:
+                      name: "{{faker 'location.county'}}"
+                      join_policy: "{{oneOf (array 'OPEN' 'APROVAL-NEEDED' 'CLOSED')}}"
+                      member_count: {}
+                      pending_member_count: {}
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+  /area/join-code:
+    get:
+      tags: []
+      summary: "Displays the Area Join Code, encoded in QRCode. If there are none active, generate one instead."
+      description: Only one Area Join Code can be active at any given time.
+      operationId: getAreaJoinCode
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "The string representation of the Area Join Code, which then can be transformed into a qr-code form."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_13'
+              examples:
+                Response example:
+                  value:
+                    message: string
+                    data:
+                      endpoint: http://192.168.10.17:8080/api
+                      referral_tracking_identifier: BONDYWENTUPTHEHILLANDDIDN'TCOMEBACK
+                Mockoon:
+                  value:
+                    message: "The string representation of the Area Join Code, which then can be transformed into a qr-code form."
+                    data:
+                      endpoint: "{{faker 'internet.url'}}"
+                      referral_tracking_identifier: "{{faker 'string.uuid'}}"
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+    delete:
+      tags: []
+      summary: Revokes the active Area Join Code.
+      operationId: revokeAreaJoinCode
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A successful revoke of the active Area Join Code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_14'
+              examples:
+                Response example:
+                  value:
+                    message: Did revoke the active Area Join Code.
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+  /area/members:
+    get:
+      tags: []
+      summary: Lists out every members enrolled within an Area.
+      operationId: getAreaMembers
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A list of every enrolled members of an Area.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+              examples:
+                Response example:
+                  value:
+                    message: Every information regarding the specified member.
+                    data:
+                    - id: ZXCVBNM-ASDFGHJKL-QWERTYUIOP
+                      name: Abby Brown
+                      role: Member
+                      speciality: ""
+                      title: ""
+                      member_since: 2019-08-24T14:15:22Z
+                      contact_information:
+                        phone_number: "1242189235214"
+                        email: example@gmail.com
+                        whatsapp-registered_number: "1242189235214"
+                Mockoon:
+                  value:
+                    message: ""
+                    data:
+                    - id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                    - id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                    - id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                    - id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                    - id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                    - id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                    - id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                    - id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+                    - id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+    post:
+      tags: []
+      summary: Admits the specified applicant to an Area.
+      operationId: admitsApplicantById
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/area_members_body'
+      responses:
+        "200":
+          description: A successful admission for the specified applicant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_16'
+              examples:
+                Response example:
+                  value:
+                    message: Successfully admitted the specified applicant.
+        "400":
+          $ref: '#/components/responses/BadRequest400'
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+  /area/member/{member_id}:
+    get:
+      tags: []
+      summary: Retrieves full information regarding the member with the given id.
+      operationId: getAreaMember
+      parameters:
+      - name: member_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The full information regarding the specified member.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_17'
+              examples:
+                Response example:
+                  value:
+                    message: The full information regarding the member with id of ASBHCIPBEPGILCKN-1285898714.
+                    data:
+                      id: ASBHCIPBEPGILCKN-1285898714
+                      name: Zyzzx Yelta
+                      role: Crew
+                      speciality: Plumbing
+                      title: Chief of Plumbing Division
+                      member_since: 2019-08-24T14:15:22Z
+                      contact_information:
+                        phone_number: "102865972938"
+                Mockoon:
+                  value:
+                    message: ""
+                    data:
+                      id: "{{faker 'string.uuid'}}"
+                      name: "{{faker 'person.fullName'}}"
+                      role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      title: "{{faker 'person.jobTitle'}}"
+                      member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+                      contact_information:
+                        phone_number: "{{faker 'phone.number' style='international'}}"
+                        email: "{{faker 'internet.email'}}"
+                        whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+    delete:
+      tags: []
+      summary: Removes a member with the given id from an Area.
+      operationId: removeMember
+      parameters:
+      - name: member_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A successful kick for the specified member from an Area.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+              examples:
+                Response example:
+                  value:
+                    message: Successfully kicked the specified member from an Area.
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+  /area/members/pending:
+    get:
+      tags: []
+      summary: Lists out every applicant who requested to join an Area.
+      operationId: getPendingMembers
+      parameters:
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A list of every applicant whose application is awaiting assessment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_19'
+              examples:
+                Response example:
+                  value:
+                    message: "Every pending applications, waiting to be approved."
+                    data:
+                    - application_id: QWERTYUIOP-ASDFGHJKL-ZXCVBNM
+                      form_answer:
+                      - field_label: Name
+                        field_value: Anne Beaty
+                    - application_id: ASDFGHJKL-ZXCVBNM-QWERTYUIOP
+                      form_answer:
+                      - field_label: Name
+                        field_value: Charlie Denver
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+  /area/members/pending/{application_id}:
+    get:
+      tags: []
+      summary: Retrieves full information regarding this applicant's join request.
+      operationId: getApplicationOfAPendingMember
+      parameters:
+      - name: application_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The full information regarding the specified applicant's application.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_20'
+              examples:
+                Response example:
+                  value:
+                    message: Detailed information regarding this applicant's application.
+                    data:
+                      application_id: QWERTYUIOP-ASDFGHJKL-ZXCVBNM
+                      form_answer:
+                      - field_label: Name
+                        field_value: Anne Beaty
+        "400":
+          $ref: '#/components/responses/BadRequest400'
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+    delete:
+      tags: []
+      summary: Rejects the specified applicant from joining an Area.
+      operationId: rejectApplication
+      parameters:
+      - name: application_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A successful rejection of an application.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_21'
+              examples:
+                Response example:
+                  value:
+                    message: Successfully rejected an applicant.
+        "403":
+          $ref: '#/components/responses/Forbidden403ForNonManagement'
+      security:
+      - ApprovalBaseOAuth:
+        - management
+  /auth/exchange:
+    post:
+      tags: []
+      summary: Exchanges authentication_code for access and refresh tokens.
+      operationId: exchangeAuthenticationCodeForAccessAndRefreshTokens
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth_exchange_body'
+            examples:
+              Request example:
+                value:
+                  authentication_code: QWERTUOP-ASDFGHJKL-ZXCVBNM
+                  grant_type: authorization_code
+      responses:
+        "200":
+          description: A successful exchange.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_22'
+              examples:
+                Response example:
+                  value:
+                    message: Successfully exchanged for tokens. The used authentication_code has now been revoked.
+                    data:
+                      access_token: QWERTIOP-ASDFGHJKL-ZXCVBNM
+                      access_expiry_interval: 7200
+                      refresh_token: 1234567890-0987654321-123567890
+                      refresh_expiry_interval: 7200
+                      token_type: Bearer
+                      role_scope: Member
+                Mockoon:
+                  value:
+                    message: ""
+                    data:
+                      access_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
+                      access_expiry_interval: {}
+                      refresh_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
+                      refresh_expiry_interval: {}
+                      token_type: Bearer
+                      role_scope: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+        "204":
+          description: You've claimed your tokens from the AuthenticationCode you supplied.
+          content: {}
+        "400":
+          $ref: '#/components/responses/BadRequest400'
+  /auth/refresh:
+    post:
+      tags: []
+      summary: Refreshes access token with refresh token.
+      operationId: refreshAccessTokenWithRefreshToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth_refresh_body'
+            examples:
+              Request example:
+                value:
+                  refresh_token: AZQWSXECDRFVTGBYHNUJMIKOL
+      responses:
+        "200":
+          description: "A successful refresh. In situation where necessary, the new refresh token may be included aswel."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_23'
+              examples:
+                Response example:
+                  value:
+                    message: Successfully refreshed your access token.
+                    data:
+                      access_token: qazwsxedcrfvtgbyhnujimkolp
+                      access_expiry_interval: 7200
+                      token_type: Bearer
+                      role_scope: Member
+                Mockoon:
+                  value:
+                    message: ""
+                    data:
+                      access_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
+                      access_expiry_interval: {}
+                      refresh_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
+                      refresh_expiry_interval: {}
+                      token_type: Bearer
+                      role_scope: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
+        "400":
+          $ref: '#/components/responses/BadRequest400'
+        "401":
+          description: Unauthorized
+        "403":
+          description: You aren't allowed to perform any more refreshes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example 1:
+                  value:
+                    genus: ILLEGAL
+                    species: CREDENTIALS
+                    message: string
+                    resolution: string
+components:
+  schemas:
+    ErrorResponse:
+      title: ErrorResponse
+      required:
+      - genus
+      - species
+      type: object
+      properties:
+        genus:
+          type: string
+          enum:
+          - MISSING
+          - INVALID
+          - EXPIRED
+          - ILLEGAL
+          x-stoplight:
+            id: 7bs47kwe9eq3q
+        species:
+          type: string
+          enum:
+          - CREDENTIALS
+          - ARGUMENTS
+        message:
+          type: string
+          x-stoplight:
+            id: bjmdle7oi5ld0
+        resolution:
+          type: string
+          x-stoplight:
+            id: su5gl3j63a9fy
+      description: A type which outlines the information of an error to be returned to the requestor.
+      x-examples:
+        Unauthorized401:
+          error_genus: MISSING
+          error_species: CREDENTIALS
+          error_message: Access token wasn't provided.
+          error_resolution: Include them inside your request header.
+        Forbidden403:
+          error_genus: EXPIRED
+          error_species: CREDENTIALS
+          error_message: Expired access token.
+          error_resolution: Use your refresh token to get a new one.
+        BadRequest400:
+          error_genus: ILLEGAL
+          error_species: ARGUMENTS
+          error_message: Argument of 'id' should be string.
+    SuccessResponse:
+      title: SuccessResponse
+      required:
+      - message
+      type: object
+      properties:
+        data:
+          oneOf:
+          - $ref: '#/components/schemas/ArrayOfObjectsResponse'
+          - $ref: '#/components/schemas/SingularObjectResponse'
+          - $ref: '#/components/schemas/ArrayOfArraysResponse'
+          - type: object
+            nullable: true
+            x-stoplight:
+              id: 7kguqxvvkltcs
+        message:
+          type: string
+          x-stoplight:
+            id: o3mssj6ze2xn8
+      description: A type which get instantiated upon a successful process of a request.
+      x-examples:
+        SingularObjectResponse:
+          data:
+            id: 1
+            name: Abby Brown
+            dob: "20000101"
+          message: Successfully retrieved user information with the id of 1
+        ArrayOfObjectsResponse:
+          data:
+          - id: 1
+            name: Abby Brown
+            dob: "20000101"
+          - id: 2
+            name: Charlie Destin
+            dob: "20000202"
+          message: Successfully listed all users.
+        ArrayOfArraysResponse:
+          data:
+          - - id: 1
+              name: Abby Brown
+              dob: "20000101"
+            - id: 2
+              name: Charlie Destin
+              dob: "20000202"
+          - - id: 3
+              name: Edwin Frank
+              dob: "20000303"
+            - id: 4
+              name: Gerald Hank
+              dob: "20000404"
+          message: Successfully joined the user table of production and development databases.
+        NullResponse:
+          message: string
+    ArrayOfObjectsResponse:
+      title: ArrayResponse
+      type: object
+      properties:
+        data:
+          type: array
+          items: {}
+      description: "A type of response object, which contains an array of data objects."
+    SingularObjectResponse:
+      title: ObjectResponse
+      type: object
+      properties:
+        data: {}
+      description: "A type of response object, which contains singular data object."
+    ArrayOfArraysResponse:
+      title: ArraysOfArrayResponse
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: array
+            items: {}
+          x-stoplight:
+            id: wkwofr6f8q4a4
+      description: "A type of response object, which contains an array of arrays object."
+    EventNotification:
+      title: EventNotification
+      type: object
+      properties:
+        notification_id:
+          type: string
+        title:
+          type: string
+          x-stoplight:
+            id: zlkegxzhmhlxn
+        body:
+          type: string
+          x-stoplight:
+            id: mfbjmvhkycqzg
+        actionable:
+          $ref: '#/components/schemas/Actionable'
+    IssueTicket:
+      title: IssueTicket
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          description: Filled by the server. Client sends empty.
+          nullable: true
+        issue_type:
+          $ref: '#/components/schemas/IssueType'
+        response_level:
+          $ref: '#/components/schemas/ResponseLevel'
+        raised_on:
+          type: string
+          description: Indicates when was this Ticket raised.
+          format: date-time
+          x-stoplight:
+            id: gldoj8nekdrl1
+        status:
+          $ref: '#/components/schemas/IssueTicketStatus'
+        stated_issue:
+          type: string
+          description: One's claim of the issue present.
+          x-stoplight:
+            id: tkyavo2qudwdq
+        location:
+          $ref: '#/components/schemas/IssueTicketLocation'
+        supportive_documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/IssueTicketResource'
+          x-stoplight:
+            id: hllem6dtuu2ir
+        issuer:
+          $ref: '#/components/schemas/ContactInformation'
+        logs:
+          type: array
+          description: "Only the 4 latest Ticket Logs. To get more, hit another endpoint."
+          items:
+            $ref: '#/components/schemas/IssueTicketLog'
+          x-stoplight:
+            id: msf8bxatdrpxt
+        handlers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactInformation'
+          x-stoplight:
+            id: dzisgx1jebvto
+        closed_on:
+          type: string
+          description: A present value indicates that this Ticket has been resolved.
+          format: date-time
+          nullable: true
+          x-stoplight:
+            id: ftthiwn8tmxto
+      description: Transport layer-representation of an IssueTicket.
+      x-examples:
+        Example 1:
+          ticket_id: XYZ
+          issue_type:
+            label: Plumbing
+          response_level:
+            label: "Urgent, emergency"
+          raised_on: 2019-08-24T14:15:22Z
+          status:
+            label: Open
+          stated_issue: string
+          location:
+            stated_location: string
+            gps_location:
+              latitude: 0
+              longitude: 0
+          supportive_documents:
+          - id: string
+            type: IMAGE
+            filename: string
+            size: string
+            owner:
+              name: string
+              phone_number: string
+              email: string
+              whatsapp-registered_number: string
+          issuer:
+            name: string
+            phone_number: string
+            email: string
+            whatsapp-registered_number: string
+          logs:
+          - log_id: string
+            owning_ticket_id: string
+            issuer:
+              name: string
+              phone_number: string
+              email: string
+              whatsapp-registered_number: string
+            recorded_on: 2019-08-24T14:15:22Z
+            news: string
+            attachment:
+            - id: string
+              type: IMAGE
+              filename: string
+              size: string
+              owner:
+                name: string
+                phone_number: string
+                email: string
+                whatsapp-registered_number: string
+            actionable:
+              genus: SEGUE
+              species: TICKET_LOG
+              segue_destination: string
+          handlers:
+          - name: string
+            phone_number: string
+            email: string
+            whatsapp-registered_number: string
+    MINIMAL_IssueTicket:
+      title: MINIMAL_IssueTicket
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          description: Filled by the server. Client sends empty.
+          format: uuid
+          nullable: true
+        issue_type:
+          $ref: '#/components/schemas/IssueType'
+        response_level:
+          $ref: '#/components/schemas/ResponseLevel'
+        raised_on:
+          type: string
+          description: Indicates when was this Ticket raised.
+          format: date-time
+          x-stoplight:
+            id: gldoj8nekdrl1
+        status:
+          $ref: '#/components/schemas/IssueTicketStatus'
+        closed_on:
+          type: string
+          description: A present value indicates that this Ticket has been resolved.
+          format: date-time
+          nullable: true
+          x-stoplight:
+            id: ftthiwn8tmxto
+      x-examples:
+        Response example:
+          ticket_id: string
+          issue_type: Plumbing
+          response_level: "Urgent, emergency"
+          raised_on: 2019-08-24T14:15:22Z
+          status: Open
+    TOBEMADE_IssueTicket:
+      title: TOBEMADE_IssueTicket
+      type: object
+      properties:
+        issue_type:
+          $ref: '#/components/schemas/IssueType'
+        response_level:
+          $ref: '#/components/schemas/ResponseLevel'
+        stated_issue:
+          type: string
+          x-stoplight:
+            id: hmk7r06c84zx4
+        location:
+          $ref: '#/components/schemas/IssueTicketLocation'
+        supportive_documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/TOBEMADE_IssueTicketResource'
+          x-stoplight:
+            id: lngemuhk9qszo
+    IssueTicketStatus:
+      title: TicketStatus
+      type: string
+      description: The status component of an IssueTicket.
+      enum:
+      - Open
+      - In Assessment
+      - On Progress
+      - Work Evaluation
+      - Closed
+      - Cancelled
+      - Rejected
+    IssueTicketLocation:
+      title: IssueLocation
+      type: object
+      properties:
+        stated_location:
+          type: string
+        gps_location:
+          $ref: '#/components/schemas/IssueTicketLocation_gps_location'
+      description: The location component of an IssueTicket.
+    IssueType:
+      title: IssueType
+      type: string
+      enum:
+      - Plumbing
+      - Housekeeping
+      - Social
+      - Facility
+      - Engineering
+      - Security
+    IssueTicketResource:
+      title: IssueTicketResource
+      type: object
+      properties:
+        id:
+          type: string
+        resource_type:
+          $ref: '#/components/schemas/ResourceType'
+        resource_name:
+          type: string
+          default: UNNAMED_RESOURCE
+          x-stoplight:
+            id: 1engr9tx00hwr
+        resource_size:
+          type: string
+          nullable: true
+          example: 147 KB
+          x-stoplight:
+            id: 76n9z66eox4v1
+        previewable_on:
+          type: string
+          format: uri
+          x-stoplight:
+            id: 4j6c2ryiqe2uf
+    IssueTicketLog:
+      title: IssueTicketLog
+      required:
+      - issuer
+      - news
+      - recorded_on
+      type: object
+      properties:
+        id:
+          type: string
+        owning_ticket_id:
+          type: string
+          description: Whence this TicketLog is part of.
+          x-stoplight:
+            id: 987roi8seshqa
+        log_type:
+          $ref: '#/components/schemas/IssueLogType'
+        issuer:
+          $ref: '#/components/schemas/ContactInformation'
+        recorded_on:
+          type: string
+          format: date-time
+          x-stoplight:
+            id: jk4e1rs5emqpq
+        news:
+          type: string
+          description: The logged information of what happened.
+          x-stoplight:
+            id: q93l43wxil5l1
+        attachment:
+          type: array
+          items:
+            $ref: '#/components/schemas/IssueTicketResource'
+          x-stoplight:
+            id: tt5p4hr9gizas
+        actionable:
+          $ref: '#/components/schemas/Actionable'
+      description: Transport layer-representation of a Ticket Log.
+    TOBEMADE_IssueTicketResource:
+      title: TOBEMADE_IssueTicketResource
+      type: object
+      properties:
+        resource_type:
+          $ref: '#/components/schemas/ResourceType'
+        resource_name:
+          type: string
+          x-stoplight:
+            id: wjvosqvm2zlxv
+        resource_size:
+          type: number
+          description: The size of the resource in bytes.
+          x-stoplight:
+            id: 0osk6dolbxv7o
+        resource_content:
+          type: string
+          description: Base64 representation of the resource content.
+          x-stoplight:
+            id: ajbfcucc7tmsr
+    IssueLogType:
+      title: IssueLogType
+      type: string
+      enum:
+      - Assessment
+      - Work Progress
+      - Work Evaluation Request
+      - Work Evaluation
+      - Activity
+    ContactInformation:
+      title: ContactInformation
+      type: object
+      properties:
+        name:
+          type: string
+          x-stoplight:
+            id: dzxkl06d3ur9z
+        phone_number:
+          type: string
+          nullable: true
+          x-stoplight:
+            id: 2r37lqv0ojmz2
+        email:
+          type: string
+          nullable: true
+          x-stoplight:
+            id: fuip14rzmt0pg
+        whatsapp-registered_number:
+          type: string
+          nullable: true
+          x-stoplight:
+            id: dr7flje8qz75e
+      description: Transport layer-representation of a contact information object.
+    Actionable:
+      title: Actionable
+      type: object
+      properties:
+        genus:
+          type: string
+          enum:
+          - SEGUE
+          - CONTENT_AVAILABLE
+          - INERT
+          x-stoplight:
+            id: uux7m9f887l3y
+        species:
+          type: string
+          enum:
+          - TICKET_LOG
+          - TICKET
+          - INERT
+          x-stoplight:
+            id: kuelguo8l05zh
+        segue_destination:
+          type: string
+          description: The id of the resource to be displayed.
+          nullable: true
+          x-stoplight:
+            id: ptxrjpl0bt874
+      description: "Transport layer-representation of an instruction which to be executed, once a coresponding TicketLog or Notification object is opened."
+      x-examples:
+        Example 1:
+          genus: SEGUE
+          species: TICKET
+          segue_destination: string
+        Example 2:
+          genus: CONTENT_AVAILABLE
+          species: TICKET_LOG
+          segue_destination: string
+    ResponseLevel:
+      title: ResponseLevel
+      type: string
+      enum:
+      - "Urgent, emergency"
+      - Urgent
+      - Normal
+    CalendarEvent:
+      title: CalendarEvent
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          x-stoplight:
+            id: lfl0obl4uq1et
+        description:
+          type: string
+          x-stoplight:
+            id: 8b4nk2gajyrd2
+        datetime:
+          type: string
+          format: date-time
+          x-stoplight:
+            id: j1aptx5pzli5k
+        duration_in_seconds:
+          minimum: 0
+          type: integer
+          x-stoplight:
+            id: 2rpw6hfiq5pl1
+        reminder_enabled:
+          type: boolean
+          x-stoplight:
+            id: q72b8cfx02tfc
+      description: ""
+      x-examples:
+        Example:
+          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+          title: Thesis Consultation Session I
+          description: Zoom meeting online room
+          datetime: 2019-08-24T14:15:22Z
+          duration_in_seconds: 1800
+          reminder_enabled: true
+        Mockoon:
+          id: "{{faker 'string.uuid'}}"
+          title: "{{faker 'lorem.sentence'}}"
+          description: "{{faker 'lorem.paragraph'}}"
+          datetime: "{{dateFormat (faker 'date.recent') 'YYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
+          duration_in_seconds: "{{faker 'number.int' min=0 max=86400}}"
+          reminded_enabled: "{{faker 'datatype.boolean'}}"
+    AreaInformation:
+      title: AreaInformation
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the Area which the requestor is affiliated with.
+          x-stoplight:
+            id: xru4b747ggdc1
+        join_policy:
+          $ref: '#/components/schemas/AreaJoinPolicy'
+        member_count:
+          type: number
+          description: A number that tells the number of heads enrolled within this Area.
+          example: 37
+          default: 0
+          x-stoplight:
+            id: g9vaqybucen1y
+        pending_member_count:
+          type: number
+          description: A number that tells the number of heads pending to be admitted into this Area.
+          example: 12
+          default: 0
+          x-stoplight:
+            id: dtlwo371uly5j
+    AreaMemberRole:
+      title: AreaMemberRole
+      type: string
+      enum:
+      - Member
+      - Crew
+      - Management
+      x-examples: {}
+    AreaMember:
+      title: AreaMember
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          x-stoplight:
+            id: v6yjrbdv7jjxd
+        role:
+          $ref: '#/components/schemas/AreaMemberRole'
+        speciality:
+          $ref: '#/components/schemas/IssueType'
+        title:
+          type: string
+          x-stoplight:
+            id: 6rpinmlg35vsw
+        member_since:
+          type: string
+          format: date-time
+          x-stoplight:
+            id: angpuxjn83nst
+        member_until:
+          type: string
+          format: date-time
+          nullable: true
+          x-stoplight:
+            id: cukfz6qd9lvm8
+        contact_information:
+          $ref: '#/components/schemas/AreaMember_contact_information'
+    AreaEntryApplication:
+      title: AreaEntryApplication
+      type: object
+      properties:
+        application_id:
+          type: string
+        form_answer:
+          type: array
+          items:
+            $ref: '#/components/schemas/AreaEntryApplication_form_answer'
+          x-stoplight:
+            id: uaek75j9vp18u
+    AreaJoinCode:
+      title: AreaJoinCode
+      type: object
+      properties:
+        endpoint:
+          type: string
+          description: Where the Area's FixPro Backend is hosted.
+        referral_tracking_identifier:
+          type: string
+          description: A unique code that identifies this particular code.
+          x-stoplight:
+            id: gogrhqc9wfmgy
+    ResourceType:
+      title: ResourceType
+      type: string
+      enum:
+      - IMAGE
+      - VIDEO
+      - SOUND
+      - DOCUMENT
+      - ARCHIVE
+    AreaJoinPolicy:
+      title: AreaJoinPolicy
+      type: string
+      enum:
+      - OPEN
+      - APROVAL-NEEDED
+      - CLOSED
+    entry_check_body:
+      type: object
+      properties:
+        application_id:
+          type: string
+          x-stoplight:
+            id: 5n5535pwdcstn
+    inline_response_200:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: ek1n7dt3etjx9
+        data:
+          $ref: '#/components/schemas/inline_response_200_data'
+    inline_response_204:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: 7skprtrep5gio
+        data:
+          type: object
+          nullable: true
+          x-stoplight:
+            id: zlij7e0ibrh65
+    inline_response_200_1:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: hshkgckug2xyb
+        data:
+          $ref: '#/components/schemas/inline_response_200_1_data'
+    inline_response_403:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: oz3u5qdfna6a4
+        data:
+          type: object
+          nullable: true
+          x-stoplight:
+            id: x9vnundbii6qp
+    entryform_data:
+      type: object
+      properties:
+        field_label:
+          type: string
+          x-stoplight:
+            id: vc2u9enc3cze3
+        field_value:
+          type: string
+          x-stoplight:
+            id: ooolxw2g5rem2
+    entry_form_body:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/entryform_data'
+          x-stoplight:
+            id: vufvr37zzctfg
+        encryption_key:
+          type: string
+          description: Public key used to encrypt the to-be-returned application_id.
+          x-stoplight:
+            id: np03zkv8vrfl0
+    inline_response_200_2:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: efhiy0m760al8
+        data:
+          $ref: '#/components/schemas/inline_response_200_2_data'
+    inline_response_200_3:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: 3qjxzb3zffsmv
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MINIMAL_IssueTicket'
+          x-stoplight:
+            id: nzld35vy32dxz
+    inline_response_201:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: bjui13qathj5p
+        data:
+          $ref: '#/components/schemas/MINIMAL_IssueTicket'
+    inline_response_200_4:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: 1ruhxvy0pwue0
+        data:
+          $ref: '#/components/schemas/IssueTicket'
+    inline_response_200_5:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: lvuhqvla1bcsl
+        data:
+          $ref: '#/components/schemas/MINIMAL_IssueTicket'
+    inline_response_200_6:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: h6bzwe1l40x6q
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/IssueTicketLog'
+          x-stoplight:
+            id: s22j1c2wg4qhw
+    inline_response_201_1:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: 3oa1aixztsx91
+        data:
+          $ref: '#/components/schemas/IssueTicketLog'
+    inline_response_200_7:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: ctdl6epxfbrqs
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactInformation'
+          x-stoplight:
+            id: d86snv98g0x6y
+    ticket_id_handlers_body:
+      type: object
+      properties:
+        target_member_id:
+          type: string
+          x-stoplight:
+            id: c8afxe3lwkb5x
+    inline_response_201_2:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: yzactdryx9jkd
+        data:
+          type: object
+          nullable: true
+          x-stoplight:
+            id: k0n8n51j5bf5w
+    inline_response_200_8:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: 20mvd86lbwwmm
+        data:
+          $ref: '#/components/schemas/inline_response_200_8_data'
+    inline_response_200_9:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: 6i4a4jh1l76e9
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventNotification'
+          x-stoplight:
+            id: vk6oma39j4t39
+    inline_response_200_10:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: p46kp7ircnkry
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarEvent'
+          x-stoplight:
+            id: pz395sj60i3qg
+    inline_response_200_11:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: utwz5trfdegkc
+        data:
+          $ref: '#/components/schemas/inline_response_200_11_data'
+    notification_body:
+      type: object
+      properties:
+        fcmToken:
+          type: string
+          x-stoplight:
+            id: gtvhiaqzcdn6g
+    inline_response_202:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: efnn947e3fp33
+        data:
+          type: object
+          nullable: true
+          x-stoplight:
+            id: 3p83t56rswbr5
+    inline_response_200_12:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: 9zn9quu27iz7a
+        data:
+          $ref: '#/components/schemas/AreaInformation'
+    inline_response_200_13:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: j5v2mpziv2u9z
+        data:
+          $ref: '#/components/schemas/AreaJoinCode'
+    inline_response_200_14:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: f5wrgsgbsniyc
+        data:
+          type: object
+          nullable: true
+          x-stoplight:
+            id: aaxqyeizqbs1b
+    inline_response_200_15:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: y37939tvlak63
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AreaMember'
+          x-stoplight:
+            id: 4cz2wictl4wfe
+    area_members_body:
+      required:
+      - application_id
+      - role
+      type: object
+      properties:
+        application_id:
+          type: string
+          x-stoplight:
+            id: ffgmw2xzeg9b8
+        role:
+          $ref: '#/components/schemas/AreaMemberRole'
+        specialization:
+          $ref: '#/components/schemas/IssueType'
+        title:
+          type: string
+          description: |-
+            The title of the holder.
+
+            Examples include:
+            Chief of Engineering Dept
+            Janitor
+            Head of Emergency Plumbing Team
+          nullable: true
+          x-stoplight:
+            id: 1q26yf2mdr5dh
+    inline_response_200_16:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: e7lni1egmsqut
+        data:
+          type: object
+          nullable: true
+          x-stoplight:
+            id: 6r1xwc48f8op0
+    inline_response_200_17:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: m3ay2de6rarqg
+        data:
+          $ref: '#/components/schemas/AreaMember'
+    inline_response_200_18:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: z9zd12iudvfkz
+        data:
+          type: object
+          nullable: true
+          x-stoplight:
+            id: t9uvz1d57zpxi
+    inline_response_200_19:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: mbpip41lo7ckd
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AreaEntryApplication'
+          x-stoplight:
+            id: 6kugw5wddx5h5
+    inline_response_200_20:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: cbj7thmo6mz4j
+        data:
+          $ref: '#/components/schemas/AreaEntryApplication'
+    inline_response_200_21:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: 4s7s6cezolgz6
+        data:
+          type: object
+          nullable: true
+          x-stoplight:
+            id: pdyjqsoeigfji
+    auth_exchange_body:
+      type: object
+      properties:
+        authentication_code:
+          type: string
+          x-stoplight:
+            id: d6wbmz4dtudaj
+        grant_type:
+          type: string
+          x-stoplight:
+            id: 2qacq70mfi73s
+    inline_response_200_22:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: unybi9ldm993o
+        data:
+          $ref: '#/components/schemas/inline_response_200_22_data'
+    auth_refresh_body:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+          x-stoplight:
+            id: 4vzlrnp6ui1rc
+    inline_response_200_23:
+      type: object
+      properties:
+        message:
+          type: string
+          x-stoplight:
+            id: unybi9ldm993o
+        data:
+          $ref: '#/components/schemas/inline_response_200_23_data'
+    IssueTicketLocation_gps_location:
+      type: object
+      properties:
+        latitude:
+          type: number
+          x-stoplight:
+            id: 2zhhdq8zzjd5m
+        longitude:
+          type: number
+          x-stoplight:
+            id: kyy7hdhe5clrn
+    AreaMember_contact_information:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          nullable: true
+          x-stoplight:
+            id: ve3pcogx1julb
+        email:
+          type: string
+          nullable: true
+          x-stoplight:
+            id: cfpigw3mrw9i6
+        whatsapp-registered_number:
+          type: string
+          nullable: true
+          x-stoplight:
+            id: 13arfc13ca858
+    AreaEntryApplication_form_answer:
+      type: object
+      properties:
+        field_label:
+          type: string
+          x-stoplight:
+            id: h5n4jul822zgj
+        field_value:
+          type: string
+          x-stoplight:
+            id: fkglq7jzxme08
+    inline_response_200_data:
+      type: object
+      properties:
+        authentication_code:
+          type: string
+          x-stoplight:
+            id: 88rqmi1cbapoe
+    inline_response_200_1_data_form_fields:
+      type: object
+      properties:
+        field_label:
+          type: string
+          x-stoplight:
+            id: lypbvghydqild
+    inline_response_200_1_data:
+      type: object
+      properties:
+        form_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/inline_response_200_1_data_form_fields'
+          x-stoplight:
+            id: jp0bqajqs9p7f
+        nonce:
+          type: string
+          x-stoplight:
+            id: oh8l3zi3oitok
+        area_name:
+          type: string
+          x-stoplight:
+            id: bng44y8k69ygc
+    inline_response_200_2_data:
+      type: object
+      properties:
+        application_id:
+          type: string
+          x-stoplight:
+            id: 48x5n839se63s
+        application_expiry_date:
+          type: string
+          format: date-time
+          x-stoplight:
+            id: jmkd0ma188o18
+    inline_response_200_8_data:
+      type: object
+      properties:
+        base64file:
+          type: string
+          x-stoplight:
+            id: 11vpntmbhnnpj
+    inline_response_200_11_data:
+      type: object
+      properties:
+        API_KEY:
+          type: string
+          x-stoplight:
+            id: t090t9zzkeo6a
+        GCM_SENDER_ID:
+          type: string
+          x-stoplight:
+            id: 36ve9ntl9qt85
+        BUNDLE_ID:
+          type: string
+          x-stoplight:
+            id: lkegsfr9ci024
+        PROJECT_ID:
+          type: string
+          x-stoplight:
+            id: 9lece4pb7vh39
+        STORAGE_BUCKET:
+          type: string
+          x-stoplight:
+            id: ufsbf7fw8x47n
+        IS_GCM_ENABLED:
+          type: boolean
+          x-stoplight:
+            id: goeq8ftsg0icr
+        GOOGLE_APP_ID:
+          type: string
+          x-stoplight:
+            id: im1h5xdejaqer
+    inline_response_200_22_data:
+      type: object
+      properties:
+        access_token:
+          type: string
+          x-stoplight:
+            id: 291stljadfm36
+        access_expiry_interval:
+          type: integer
+          x-stoplight:
+            id: vinjxk3shyfrs
+        refresh_token:
+          type: string
+          x-stoplight:
+            id: kzpnqevv88oc0
+        refresh_expiry_interval:
+          type: integer
+          x-stoplight:
+            id: 06dgd6vxa3tto
+        token_type:
+          type: string
+          x-stoplight:
+            id: d7uw0zjtl5bbv
+        role_scope:
+          $ref: '#/components/schemas/AreaMemberRole'
+    inline_response_200_23_data:
+      type: object
+      properties:
+        access_token:
+          type: string
+          x-stoplight:
+            id: 291stljadfm36
+        access_expiry_interval:
+          type: integer
+          x-stoplight:
+            id: vinjxk3shyfrs
+        refresh_token:
+          type: string
+          nullable: true
+          x-stoplight:
+            id: kzpnqevv88oc0
+        refresh_expiry_interval:
+          type: integer
+          nullable: true
+          x-stoplight:
+            id: 189rruz7alglc
+        token_type:
+          type: string
+          x-stoplight:
+            id: d7uw0zjtl5bbv
+        role_scope:
+          $ref: '#/components/schemas/AreaMemberRole'
+  responses:
+    Ok200:
+      description: Request performed successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+          examples: {}
+        text/html:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+          examples:
+            Example 1:
+              value: "hlvSOduyvfbpoyuiaverlgfvbap fbup ubawfiubaeriporgubesriupbgpina[object Object]"
+    Created201:
+      description: Did create resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+          examples:
+            Successful Raising of Issue Ticket:
+              value:
+                data:
+                  created_ticket:
+                    ticket_attr: ""
+                message: Successfully raised your ticket.
+    BadRequest400:
+      description: Request doesn't provide all the required information.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples: {}
+    Unauthorized401:
+      description: Invalid or missing credentials.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Response example:
+              value:
+                genus: MISSING
+                species: CREDENTIALS
+                message: No credentials were supplied alongside your request.
+                resolution: Recheck your header and try again.
+    Forbidden403:
+      description: No permission.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Example 1:
+              value:
+                genus: MISSING
+                species: CREDENTIALS
+                message: string
+                resolution: string
+    Forbidden403ForNonManagement:
+      description: A type of error which can be encountered if some AreaMember attempted an operation outside of their scope.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            "403":
+              value:
+                genus: INVALID
+                species: CREDENTIALS
+                message: You are not allowed to perform this action.
+                resolution: Make sure you are part of the management to perform this action.
+    NotFound404:
+      description: No such path.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    IllegalMethod405:
+      description: Illegal method.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError500:
+      description: Unable to process the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RejectedApplication403:
+      description: Rejected application
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Example 1:
+              value:
+                genus: INVALID
+                species: CREDENTIALS
+                message: You can no longer use this credentials as your application has been rejected.
+                resolution: Try reapplying by submitting another form.
+  parameters:
+    application_id:
+      name: application_id
+      in: query
+      description: A string of characters which uniquely identifies one applicant's application from the next. One is issued after submitting a join form.
+      required: false
+      schema:
+        type: string
+    ajc_reference_tracking_identifier:
+      name: ref
+      in: query
+      description: Referral Tracking Number of the qrcode which points to this url.
+      required: false
+      schema:
+        type: string
+    nonce:
+      name: nonce
+      in: query
+      description: "A single-use string of characters, issued for some single purpose. One example include this being issued after retrieving form fields."
+      required: false
+      schema:
+        type: string
+    Authorization:
+      name: Authorization
+      in: header
+      description: Filled by the value of OAuth 2-compliant access token. Prefixed by 'Bearer '.
+      required: false
+      schema:
+        type: string
+  securitySchemes:
+    ApprovalBaseOAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://localhost:9191/api/v1/auth/authorize
+          tokenUrl: https://localhost:9191/api/v1/auth/exchange
+          refreshUrl: https://localhost:9191/api/v1/auth/refresh
+          scopes:
+            member: ""
+            crew: ""
+            management: ""
