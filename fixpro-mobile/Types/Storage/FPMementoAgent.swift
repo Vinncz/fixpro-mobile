@@ -4,96 +4,71 @@ import VinUtility
 
 
 /// Type that triggers taking, saving, and restoring snapshots.
-class FPMementoAgent: VUMementoAgent {
+/// It binds an object to be observed with the storage of where snapshots of itself will be preserved.
+final class FPMementoAgent<Target, TargetSnapshot> where Target: VUMementoSnapshotable, TargetSnapshot: VUMementoSnapshot {
     
     
-    /// Datastore to be written and read.
     var storage: any FPTextStorageServicing
-    var target: VUMementoSnapshotable?
-    var storageKey: String
+    var target: Target
+    var targetStorageKey: String
     
     
-    /// Initializes an instace of ``FPMementoAgent``.
-    init(storage: any FPTextStorageServicing, target: VUMementoSnapshotable?, storageKey: String) {
-        self.target = target
+    init(storage: any FPTextStorageServicing, target: Target, storageKey: String) {
         self.storage = storage
-        self.storageKey = storageKey
+        self.target = target
+        self.targetStorageKey = storageKey
     }
     
     
-    /// Attempts to persists the current state of the object.
-    @discardableResult func takeSnapshot(tag: String?) -> Result<any VUMementoSnapshot, FPError> {
-        do {
-            switch target?.captureSnapshot() {
-                case .success(var snapshot):
-                    snapshot.tag = tag
-                    VULogger.log("Snapped \(snapshot)")
-                    
-                    let encoder = JSONEncoder()
-                    let encodedValue = try encoder.encode(snapshot)
-                    
-                    switch storage.place(for: storageKey, data: encodedValue.base64EncodedString()) {
-                        case .success:
-                            return .success(snapshot)
-                            
-                        case .failure(let error):
-                            VULogger.log(tag: .error, error)
-                            return .failure(error)
-                    }
-                    
-                case .failure(let error):
-                    VULogger.log(tag: .error, error)
-                    return .failure(error)
-                    
-                case .none:
-                    return .failure(.UNLOADED_ENTRY)
-            }
-            
-        } catch {
-            VULogger.log(tag: .error, error)
-            return .failure(.ENCODE_FAILURE)
-            
+    @discardableResult func snap() async -> Result<TargetSnapshot, FPError> {
+        switch await target.captureSnapshot() {
+            case .success(let snapshot):
+                let encoder = JSONEncoder()
+                
+                guard 
+                    let snp = snapshot as? TargetSnapshot,
+                    let stringSnapshot = try? encoder.encode(snp)
+                else { 
+                    return .failure(.TYPE_MISMATCH) 
+                }
+                
+                storage.place(for: targetStorageKey, data: stringSnapshot.base64EncodedString())
+                return .success(snp)
+                
+            case .failure(let error):
+                return .failure(error as! FPError)
+        }
+    }
+
+    
+    func cold<BootableType>(restore type: BootableType.Type) async -> Result<BootableType, FPError> where BootableType: VUMementoSnapshotBootable {
+        switch storage.retrieve(for: targetStorageKey, limit: 1) {
+            case .success(let stringSnapshot):
+                let decoder = JSONDecoder()
+                
+                guard let snp = try? decoder.decode(TargetSnapshot.self, from: Data(base64Encoded: stringSnapshot)!) else {
+                    return .failure(.TYPE_MISMATCH)
+                }
+                
+                return .success(type.boot(fromSnapshot: snp as! BootableType.BootSnapshotType) as! BootableType)
+
+            case .failure(let error):
+                return .failure(error)
         }
     }
     
+}
+
+
+func decode<ResultingType>(_ encodedSomething: Data, to resultingType: ResultingType.Type) -> Result<ResultingType, Error> where ResultingType: Decodable {
+    let decoder = JSONDecoder()
     
-    /// Attempts to restore the object to a previous state.
-    func restore<T: VUMementoSnapshot>(to type: T.Type) -> Result<T, FPError> {
-        do {
-            switch storage.retrieve(for: storageKey, limit: 1) {
-                case .success(let encodedValue):
-                    
-                    guard let encodedData = Data(base64Encoded: encodedValue) else {
-                        throw FPError.INVALID_ENTRY
-                    }
-                    
-                    let decoder = JSONDecoder()
-                    let decodedValue = try decoder.decode(T.self, from: encodedData)
-                    guard let typecastedValue = decodedValue as T? else {
-                        throw FPError.TYPE_MISMATCH
-                    }
-                    
-                    switch target?.restore(from: typecastedValue) {
-                        case .success:
-                            return .success(typecastedValue)
-                        case .failure(let error):
-                            VULogger.log(tag: .error, error)
-                            return .failure(error)
-                        case .none:
-                            return .failure(.UNLOADED_ENTRY)
-                    }
-                    
-                    
-                case .failure(let error):
-                    VULogger.log(tag: .error, error)
-                    return .failure(error)
-            }
-            
-        } catch {
-            VULogger.log(tag: .error, error)
-            return .failure(.DECODE_FAILURE)
-            
-        }
+    do {
+        let decodedObject = try decoder.decode(resultingType.self, from: encodedSomething)
+        return .success(decodedObject)
+        
+    } catch {
+        return .failure(error)
+        
     }
-    
 }

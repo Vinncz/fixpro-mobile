@@ -22,11 +22,9 @@ extension FPKeychainQueristService: VURetrieverQuerist {
         let status = SecItemCopyMatching(query.unwrapped(), &keyData)
         
         guard status == errSecSuccess else {
-            VULogger.log(tag: .error, "\(subject) is absent.")
             return .failure(.MISSING_ENTRY)
         }
         
-        VULogger.log(tag: .success, "\(subject) is present.")
         return .success(true)
     }
     
@@ -41,11 +39,9 @@ extension FPKeychainQueristService: VURetrieverQuerist {
         let status = SecItemCopyMatching(query.unwrapped(), &keyData)
         
         guard status == errSecSuccess, let data = keyData as? Data, let val = String(data: data, encoding: .utf8) else {
-            VULogger.log(tag: .error, "Did not find \(subject)")
             return .failure(.MISSING_ENTRY)
         }
         
-        VULogger.log(tag: .success, "Retrieved for \(subject)")
         return .success(val)
     }
     
@@ -67,11 +63,11 @@ extension FPKeychainQueristService: VUPlacerQuerist {
         let status = SecItemAdd(query.unwrapped(), nil)
         switch status {
             case errSecSuccess:
-                VULogger.log(tag: .success, "Placed for \(subject)")
                 return .success(true)
-            case errSecDuplicateItem:
-                VULogger.log(tag: .error, "Stopped placement-op before overwriting \(subject)")
+            case errSecDuplicateItem, errSecDuplicateKeychain:
                 return .failure(.DUPLICATE_ENTRY)
+            case errSecInvalidQuery:
+                return .failure(.ILLEGAL_ARGUMENT)
             default:
                 break
         }
@@ -96,8 +92,11 @@ extension FPKeychainQueristService: VURemoverQuerist {
         let status = SecItemDelete(query.unwrapped())
         switch status {
             case errSecSuccess:
-                VULogger.log(tag: .success, "Removed \(subject)")
                 return .success(true)
+            case errSecInvalidQuery:
+                return .failure(.ILLEGAL_ARGUMENT)
+            case errSecMissingValue, errSecItemNotFound:
+                return .failure(.MISSING_ENTRY)
             default: 
                 break
         }

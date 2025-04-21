@@ -4,7 +4,7 @@ info:
   description: "An open-standard declaration, protected by OAuth v2."
   version: 1.0.0
 servers:
-- url: https://virtserver.swaggerhub.com/yourmom/FPB/1.0.0
+- url: https://virtserver.swaggerhub.com
   description: SwaggerHub API Auto Mocking
 security:
 - ApprovalBaseOAuth:
@@ -77,19 +77,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_200_1'
               examples:
-                Response example:
-                  value:
-                    message: All the required fields and a nonce to be used for submission.
-                    data:
-                      area_name: Bali Indah Beach
-                      form_fields:
-                      - field_label: name
-                        field_type: STRING
-                      - field_label: phone_number
-                        field_type: NUMBER
-                      - field_label: whatsapp-registered_phone_number
-                        field_type: NUMBER
-                      nonce: "12345678901234567890123456789012"
                 Mockoon:
                   value:
                     message: All the required fields and a nonce to be used for submission.
@@ -97,11 +84,8 @@ paths:
                       area_name: Bali Indah Beach
                       form_fields:
                       - field_label: Full Name
-                        field_type: STRING
                       - field_label: Contactable Phone Number
-                        field_type: NUMBER
                       - field_label: WhatsApp-registered Phone Number
-                        field_type: NUMBER
                       nonce: "{{faker 'string.uuid'}}"
         "400":
           description: Request wasn't accompanied with a valid referral tracking identifier.
@@ -162,12 +146,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_200_2'
               examples:
-                Response example:
-                  value:
-                    message: Successfully submitted an application. Use the following string to check periodically of your application status.
-                    data:
-                      application_expiry_date: 2025-09-21T00:00Z
-                      application_id: qwertyuiop-asdfghjkl-zxcvbnm
                 Mockoon:
                   value:
                     message: Successfully submitted an application. Use the following string to check periodically of your application status.
@@ -222,25 +200,25 @@ paths:
                     - ticket_id: "{{faker 'lorem.paragraph'}}"
                       issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
                       response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
-                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-1}}Z"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-1}}"
                       status: "{{oneOf (array 'Open' 'In Assessment' 'On Progress' 'Work Evaluation' 'Closed' 'Cancelled' 'Rejected')}}"
                     - ticket_id: "{{faker 'string.uuid'}}"
                       issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
                       response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
-                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=0}}Z"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=0}}"
                       status: "{{oneOf (array 'Open' 'In Assessment' 'On Progress' 'Work Evaluation' 'Closed' 'Cancelled' 'Rejected')}}"
                     - ticket_id: "{{faker 'string.uuid'}}"
                       issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
                       response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
-                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-3}}Z"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-3}}"
                       status: "{{oneOf (array 'Open' 'In Assessment' 'On Progress' 'Work Evaluation' 'Closed' 'Cancelled' 'Rejected')}}"
-                      closed_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-1}}Z"
+                      closed_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-1}}"
                     - ticket_id: "{{faker 'string.uuid'}}"
                       issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
                       response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
-                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-6}}Z"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-6}}"
                       status: "{{oneOf (array 'Open' 'In Assessment' 'On Progress' 'Work Evaluation' 'Closed' 'Cancelled' 'Rejected')}}"
-                      closed_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-3}}Z"
+                      closed_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-3}}"
     post:
       tags: []
       summary: Raises new Issue Ticket associated with a requestor identified through the access token.
@@ -297,7 +275,7 @@ paths:
                       ticket_id: "{{faker 'string.uuid'}}"
                       issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
                       response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
-                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss'}}Z"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX'}}"
                       status: Open
         "400":
           $ref: '#/components/responses/BadRequest400'
@@ -326,68 +304,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_200_4'
               examples:
-                Response example:
-                  value:
-                    message: The IssueTicket object of the given id.
-                    data:
-                      ticket_id: ABC123
-                      issue_type:
-                        label: Plumbing
-                      response_level:
-                        label: "Urgent, emergency"
-                      raised_on: 2019-08-24T14:15:22Z
-                      status:
-                        label: Open
-                      stated_issue: string
-                      location:
-                        stated_location: string
-                        gps_location:
-                          latitude: 0
-                          longitude: 0
-                      supportive_documents:
-                      - id: string
-                        type: IMAGE
-                        filename: string
-                        size: string
-                        owner:
-                          name: string
-                          phone_number: string
-                          email: string
-                          whatsapp-registered_number: string
-                      issuer:
-                        name: string
-                        phone_number: string
-                        email: string
-                        whatsapp-registered_number: string
-                      logs:
-                      - log_id: string
-                        owning_ticket_id: string
-                        issuer:
-                          name: string
-                          phone_number: string
-                          email: string
-                          whatsapp-registered_number: string
-                        recorded_on: 2019-08-24T14:15:22Z
-                        news: string
-                        attachment:
-                        - id: string
-                          type: IMAGE
-                          filename: string
-                          size: string
-                          owner:
-                            name: string
-                            phone_number: string
-                            email: string
-                            whatsapp-registered_number: string
-                        actionable:
-                          genus: SEGUE
-                          species: TICKET_LOG
-                          segue_destination: string
-                      handlers:
-                      - name: string
-                        phone_number: string
-                        email: string
-                        whatsapp-registered_number: string
                 Mockoon:
                   value:
                     message: The IssueTicket object of the given id.
@@ -395,14 +311,14 @@ paths:
                       ticket_id: "{{faker 'string.uuid'}}"
                       issue_type: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
                       response_level: "{{oneOf (array 'Urgent, emergency' 'Urgent' 'Normal')}}"
-                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-3}}Z"
+                      raised_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-3}}"
                       status: Open
                       stated_issue: "{{faker 'lorem.paragraph'}}"
                       location:
                         stated_location: "{{faker 'location.secondaryAddress'}}"
                         gps_location:
-                          latitude: {}
-                          longitude: {}
+                          latitude: {{faker 'location.latitude'}}
+                          longitude: {{faker 'location.longitude'}}
                       supportive_documents:
                       - id: "{{faker 'string.uuid'}}"
                         resource_type: "{{oneOf (array 'IMAGE' 'VIDEO' 'SOUND' 'DOCUMENT' 'ARCHIVE')}}"
@@ -423,7 +339,7 @@ paths:
                           phone_number: "{{faker 'phone.number' style='international'}}"
                           email: "{{faker 'internet.email'}}"
                           whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
-                        recorded_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' hours=-18}}Z"
+                        recorded_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' hours=-18}}"
                         news: "{{faker 'lorem.paragraph'}}"
                         attachment:
                         - id: "{{faker 'string.uuid'}}"
@@ -449,7 +365,7 @@ paths:
                         phone_number: "{{faker 'phone.number' style='international'}}"
                         email: "{{faker 'internet.email'}}"
                         whatsapp-registered_number: "{{faker 'phone.number' style='international'}}"
-                      closed_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ss' days=-1}}Z"
+                      closed_on: "{{dateTimeShift date=(now) format='yyyy-MM-dd\\'T\\'HH:mm:ssXXX' days=-1}}"
         "400":
           $ref: '#/components/responses/BadRequest400'
     delete:
@@ -479,13 +395,7 @@ paths:
                 Response example:
                   value:
                     message: Successfully closed the specified ticket.
-                    data:
-                      ticket_id: QWERTYUIOP-ASDFGHJKL-ZXCVBNMM
-                      issue_type: Plumbing
-                      response_level: "Urgent, emergency"
-                      raised_on: 2019-08-24T14:15:22Z
-                      status: Open
-                      closed_on: 2019-08-24T14:26:57Z
+                    data: {}
         "400":
           $ref: '#/components/responses/BadRequest400'
   /ticket/{ticket_id}/logs:
@@ -707,13 +617,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_200_7'
               examples:
-                "200":
+                Response example:
                   value:
                     message: A list of every Handlers who are associated with the specified IssueTicket.
                     data:
-                    - name: Herry Budjiono
-                      phone_number: "081197777221"
-                      whatsapp-registered_number: "081197777221"
+                    - name: Jacob Koch
+                      more_information:
+                        phone_number: "1091247074032"
     post:
       tags: []
       summary: Delegates and assigns somebody to handle an IssueTicket.
@@ -782,12 +692,6 @@ paths:
         required: false
         schema:
           type: string
-      - name: limit
-        in: header
-        description: The upper limit of the number of EventNotification objects to be returned. Defaults to 20.
-        required: false
-        schema:
-          type: integer
       responses:
         "200":
           description: "A list of every EventNotifications ever sent to the requestor, up to specified limit."
@@ -1019,8 +923,8 @@ paths:
                     data:
                       name: "{{faker 'location.county'}}"
                       join_policy: "{{oneOf (array 'OPEN' 'APROVAL-NEEDED' 'CLOSED')}}"
-                      member_count: {}
-                      pending_member_count: {}
+                      member_count: {{faker 'number.int' min=24 max=127}}
+                      pending_member_count: {{faker 'number.int' min=2 max=15}}
         "403":
           $ref: '#/components/responses/Forbidden403ForNonManagement'
       security:
@@ -1051,7 +955,7 @@ paths:
                   value:
                     message: string
                     data:
-                      endpoint: http://192.168.10.17:8080/api
+                      endpoint: http://192.168.10.17:9196
                       referral_tracking_identifier: BONDYWENTUPTHEHILLANDDIDN'TCOMEBACK
                 Mockoon:
                   value:
@@ -1132,7 +1036,8 @@ paths:
                     - id: "{{faker 'string.uuid'}}"
                       name: "{{faker 'person.fullName'}}"
                       role: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
-                      speciality: "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
+                      speciality:
+                      - "{{oneOf (array 'Plumbing' 'Housekeeping' 'Social' 'Facility' 'Engineering' 'Security')}}"
                       title: "{{faker 'person.jobTitle'}}"
                       member_since: "{{dateFormat (faker 'date.past') 'YYYY-MM-dd\\'T\\'HH:mm:ssXXX'}}"
                       contact_information:
@@ -1490,12 +1395,12 @@ paths:
                       role_scope: Member
                 Mockoon:
                   value:
-                    message: ""
+                    message: "Successfully exchanged for tokens. The used authentication_code has now been revoked."
                     data:
                       access_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
-                      access_expiry_interval: {}
+                      access_expiry_interval: {{faker 'number.int' max=99999}}
                       refresh_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
-                      refresh_expiry_interval: {}
+                      refresh_expiry_interval: {{faker 'number.int' max=99999}}
                       token_type: Bearer
                       role_scope: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
         "204":
@@ -1535,12 +1440,12 @@ paths:
                       role_scope: Member
                 Mockoon:
                   value:
-                    message: ""
+                    message: "Successfully refreshed your access token."
                     data:
                       access_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
-                      access_expiry_interval: {}
+                      access_expiry_interval: {{faker 'number.int' max=99999}}
                       refresh_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
-                      refresh_expiry_interval: {}
+                      refresh_expiry_interval: {{faker 'number.int' max=99999}}
                       token_type: Bearer
                       role_scope: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
         "400":
@@ -2003,21 +1908,10 @@ components:
           type: string
           x-stoplight:
             id: dzxkl06d3ur9z
-        phone_number:
-          type: string
-          nullable: true
+        more_information:
+          type: object
           x-stoplight:
-            id: 2r37lqv0ojmz2
-        email:
-          type: string
-          nullable: true
-          x-stoplight:
-            id: fuip14rzmt0pg
-        whatsapp-registered_number:
-          type: string
-          nullable: true
-          x-stoplight:
-            id: dr7flje8qz75e
+            id: 30ncfmvozwev0
       description: Transport layer-representation of a contact information object.
     Actionable:
       title: Actionable
@@ -2153,9 +2047,13 @@ components:
         role:
           $ref: '#/components/schemas/AreaMemberRole'
         speciality:
-          $ref: '#/components/schemas/IssueType'
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/IssueType'
         title:
           type: string
+          nullable: true
           x-stoplight:
             id: 6rpinmlg35vsw
         member_since:
@@ -2169,8 +2067,10 @@ components:
           nullable: true
           x-stoplight:
             id: cukfz6qd9lvm8
-        contact_information:
-          $ref: '#/components/schemas/AreaMember_contact_information'
+        more_information:
+          type: object
+          x-stoplight:
+            id: pkniic08q0wnw
     AreaEntryApplication:
       title: AreaEntryApplication
       type: object
@@ -2244,6 +2144,7 @@ components:
       properties:
         message:
           type: string
+          example: All the required fields and a nonce to be used for submission.
           x-stoplight:
             id: hshkgckug2xyb
         data:
@@ -2290,6 +2191,7 @@ components:
       properties:
         message:
           type: string
+          example: Successfully submitted an application. Use the following string to check periodically of your application status.
           x-stoplight:
             id: efhiy0m760al8
         data:
@@ -2299,6 +2201,7 @@ components:
       properties:
         message:
           type: string
+          example: A list containing every Tickets ever raised by the requestor (you).
           x-stoplight:
             id: 3qjxzb3zffsmv
         data:
@@ -2333,7 +2236,8 @@ components:
           x-stoplight:
             id: lvuhqvla1bcsl
         data:
-          $ref: '#/components/schemas/MINIMAL_IssueTicket'
+          type: object
+          nullable: true
     inline_response_200_6:
       type: object
       properties:
@@ -2507,7 +2411,9 @@ components:
         role:
           $ref: '#/components/schemas/AreaMemberRole'
         specialization:
-          $ref: '#/components/schemas/IssueType'
+          type: array
+          items:
+            $ref: '#/components/schemas/IssueType'
         title:
           type: string
           description: |-
@@ -2634,24 +2540,6 @@ components:
           type: number
           x-stoplight:
             id: kyy7hdhe5clrn
-    AreaMember_contact_information:
-      type: object
-      properties:
-        phone_number:
-          type: string
-          nullable: true
-          x-stoplight:
-            id: ve3pcogx1julb
-        email:
-          type: string
-          nullable: true
-          x-stoplight:
-            id: cfpigw3mrw9i6
-        whatsapp-registered_number:
-          type: string
-          nullable: true
-          x-stoplight:
-            id: 13arfc13ca858
     AreaEntryApplication_form_answer:
       type: object
       properties:
@@ -2675,11 +2563,17 @@ components:
       properties:
         field_label:
           type: string
+          example: Full Name
           x-stoplight:
             id: lypbvghydqild
     inline_response_200_1_data:
       type: object
       properties:
+        area_name:
+          type: string
+          example: Bali Indah Beach
+          x-stoplight:
+            id: bng44y8k69ygc
         form_fields:
           type: array
           items:
@@ -2688,17 +2582,15 @@ components:
             id: jp0bqajqs9p7f
         nonce:
           type: string
+          example: "{{faker 'string.uuid'}}"
           x-stoplight:
             id: oh8l3zi3oitok
-        area_name:
-          type: string
-          x-stoplight:
-            id: bng44y8k69ygc
     inline_response_200_2_data:
       type: object
       properties:
         application_id:
           type: string
+          example: "{{faker 'string.uuid'}}"
           x-stoplight:
             id: 48x5n839se63s
         application_expiry_date:
@@ -2934,9 +2826,9 @@ components:
       type: oauth2
       flows:
         authorizationCode:
-          authorizationUrl: https://localhost:9191/api/v1/auth/authorize
-          tokenUrl: https://localhost:9191/api/v1/auth/exchange
-          refreshUrl: https://localhost:9191/api/v1/auth/refresh
+          authorizationUrl: https://localhost:9196/api/v1/auth/authorize
+          tokenUrl: https://localhost:9196/api/v1/auth/exchange
+          refreshUrl: https://localhost:9196/api/v1/auth/refresh
           scopes:
             member: ""
             crew: ""

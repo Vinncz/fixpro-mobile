@@ -5,10 +5,10 @@ import VinUtility
 
 struct AreaJoinCode: Codable {
     
-    let endpoint: String
+    let endpoint: URL
     let referralTrackingIdentifier: String
     
-    private init(endpoint: String, referralTrackingIdentifier: String) {
+    private init(endpoint: URL, referralTrackingIdentifier: String) {
         self.endpoint = endpoint
         self.referralTrackingIdentifier = referralTrackingIdentifier
     }
@@ -22,7 +22,6 @@ extension AreaJoinCode {
             guard let data = json.data(using: .utf8) else { throw FPError.MALFORMED }
             let result = try JSONDecoder().decode(AreaJoinCode.self, from: data)
             
-            guard nil != URL(string: result.endpoint) else { throw FPError.TYPE_MISMATCH }
             return .success(.init(
                 endpoint: result.endpoint, 
                 referralTrackingIdentifier: result.referralTrackingIdentifier

@@ -27,9 +27,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         self.window = window
         
         let rootRouter = RootBuilder().build()
+        FPRIBService_UIKitBridge.global.notificationResponder.setRootInteractor(rootRouter.interactable as! RootInteractable)
         
         self.rootRouter = rootRouter
-             rootRouter.launch(from: window)
+        rootRouter.launch(from: window)
     }
     
 }

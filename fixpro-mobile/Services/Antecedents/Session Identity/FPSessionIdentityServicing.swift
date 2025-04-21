@@ -3,30 +3,64 @@ import VinUtility
 
 
 
-/// Set of requirements for a service that manages identity between sessions.
-protocol FPSessionIdentityServicing: VUStatefulServicing {
+/// Set of requirements for a service that holds and provides identity used by network requests.
+protocol FPSessionIdentityServicing: VUStatefulServicing, Actor {
     
     
     /// Short-lived token that authenticate you from another 'user' using the service.
-    var accessToken: String? { get }
+    var accessToken: String? { get set }
+    var accessTokenExpirationDate: Date? { get set }
     
     
     /// Long-lived token that enables ``accessToken`` renewal.
-    var refreshToken: String { get }
+    var refreshToken: String { get set }
+    var refreshTokenExpirationDate: Date { get set }
     
     
-    /// Instantiates a ``FPSessionIdentityService`` following a successful exchange of `Authentication Code`, to gain both `Access` and `Refresh` tokens.
+    /// Authorization level of the token.
+    var role: FPTokenRole { get set }
+    
+    
+    /// Instantiates a ``FPSessionIdentityService`` following a successful exchange of `Authentication Code` that grants both `Access` and `Refresh` tokens.
     /// 
     /// - Parameter authenticationCode: The code gotten after a successful form submission with `FPNetworkingClient/submitEntryForm(_:)`.
-    /// - Parameter endpoint: The url that points to the API of FixPro Backend's of the Area.
+    /// - Parameter networkingClient: The client that will perform exchange operations.
+    /// 
+    /// > Note: The passed in `networkingClient` will be attached to self's ``networkingClient``.
     /// 
     /// - Returns: An initialized instance of ``FPSessionIdentityService`` via the ``FPSessionIdentityServicing`` interface.
-    static func exhangeForTokens(authenticationCode: String, endpoint: URL) async -> Result<FPSessionIdentityServicing, FPError>
+    static func exhangeForTokens(authenticationCode: String, networkingClient: FPNetworkingClient) async -> Result<FPSessionIdentityServicing, FPError>
+    
+}
+
+
+
+/// Setter extensions.
+extension FPSessionIdentityServicing {
     
     
-    /// Makes a request for the issuance of a new ``accessToken``, by sending the ``refreshToken`` over.
-    /// Upon successful execution, there is a chance that a new ``refreshToken`` is issued.
-    /// Whether or not a new ``refreshToken`` is issued, old values of ``accessToken`` and ``refreshToken`` are overwritten.
-    @discardableResult func refreshAccessToken() async -> Result<(accessToken: String, refreshToken: String?), FPError>
+    func set(accessToken: String) {
+        self.accessToken = accessToken
+    }
+    
+    
+    func set(accessTokenExpirationDate: Date?) {
+        self.accessTokenExpirationDate = accessTokenExpirationDate
+    }
+    
+    
+    func set(refreshToken: String) {
+        self.refreshToken = refreshToken
+    }
+    
+    
+    func set(refreshTokenExpirationDate: Date) {
+        self.refreshTokenExpirationDate = refreshTokenExpirationDate
+    }
+    
+    
+    func set(role: FPTokenRole) {
+        self.role = role
+    }
     
 }
