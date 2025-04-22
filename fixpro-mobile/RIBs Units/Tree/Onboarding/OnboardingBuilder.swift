@@ -61,7 +61,7 @@ final class OnboardingComponent: Component<OnboardingDependency> {
     
     /// Proxy to the object that performs tokens renewal.
     var sessionIdentityUpkeeperProxy: any VUProxy<FPSessionIdentityUpkeeping> {
-        shared { VUProxyObject() }
+        dependency.sessionIdentityUpkeeperProxy
     }
     
     
