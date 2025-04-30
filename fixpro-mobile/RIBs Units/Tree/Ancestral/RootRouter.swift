@@ -1,3 +1,5 @@
+import Foundation
+import VinUtility
 import RIBs
 
 
@@ -81,31 +83,43 @@ final class RootRouter: LaunchRouter<RootInteractable, RootViewControllable> {
 extension RootRouter: RootRouting {
     
     func operationalFlow(fromNotification notification: FPNotificationDigest? = nil) {
-        if let onboardingRouter {
-            detachChild(onboardingRouter)
-            self.onboardingRouter = nil
-            viewController.cleanUp(completion: nil)
+        Task { @MainActor in
+            clearAllFlows()
+            
+            let operationsRouter = operationsBuilder.build(withListener: interactor, triggerNotification: notification)
+            self.operationsRouter = operationsRouter
+            
+            attachChild(operationsRouter)
+            viewController.transition(to: operationsRouter.viewControllable, completion: nil)
         }
-        
-        let operationsRouter = operationsBuilder.build(withListener: interactor, triggerNotification: notification)
-        self.operationsRouter = operationsRouter
-        
-        attachChild(operationsRouter)
-        viewController.transition(to: operationsRouter.viewControllable, completion: nil)
     }
     
+    
     func onboardingFlow() {
-        if let operationsRouter {
-            detachChild(operationsRouter)
-            self.operationsRouter = nil
+        Task { @MainActor in
+            clearAllFlows()
+            
+            let onboardingRouter = onboardingBuilder.build(withListener: interactor)
+            self.onboardingRouter = onboardingRouter
+            
+            attachChild(onboardingRouter)
+            viewController.transition(to: onboardingRouter.viewControllable, completion: nil)
+        }
+    }
+    
+    
+    func clearAllFlows() {
+        if let onboardingRouter {
             viewController.cleanUp(completion: nil)
+            detachChild(onboardingRouter)
+            self.onboardingRouter = nil
         }
         
-        let onboardingRouter = onboardingBuilder.build(withListener: interactor)
-        self.onboardingRouter = onboardingRouter
-        
-        attachChild(onboardingRouter)
-        viewController.transition(to: onboardingRouter.viewControllable, completion: nil)
+        if let operationsRouter {
+            viewController.cleanUp(completion: nil)
+            detachChild(operationsRouter)
+            self.operationsRouter = nil
+        }
     }
     
 }

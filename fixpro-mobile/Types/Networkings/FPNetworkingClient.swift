@@ -1,14 +1,24 @@
+import Foundation
 import OpenAPIRuntime
 import OpenAPIURLSession
-import Foundation
 import VinUtility
+
+
 
 class FPNetworkingClient {
     
+    
     var gateway: Client
+    
+    
     var endpoint: URL
     
+    
+    var middlewares: [ClientMiddleware]
+    
+    
     init(endpoint: URL, middlewares: [ClientMiddleware]) {
+        self.middlewares = middlewares
         self.gateway = Client(serverURL: endpoint, 
                               configuration: .init(
                                 dateTranscoder: .iso8601,
@@ -17,6 +27,11 @@ class FPNetworkingClient {
                               transport: URLSessionTransport(), 
                               middlewares: middlewares)
         self.endpoint = endpoint
+    }
+    
+    
+    func deepCopy() -> FPNetworkingClient {
+        FPNetworkingClient(endpoint: endpoint, middlewares: middlewares)
     }
     
 }

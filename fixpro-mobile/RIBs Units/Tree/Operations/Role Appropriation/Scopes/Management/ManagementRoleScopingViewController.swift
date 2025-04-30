@@ -1,4 +1,5 @@
 import Foundation
+import VinUtility
 import RIBs
 import RxSwift
 import UIKit
@@ -23,14 +24,16 @@ final class ManagementRoleScopingViewController: UITabBarController {
     var activeFlow: (any ViewControllable)?
     
     
-    /// Assumed to be handled by ``ManagementRoleScopingRouter``.
-    var newTicketViewController: (() -> UIViewController)?
-    
-    
     /// Customization point that is invoked after self enters the view hierarchy.
     override func viewDidLoad() {
         delegate = self
         super.viewDidLoad()
+        hidesBottomBarWhenPushed = true
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
     }
     
 }
@@ -41,16 +44,6 @@ extension ManagementRoleScopingViewController: UITabBarControllerDelegate {
     
     
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
-        if viewController.tabBarItem.tag == .MODALLY_PRESENTED_VIEW_CONTROLLER {
-            guard let ntvc = newTicketViewController?() else { 
-                return true 
-            }
-            
-            ntvc.modalPresentationStyle = .fullScreen
-            present(ntvc, animated: true)
-            return false
-        }
-        
         return true
     }
     

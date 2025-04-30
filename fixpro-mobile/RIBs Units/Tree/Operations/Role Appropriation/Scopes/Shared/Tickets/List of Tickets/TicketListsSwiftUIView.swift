@@ -1,4 +1,5 @@
 import SwiftUI
+import VinUtility
 
 
 
@@ -11,7 +12,20 @@ struct TicketListsSwiftUIView: View {
     
     
     var body: some View {
-        Text("Hello from TicketListsSwiftUIView")
+        List {
+            switch viewModel.roleContext.role {
+            case .member:
+                TicketListSwiftUIViewForMember(viewModel: viewModel)
+            case .crew:
+                TicketListSwiftUIViewForCrew(viewModel: viewModel)
+            case .management:
+                TicketListSwiftUIViewForManagement(viewModel: viewModel)
+            }
+        }
+        .refreshable {
+            await viewModel.didIntendToRefreshTicketList()
+        }
+        .navigationTitle("Home")
     }
     
 }
@@ -19,6 +33,9 @@ struct TicketListsSwiftUIView: View {
 
 
 #Preview {
-    @Previewable var viewModel = TicketListsSwiftUIViewModel()
+    @Previewable var viewModel = TicketListsSwiftUIViewModel(roleContext: .init(role: .member), 
+                                                             tickets: [], 
+                                                             didIntendToRefreshTicketList: {}, 
+                                                             didTapTicket: {_ in})
     TicketListsSwiftUIView(viewModel: viewModel)
 }

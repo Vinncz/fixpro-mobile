@@ -1,11 +1,16 @@
 import Foundation
 import RIBs
+import VinUtility
 
 
 
 /// A set of properties that are required by `MemberRoleScopingRIB` to function, 
 /// supplied from the scope of its parent.
-protocol MemberRoleScopingDependency: Dependency {}
+protocol MemberRoleScopingDependency: Dependency {
+    var authorizationContext: FPRoleContext { get }
+    var locationBeacon: VULocationBeacon { get }
+    var networkingClient: FPNetworkingClient { get }
+}
 
 
 
@@ -14,9 +19,18 @@ protocol MemberRoleScopingDependency: Dependency {}
 final class MemberRoleScopingComponent: Component<MemberRoleScopingDependency> {
     
     
-    /// Constructs a singleton instance of ``MemberRoleScopingViewController``.
-    var memberRoleScopingViewController: MemberRoleScopingViewControllable & MemberRoleScopingPresentable {
-        shared { MemberRoleScopingViewController() }
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
+    }
+    
+    
+    var locationBeacon: VULocationBeacon {
+        dependency.locationBeacon
+    }
+    
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }
@@ -24,7 +38,7 @@ final class MemberRoleScopingComponent: Component<MemberRoleScopingDependency> {
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension MemberRoleScopingComponent: TicketListsDependency, NewTicketDependency, InboxDependency, PreferencesDependency {}
+extension MemberRoleScopingComponent: TicketNavigatorDependency, NewTicketDependency, InboxNavigatorDependency, PreferencesDependency {}
 
 
 
@@ -35,7 +49,7 @@ protocol MemberRoleScopingBuildable: Buildable {
     
     /// Constructs the `MemberRoleScopingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: MemberRoleScopingListener) -> MemberRoleScopingRouting
+    func build(withListener listener: MemberRoleScopingListener, triggerNotification: FPNotificationDigest?) -> MemberRoleScopingRouting
     
 }
 
@@ -54,17 +68,19 @@ final class MemberRoleScopingBuilder: Builder<MemberRoleScopingDependency>, Memb
     
     /// Constructs the `MemberRoleScopingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: MemberRoleScopingListener) -> MemberRoleScopingRouting {
+    func build(withListener listener: MemberRoleScopingListener, triggerNotification: FPNotificationDigest?) -> MemberRoleScopingRouting {
+        let viewController = MemberRoleScopingViewController()
         let component  = MemberRoleScopingComponent(dependency: dependency)
-        let interactor = MemberRoleScopingInteractor(component: component)
-            interactor.listener = listener
+        let interactor = MemberRoleScopingInteractor(component: component, presenter: viewController, triggerNotification: triggerNotification)
+        
+        interactor.listener = listener
         
         return MemberRoleScopingRouter(
             interactor: interactor, 
-            viewController: component.memberRoleScopingViewController,
-            ticketListBuilder: TicketListsBuilder(dependency: component),
+            viewController: viewController,
+            ticketNavigatorBuilder: TicketNavigatorBuilder(dependency: component),
             newTicketBuilder: NewTicketBuilder(dependency: component),
-            inboxBuilder: InboxBuilder(dependency: component),
+            inboxNavigatorBuilder: InboxNavigatorBuilder(dependency: component),
             preferencesBuilder: PreferencesBuilder(dependency: component)
         )
     }

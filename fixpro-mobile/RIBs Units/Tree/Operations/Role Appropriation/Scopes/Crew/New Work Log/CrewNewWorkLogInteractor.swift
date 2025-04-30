@@ -1,4 +1,5 @@
 import RIBs
+import VinUtility
 import RxSwift
 
 
@@ -31,7 +32,9 @@ protocol CrewNewWorkLogPresentable: Presentable {
 
 /// Contract adhered to by the Interactor of `CrewNewWorkLogRIB`'s parent, listing the attributes and/or actions
 /// that ``CrewNewWorkLogInteractor`` is allowed to access or invoke.
-protocol CrewNewWorkLogListener: AnyObject {}
+protocol CrewNewWorkLogListener: AnyObject {
+    func didDismissCrewNewWorkLog()
+}
 
 
 
@@ -68,6 +71,11 @@ final class CrewNewWorkLogInteractor: PresentableInteractor<CrewNewWorkLogPresen
     }
     
     
+    deinit {
+        VULogger.log("Deinitialized.")
+    }
+    
+    
     /// Customization point that is invoked after self becomes active.
     override func didBecomeActive() {
         super.didBecomeActive()
@@ -83,7 +91,12 @@ final class CrewNewWorkLogInteractor: PresentableInteractor<CrewNewWorkLogPresen
     
     /// Configures the view model.
     private func configureViewModel() {
-        // TODO: Configure the view model.
+        viewModel.didIntendToDismiss = { [weak self] in
+            self?.didGetDismissed()
+        }
+        viewModel.didIntendToAddWorkLog = { [weak self] in 
+            // TODO: Add logic
+        }
         presenter.bind(viewModel: self.viewModel)
     }
     
@@ -93,4 +106,8 @@ final class CrewNewWorkLogInteractor: PresentableInteractor<CrewNewWorkLogPresen
 
 /// Conformance to the ``CrewNewWorkLogPresentableListener`` protocol.
 /// Contains everything accessible or invokable by ``CrewNewWorkLogViewController``.
-extension CrewNewWorkLogInteractor: CrewNewWorkLogPresentableListener {}
+extension CrewNewWorkLogInteractor: CrewNewWorkLogPresentableListener {
+    func didGetDismissed() {
+        listener?.didDismissCrewNewWorkLog()
+    }
+}

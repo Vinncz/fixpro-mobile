@@ -11,7 +11,23 @@ struct InboxSwiftUIView: View {
     
     
     var body: some View {
-        Text("Hello from InboxSwiftUIView")
+        List(viewModel.notifications) { notification in
+            FPChevronRowView {
+                viewModel.didTapNotification?(notification)
+            } children: {
+                VStack(alignment: .leading) {
+                    Text(notification.title)
+                    Text(notification.body)
+                        .foregroundStyle(.secondary)
+                        .font(.callout)
+                }
+                .lineLimit(1)
+                .truncationMode(.tail)
+            }
+        }
+        .refreshable { 
+            await viewModel.didIntendToRefreshMailbox?()
+        }
     }
     
 }

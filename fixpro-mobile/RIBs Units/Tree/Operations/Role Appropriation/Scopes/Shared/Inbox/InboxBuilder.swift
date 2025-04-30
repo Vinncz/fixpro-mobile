@@ -5,7 +5,9 @@ import RIBs
 
 /// An empty set of properties. As the ancestral RIB, 
 /// `InboxRIB` does not require any dependencies from its parent scope.
-protocol InboxDependency: Dependency {}
+protocol InboxDependency: Dependency {
+    var networkingClient: FPNetworkingClient { get }
+}
 
 
 
@@ -14,9 +16,8 @@ protocol InboxDependency: Dependency {}
 final class InboxComponent: Component<InboxDependency> {
     
     
-    /// Constructs a singleton instance of ``InboxViewController``.
-    var inboxViewController: InboxViewControllable & InboxPresentable {
-        shared { InboxViewController() }
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }
@@ -55,13 +56,14 @@ final class InboxBuilder: Builder<InboxDependency>, InboxBuildable {
     /// Constructs the `InboxRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
     func build(withListener listener: InboxListener) -> InboxRouting {
+        let viewController = InboxViewController()
         let component  = InboxComponent(dependency: dependency)
-        let interactor = InboxInteractor(component: component)
+        let interactor = InboxInteractor(component: component, presenter: viewController)
             interactor.listener = listener
         
         return InboxRouter(
             interactor: interactor, 
-            viewController: component.inboxViewController
+            viewController: viewController
         )
     }
     

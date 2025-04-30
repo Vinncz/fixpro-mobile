@@ -1,4 +1,5 @@
 import Foundation
+import VinUtility
 import RIBs
 import RxSwift
 import SnapKit
@@ -9,7 +10,9 @@ import UIKit
 
 /// Contract adhered to by ``CrewNewWorkLogInteractor``, listing the attributes and/or actions 
 /// that ``CrewNewWorkLogViewController`` is allowed to access or invoke.
-protocol CrewNewWorkLogPresentableListener: AnyObject {}
+protocol CrewNewWorkLogPresentableListener: AnyObject {
+    func didGetDismissed()
+}
  
  
 
@@ -33,13 +36,36 @@ final class CrewNewWorkLogViewController: UIViewController {
     var activeFlow: (any ViewControllable)?
     
     
+    deinit {
+        VULogger.log("Deinitialized.")
+    }
+    
+    
     /// Customization point that is invoked after self enters the view hierarchy.
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.isModalInPresentation = true
+        
+        if let presentationController = presentationController as? UISheetPresentationController {
+            presentationController.detents = [
+                .medium(),
+                .large()
+            ]
+        }
+        
         guard hostingController != nil else {
             buildHostingController()
             return
+        }
+    }
+    
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        
+        if isBeingDismissed || isMovingFromParent {
+            presentableListener?.didGetDismissed()
         }
     }
     
@@ -102,7 +128,7 @@ extension CrewNewWorkLogViewController: CrewNewWorkLogViewControllable {
     /// 
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             

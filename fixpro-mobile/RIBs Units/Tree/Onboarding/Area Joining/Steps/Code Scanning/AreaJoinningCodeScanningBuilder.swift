@@ -22,7 +22,7 @@ final class AreaJoinningCodeScanningComponent: Component<AreaJoinningCodeScannin
     }
     
     
-    /// The proxy to the object that is integral to complete the onboarding process.
+    /// The object that is integral to complete the onboarding process.
     var onboardingServiceProxy: any VUProxy<FPOnboardingServicing> {
         dependency.onboardingServiceProxy
     }

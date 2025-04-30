@@ -4,7 +4,9 @@ import RIBs
 
 /// An empty set of properties. As the ancestral RIB, 
 /// `WorkEvaluatingRIB` does not require any dependencies from its parent scope.
-protocol WorkEvaluatingDependency: Dependency {}
+protocol WorkEvaluatingDependency: Dependency {
+    var authorizationContext: FPRoleContext { get }
+}
 
 
 
@@ -16,6 +18,11 @@ final class WorkEvaluatingComponent: Component<WorkEvaluatingDependency> {
     /// Constructs a singleton instance of ``WorkEvaluatingViewController``.
     var workEvaluatingViewController: WorkEvaluatingViewControllable & WorkEvaluatingPresentable {
         shared { WorkEvaluatingViewController() }
+    }
+    
+    
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
     }
     
 }
@@ -34,7 +41,7 @@ protocol WorkEvaluatingBuildable: Buildable {
     
     /// Constructs the `WorkEvaluatingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: WorkEvaluatingListener) -> WorkEvaluatingRouting
+    func build(withListener listener: WorkEvaluatingListener, workLogs: [FPTicketLog]) -> WorkEvaluatingRouting
     
 }
 
@@ -53,9 +60,9 @@ final class WorkEvaluatingBuilder: Builder<WorkEvaluatingDependency>, WorkEvalua
     
     /// Constructs the `WorkEvaluatingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: WorkEvaluatingListener) -> WorkEvaluatingRouting {
+    func build(withListener listener: WorkEvaluatingListener, workLogs: [FPTicketLog]) -> WorkEvaluatingRouting {
         let component  = WorkEvaluatingComponent(dependency: dependency)
-        let interactor = WorkEvaluatingInteractor(component: component)
+        let interactor = WorkEvaluatingInteractor(component: component, workLogs: workLogs)
             interactor.listener = listener
         
         return WorkEvaluatingRouter(

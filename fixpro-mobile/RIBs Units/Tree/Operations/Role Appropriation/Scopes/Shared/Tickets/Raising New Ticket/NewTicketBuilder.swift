@@ -1,10 +1,14 @@
 import RIBs
+import VinUtility
 
 
 
 /// An empty set of properties. As the ancestral RIB, 
 /// `NewTicketRIB` does not require any dependencies from its parent scope.
-protocol NewTicketDependency: Dependency {}
+protocol NewTicketDependency: Dependency {
+    var locationBeacon: VULocationBeacon { get }
+    var networkingClient: FPNetworkingClient { get }
+}
 
 
 
@@ -16,6 +20,16 @@ final class NewTicketComponent: Component<NewTicketDependency> {
     /// Constructs a singleton instance of ``NewTicketViewController``.
     var newTicketViewController: NewTicketViewControllable & NewTicketPresentable {
         shared { NewTicketViewController() }
+    }
+    
+    
+    var locationBeacon: VULocationBeacon {
+        dependency.locationBeacon
+    }
+    
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }

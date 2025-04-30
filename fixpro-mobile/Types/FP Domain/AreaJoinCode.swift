@@ -5,8 +5,12 @@ import VinUtility
 
 struct AreaJoinCode: Codable {
     
+    
     let endpoint: URL
+    
+    
     let referralTrackingIdentifier: String
+    
     
     private init(endpoint: URL, referralTrackingIdentifier: String) {
         self.endpoint = endpoint
@@ -16,6 +20,7 @@ struct AreaJoinCode: Codable {
 }
 
 extension AreaJoinCode {
+    
     
     static func make(fromJsonString json: String) -> Result<AreaJoinCode, FPError> {
         do {

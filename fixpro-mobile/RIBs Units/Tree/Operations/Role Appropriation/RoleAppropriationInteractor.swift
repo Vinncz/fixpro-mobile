@@ -1,3 +1,4 @@
+import Foundation
 import RIBs
 import RxSwift
 import VinUtility
@@ -7,9 +8,14 @@ import VinUtility
 /// Contract adhered to by ``RoleAppropriationRouter``, listing the attributes and/or actions 
 /// that ``RoleAppropriationInteractor`` is allowed to access or invoke.
 protocol RoleAppropriationRouting: ViewableRouting {
-    func provisionMemberScope(component: RoleAppropriationComponent)
-    func provisionCrewScope(component: RoleAppropriationComponent)
-    func provisionManagementScope(component: RoleAppropriationComponent)
+    
+    
+    /// Cleanses the view hierarchy of any `ViewControllable` instances this RIB may have added.
+    func cleanupViews()
+    
+    func provisionMemberScope(component: RoleAppropriationComponent, triggerNotification: FPNotificationDigest?)
+    func provisionCrewScope(component: RoleAppropriationComponent, triggerNotification: FPNotificationDigest?)
+    func provisionManagementScope(component: RoleAppropriationComponent, triggerNotification: FPNotificationDigest?)
 }
 
 
@@ -28,7 +34,9 @@ protocol RoleAppropriationPresentable: Presentable {
 
 /// Contract adhered to by the Interactor of `RoleAppropriationRIB`'s parent, listing the attributes and/or actions
 /// that ``RoleAppropriationInteractor`` is allowed to access or invoke.
-protocol RoleAppropriationListener: AnyObject {}
+protocol RoleAppropriationListener: AnyObject {
+    func didIntendToLogOut()
+}
 
 
 
@@ -49,11 +57,15 @@ final class RoleAppropriationInteractor: PresentableInteractor<RoleAppropriation
     var component: RoleAppropriationComponent
     
     
+    /// Others.
+    var triggerNotification: FPNotificationDigest?
+    
+    
     /// Constructs an instance of ``RoleAppropriationInteractor``.
     /// - Parameter component: The component of this RIB.
-    init(component: RoleAppropriationComponent) {
+    init(component: RoleAppropriationComponent, presenter: RoleAppropriationPresentable, triggerNotification: FPNotificationDigest?) {
         self.component = component
-        let presenter = component.roleAppropriationViewController
+        self.triggerNotification = triggerNotification
         
         super.init(presenter: presenter)
         
@@ -65,17 +77,19 @@ final class RoleAppropriationInteractor: PresentableInteractor<RoleAppropriation
     override func didBecomeActive() {
         super.didBecomeActive()
         
-        Task {
+        Task { @MainActor in
             switch await component.sessionIdentityService.role {
-                case .Crew:
-                    VULogger.log("Flowing to CrewScope")
-                    router?.provisionCrewScope(component: component)
-                case .Management:
-                    VULogger.log("Flowing to ManagementScope")
-                    router?.provisionManagementScope(component: component)
-                case .Member:
-                    VULogger.log("Flowing to MemberScope")
-                    router?.provisionMemberScope(component: component)
+            case .member:
+                VULogger.log("Flowing to Member scope")
+                router?.provisionMemberScope(component: component, triggerNotification: triggerNotification)
+                
+            case .crew:
+                VULogger.log("Flowing to Crew scope")
+                router?.provisionCrewScope(component: component, triggerNotification: triggerNotification)
+                
+            case .management:
+                VULogger.log("Flowing to Management scope")
+                router?.provisionManagementScope(component: component, triggerNotification: triggerNotification)
             }
         }
     }
@@ -84,6 +98,24 @@ final class RoleAppropriationInteractor: PresentableInteractor<RoleAppropriation
     /// Customization point that is invoked before self is fully detached.
     override func willResignActive() {
         super.willResignActive()
+        router?.cleanupViews()
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
+    }
+    
+}
+
+
+
+extension RoleAppropriationInteractor {
+    
+    
+    func didIntendToLogOut() {
+        router?.cleanupViews()
+        listener?.didIntendToLogOut()
     }
     
 }
@@ -92,4 +124,12 @@ final class RoleAppropriationInteractor: PresentableInteractor<RoleAppropriation
 
 /// Conformance to the ``RoleAppropriationPresentableListener`` protocol.
 /// Contains everything accessible or invokable by ``RoleAppropriationViewController``.
-extension RoleAppropriationInteractor: RoleAppropriationPresentableListener {}
+extension RoleAppropriationInteractor: RoleAppropriationPresentableListener {
+    
+    
+    func didMockLogOut() {
+        router?.cleanupViews()
+        didIntendToLogOut()
+    }
+    
+}

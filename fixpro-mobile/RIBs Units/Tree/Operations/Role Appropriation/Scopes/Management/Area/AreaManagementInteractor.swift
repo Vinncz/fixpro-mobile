@@ -5,7 +5,17 @@ import RxSwift
 
 /// Contract adhered to by ``AreaManagementRouter``, listing the attributes and/or actions 
 /// that ``AreaManagementInteractor`` is allowed to access or invoke.
-protocol AreaManagementRouting: ViewableRouting {}
+protocol AreaManagementRouting: ViewableRouting {
+    
+    
+    /// Removes the view hierarchy from any `ViewControllable` instances this RIB may have added.
+    func clearViewControllers()
+    
+    
+    /// Removes the hosting controller (swiftui embed) from the view hierarchy and deallocates it.
+    func detachSwiftUI()
+    
+}
 
 
 
@@ -78,12 +88,19 @@ final class AreaManagementInteractor: PresentableInteractor<AreaManagementPresen
     /// Customization point that is invoked before self is fully detached.
     override func willResignActive() {
         super.willResignActive()
+        presenter.unbindViewModel()
+        router?.clearViewControllers()
+        router?.detachSwiftUI()
     }
     
     
     /// Configures the view model.
     private func configureViewModel() {
-        // TODO: Configure the view model.
+        viewModel.joinPolicy = .OPEN
+        viewModel.didUpdateJoinPolicy = { [weak self] newPolicy in
+            self?.viewModel.joinPolicy = newPolicy
+        }
+        
         presenter.bind(viewModel: self.viewModel)
     }
     

@@ -37,6 +37,10 @@ final class AreaManagementViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.title = "Manage Area"
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+        
         guard hostingController != nil else {
             buildHostingController()
             return
@@ -82,7 +86,7 @@ extension AreaManagementViewController: AreaManagementViewControllable {
     /// and adds its view as a subview of the current view controller's view.
     /// - Note: The default implementation of this method REMOVES the previous `ViewControllable` from the view hierarchy.
     func transition(to newFlow: any ViewControllable, completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             
@@ -102,13 +106,27 @@ extension AreaManagementViewController: AreaManagementViewControllable {
     /// 
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             
             self.activeFlow = nil
             
             completion?()
+        }
+    }
+    
+    
+    /// Removes the hosting controller from the view hierarchy and deallocates it.
+    func nilHostingViewController() {
+        Task { @MainActor in
+            if let hostingController {
+                hostingController.view.removeFromSuperview()
+                hostingController.removeFromParent()
+                hostingController.didMove(toParent: nil)
+            }
+            
+            self.hostingController = nil
         }
     }
     

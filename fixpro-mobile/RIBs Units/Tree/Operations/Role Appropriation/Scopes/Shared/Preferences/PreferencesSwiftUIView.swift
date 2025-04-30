@@ -11,7 +11,15 @@ struct PreferencesSwiftUIView: View {
     
     
     var body: some View {
-        Text("Hello from PreferencesSwiftUIView")
+        Form {
+            Section {
+                Button("Leave Area", role: .destructive) {
+                    viewModel.logOut?()
+                }
+            } header: {
+                Text("Dangerous zone")
+            }
+        }
     }
     
 }

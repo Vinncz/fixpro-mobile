@@ -9,6 +9,8 @@ import RIBs
 protocol TicketListsInteractable: Interactable {
     var router: TicketListsRouting? { get set }
     var listener: TicketListsListener? { get set }
+    
+    func didMake(ticket: FPLightweightIssueTicket)
 }
 
 
@@ -56,4 +58,9 @@ final class TicketListsRouter: ViewableRouter<TicketListsInteractable, TicketLis
 
 /// Conformance extension to the ``TicketListsRouting`` protocol.
 /// Contains everything accessible or invokable by ``TicketListsInteractor``.
-extension TicketListsRouter: TicketListsRouting {}
+extension TicketListsRouter: TicketListsRouting {
+    
+    
+    
+    
+}

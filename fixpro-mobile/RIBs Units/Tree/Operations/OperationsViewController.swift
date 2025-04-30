@@ -1,4 +1,5 @@
 import Foundation
+import VinUtility
 import RIBs
 import RxSwift
 import SnapKit
@@ -44,6 +45,11 @@ final class OperationsViewController: UIViewController {
     }
     
     
+    deinit {
+        VULogger.log("Deinitialized.")
+    }
+    
+    
     /// Constructs an instance of ``OperationsSwiftUIView``, wraps them into `UIHostingController`,
     /// and sets it as the root view of this view controller.
     func buildHostingController() {
@@ -82,7 +88,7 @@ extension OperationsViewController: OperationsViewControllable {
     /// and adds its view as a subview of the current view controller's view.
     /// - Note: The default implementation of this method REMOVES the previous `ViewControllable` from the view hierarchy.
     func transition(to newFlow: any ViewControllable, completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             
@@ -102,7 +108,7 @@ extension OperationsViewController: OperationsViewControllable {
     /// 
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             
@@ -130,6 +136,20 @@ extension OperationsViewController: OperationsPresentable {
     /// Unbinds the ``OperationsSwiftUIViewModel`` from the view controller.
     func unbindViewModel() {
         self.viewModel = nil
+    }
+    
+    
+    /// Nils the hosting view controller.
+    func nilHostingViewController() {
+        Task { @MainActor in
+            if let hostingController {
+                hostingController.view.removeFromSuperview()
+                hostingController.removeFromParent()
+                hostingController.didMove(toParent: nil)
+            }
+            
+            self.hostingController = nil
+        }
     }
     
 }

@@ -1,11 +1,14 @@
 import RIBs
+import VinUtility
 import RxSwift
 
 
 
 /// Contract adhered to by ``CrewRoleScopingRouter``, listing the attributes and/or actions 
 /// that ``CrewRoleScopingInteractor`` is allowed to access or invoke.
-protocol CrewRoleScopingRouting: ViewableRouting {}
+protocol CrewRoleScopingRouting: ViewableRouting {
+    var ticketNavigatorRouter: TicketNavigatorRouting? { get set }
+}
 
 
 
@@ -23,7 +26,9 @@ protocol CrewRoleScopingPresentable: Presentable {
 
 /// Contract adhered to by the Interactor of `CrewRoleScopingRIB`'s parent, listing the attributes and/or actions
 /// that ``CrewRoleScopingInteractor`` is allowed to access or invoke.
-protocol CrewRoleScopingListener: AnyObject {}
+protocol CrewRoleScopingListener: AnyObject {
+    func didIntendToLogOut()
+}
 
 
 
@@ -44,11 +49,15 @@ final class CrewRoleScopingInteractor: PresentableInteractor<CrewRoleScopingPres
     var component: CrewRoleScopingComponent
     
     
+    /// Others.
+    var triggerNotification: FPNotificationDigest?
+    
+    
     /// Constructs an instance of ``CrewRoleScopingInteractor``.
     /// - Parameter component: The component of this RIB.
-    init(component: CrewRoleScopingComponent) {
+    init(component: CrewRoleScopingComponent, presenter: CrewRoleScopingPresentable, triggerNotification: FPNotificationDigest?) {
         self.component = component
-        let presenter = component.crewRoleScopingViewController
+        self.triggerNotification = triggerNotification
         
         super.init(presenter: presenter)
         
@@ -65,6 +74,28 @@ final class CrewRoleScopingInteractor: PresentableInteractor<CrewRoleScopingPres
     /// Customization point that is invoked before self is detached.
     override func willResignActive() {
         super.willResignActive()
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
+    }
+    
+}
+
+
+
+extension CrewRoleScopingInteractor {
+    
+    
+    func didIntendToLogOut() {
+        listener?.didIntendToLogOut()
+    }
+    
+    
+    func didRaise(ticket: FPLightweightIssueTicket) {
+        (router?.ticketNavigatorRouter?.ticketListRouter?.interactable as? TicketListsInteractable)?.didMake(ticket: ticket)
+        VULogger.log("Did talk to ticket list router")
     }
     
 }

@@ -82,7 +82,7 @@ extension WorkCalendarViewController: WorkCalendarViewControllable {
     /// and adds its view as a subview of the current view controller's view.
     /// - Note: The default implementation of this method REMOVES the previous `ViewControllable` from the view hierarchy.
     func transition(to newFlow: any ViewControllable, completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             
@@ -102,7 +102,7 @@ extension WorkCalendarViewController: WorkCalendarViewControllable {
     /// 
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             

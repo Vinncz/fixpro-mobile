@@ -1145,6 +1145,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/area_members_body'
+            examples:
+              Example 1:
+                value:
+                  application_id: string
+                  role: Member
+                  specialization:
+                  - Plumbing
+                  title: string
       responses:
         "200":
           description: A successful admission for the specified applicant.
@@ -1395,12 +1403,12 @@ paths:
                       role_scope: Member
                 Mockoon:
                   value:
-                    message: "Successfully exchanged for tokens. The used authentication_code has now been revoked."
+                    message: Successfully exchanged for tokens. The used authentication_code has now been revoked.
                     data:
                       access_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
-                      access_expiry_interval: {{faker 'number.int' max=99999}}
+                      access_expiry_interval: {{faker 'number.int' min=1800 max=3600}}
                       refresh_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
-                      refresh_expiry_interval: {{faker 'number.int' max=99999}}
+                      refresh_expiry_interval: {{faker 'number.int' min=3600 max=7200}}
                       token_type: Bearer
                       role_scope: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
         "204":
@@ -1440,12 +1448,12 @@ paths:
                       role_scope: Member
                 Mockoon:
                   value:
-                    message: "Successfully refreshed your access token."
+                    message: Successfully refreshed your access token.
                     data:
                       access_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
-                      access_expiry_interval: {{faker 'number.int' max=99999}}
+                      access_expiry_interval: {{faker 'number.int' min=1800 max=3600}}
                       refresh_token: "{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}-{{faker 'string.uuid'}}"
-                      refresh_expiry_interval: {{faker 'number.int' max=99999}}
+                      refresh_expiry_interval: {{faker 'number.int' min=3600 max=7200}}
                       token_type: Bearer
                       role_scope: "{{oneOf (array 'Member' 'Crew' 'Management')}}"
         "400":
@@ -1605,6 +1613,11 @@ components:
           type: string
           x-stoplight:
             id: mfbjmvhkycqzg
+        sent_on:
+          type: string
+          format: date-time
+          x-stoplight:
+            id: uv4qnde1qis83
         actionable:
           $ref: '#/components/schemas/Actionable'
     IssueTicket:
@@ -1627,6 +1640,10 @@ components:
             id: gldoj8nekdrl1
         status:
           $ref: '#/components/schemas/IssueTicketStatus'
+        executive_summary:
+          type: string
+          x-stoplight:
+            id: 0ttqboiv0j2qc
         stated_issue:
           type: string
           description: One's claim of the issue present.
@@ -1663,66 +1680,7 @@ components:
           x-stoplight:
             id: ftthiwn8tmxto
       description: Transport layer-representation of an IssueTicket.
-      x-examples:
-        Example 1:
-          ticket_id: XYZ
-          issue_type:
-            label: Plumbing
-          response_level:
-            label: "Urgent, emergency"
-          raised_on: 2019-08-24T14:15:22Z
-          status:
-            label: Open
-          stated_issue: string
-          location:
-            stated_location: string
-            gps_location:
-              latitude: 0
-              longitude: 0
-          supportive_documents:
-          - id: string
-            type: IMAGE
-            filename: string
-            size: string
-            owner:
-              name: string
-              phone_number: string
-              email: string
-              whatsapp-registered_number: string
-          issuer:
-            name: string
-            phone_number: string
-            email: string
-            whatsapp-registered_number: string
-          logs:
-          - log_id: string
-            owning_ticket_id: string
-            issuer:
-              name: string
-              phone_number: string
-              email: string
-              whatsapp-registered_number: string
-            recorded_on: 2019-08-24T14:15:22Z
-            news: string
-            attachment:
-            - id: string
-              type: IMAGE
-              filename: string
-              size: string
-              owner:
-                name: string
-                phone_number: string
-                email: string
-                whatsapp-registered_number: string
-            actionable:
-              genus: SEGUE
-              species: TICKET_LOG
-              segue_destination: string
-          handlers:
-          - name: string
-            phone_number: string
-            email: string
-            whatsapp-registered_number: string
+      x-examples: {}
     MINIMAL_IssueTicket:
       title: MINIMAL_IssueTicket
       type: object
@@ -1744,6 +1702,10 @@ components:
             id: gldoj8nekdrl1
         status:
           $ref: '#/components/schemas/IssueTicketStatus'
+        executive_summary:
+          type: string
+          x-stoplight:
+            id: yhi96i2yzowpn
         closed_on:
           type: string
           description: A present value indicates that this Ticket has been resolved.
@@ -2277,9 +2239,17 @@ components:
       type: object
       properties:
         target_member_id:
-          type: string
+          type: array
+          items:
+            type: string
+            x-stoplight:
+              id: a6i1m2tr5r60q
           x-stoplight:
             id: c8afxe3lwkb5x
+        executive_summary:
+          type: string
+          x-stoplight:
+            id: z05e1z56u0qic
     inline_response_201_2:
       type: object
       properties:

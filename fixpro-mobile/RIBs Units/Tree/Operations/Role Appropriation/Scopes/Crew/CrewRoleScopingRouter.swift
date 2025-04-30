@@ -8,7 +8,7 @@ import UIKit
 /// that ``CrewRoleScopingRouter`` is allowed to access or invoke.
 /// 
 /// Conform this `Interactable` protocol with this RIB's children's `Listener` protocols.
-protocol CrewRoleScopingInteractable: Interactable, TicketListsListener, WorkCalendarListener, NewTicketListener, InboxListener, PreferencesListener {
+protocol CrewRoleScopingInteractable: Interactable, TicketNavigatorListener, WorkCalendarListener, NewTicketListener, InboxNavigatorListener, PreferencesListener {
     
     
     /// Reference to ``CrewRoleScopingRouter``.
@@ -34,8 +34,8 @@ protocol CrewRoleScopingViewControllable: ViewControllable {
 final class CrewRoleScopingRouter: ViewableRouter<CrewRoleScopingInteractable, CrewRoleScopingViewControllable> {
     
     
-    var ticketListBuilder: TicketListsBuildable
-    var ticketListRouter: TicketListsRouting?
+    var ticketNavigatorBuilder: TicketNavigatorBuildable
+    var ticketNavigatorRouter: TicketNavigatorRouting?
     
     var workCalendarBuilder: WorkCalendarBuildable
     var workCalendarRouter: WorkCalendarRouting?
@@ -43,8 +43,8 @@ final class CrewRoleScopingRouter: ViewableRouter<CrewRoleScopingInteractable, C
     var newTicketBuilder: NewTicketBuildable
     var newTicketRouter: NewTicketRouting?
     
-    var inboxBuilder: InboxBuildable
-    var inboxRouter: InboxRouting?
+    var inboxNavigatorBuilder: InboxNavigatorBuildable
+    var inboxNavigatorRouter: InboxNavigatorRouting?
     
     var preferencesBuilder: PreferencesBuildable
     var preferencesRouter: PreferencesRouting?
@@ -53,11 +53,11 @@ final class CrewRoleScopingRouter: ViewableRouter<CrewRoleScopingInteractable, C
     /// Constructs an instance of ``CrewRoleScopingRouter``.
     /// - Parameter interactor: The interactor for this RIB.
     /// - Parameter viewController: The view controller for this RIB.
-    init(interactor: CrewRoleScopingInteractable, viewController: CrewRoleScopingViewControllable, ticketListBuilder: TicketListsBuildable, workCalendarBuilder: WorkCalendarBuildable, newTicketBuilder: NewTicketBuildable, inboxBuilder: InboxBuildable, preferencesBuilder: PreferencesBuildable) {
-        self.ticketListBuilder = ticketListBuilder
+    init(interactor: CrewRoleScopingInteractable, viewController: CrewRoleScopingViewControllable, ticketNavigatorBuilder: TicketNavigatorBuilder, workCalendarBuilder: WorkCalendarBuildable, newTicketBuilder: NewTicketBuildable, inboxNavigatorBuilder: InboxNavigatorBuildable, preferencesBuilder: PreferencesBuildable) {
+        self.ticketNavigatorBuilder = ticketNavigatorBuilder
         self.workCalendarBuilder = workCalendarBuilder
         self.newTicketBuilder = newTicketBuilder
-        self.inboxBuilder = inboxBuilder
+        self.inboxNavigatorBuilder = inboxNavigatorBuilder
         self.preferencesBuilder = preferencesBuilder
         
         super.init(interactor: interactor, viewController: viewController)
@@ -71,13 +71,9 @@ final class CrewRoleScopingRouter: ViewableRouter<CrewRoleScopingInteractable, C
     override func didLoad() {
         super.didLoad()
         
-        let ticketNav = UINavigationController()
-        let ticketListRouter = ticketListBuilder.build(withListener: interactor)
-        let ticketListRouterUITabBarItem = UITabBarItem(title: "Tickets", image: UIImage(systemName: "ticket"), selectedImage: UIImage(systemName: "ticket.fill"))
-        ticketListRouter.viewControllable.uiviewController.tabBarItem = ticketListRouterUITabBarItem
-        ticketNav.viewControllers = [ticketListRouter.viewControllable.uiviewController]
-        attachChild(ticketListRouter)
-        self.ticketListRouter = ticketListRouter
+        let ticketNavigatorRouter = ticketNavigatorBuilder.build(withListener: interactor)
+        self.ticketNavigatorRouter = ticketNavigatorRouter
+        attachChild(ticketNavigatorRouter)
         
         let workCalendarNav = UINavigationController()
         let workCalendarRouter = workCalendarBuilder.build(withListener: interactor)
@@ -93,13 +89,9 @@ final class CrewRoleScopingRouter: ViewableRouter<CrewRoleScopingInteractable, C
         attachChild(newTicketRouter)
         self.newTicketRouter = newTicketRouter
         
-        let inboxNav = UINavigationController()
-        let inboxRouter = inboxBuilder.build(withListener: interactor)
-        let inboxRouterUITabBarItem = UITabBarItem(title: "Inbox", image: UIImage(systemName: "bell"), selectedImage: UIImage(systemName: "bell.fill"))
-        inboxRouter.viewControllable.uiviewController.tabBarItem = inboxRouterUITabBarItem
-        inboxNav.viewControllers = [inboxRouter.viewControllable.uiviewController]
-        attachChild(inboxRouter)
-        self.inboxRouter = inboxRouter
+        let inboxNavigatorRouter = inboxNavigatorBuilder.build(withListener: interactor)
+        self.inboxNavigatorRouter = inboxNavigatorRouter
+        attachChild(inboxNavigatorRouter)
         
         let preferencesNav = UINavigationController()
         let preferencesRouter = preferencesBuilder.build(withListener: interactor)
@@ -110,7 +102,11 @@ final class CrewRoleScopingRouter: ViewableRouter<CrewRoleScopingInteractable, C
         self.preferencesRouter = preferencesRouter
         
         (viewControllable.uiviewController as? UITabBarController)?.viewControllers = [
-            ticketNav, workCalendarNav, nonViewOwningButton, inboxNav, preferencesNav
+            ticketNavigatorRouter.viewControllable.uiviewController, 
+            workCalendarNav, 
+            nonViewOwningButton, 
+            inboxNavigatorRouter.viewControllable.uiviewController, 
+            preferencesNav
         ]
         
         viewController.newTicketViewController = {
@@ -124,4 +120,54 @@ final class CrewRoleScopingRouter: ViewableRouter<CrewRoleScopingInteractable, C
 
 /// Conformance extension to the ``CrewRoleScopingRouting`` protocol.
 /// Contains everything accessible or invokable by ``CrewRoleScopingInteractor``.
-extension CrewRoleScopingRouter: CrewRoleScopingRouting {}
+extension CrewRoleScopingRouter: CrewRoleScopingRouting {
+    
+    
+//    func detachChildren() {
+//        if let ticketNavigatorRouter {
+//            ticketNavigatorRouter.viewControllable.uiviewController.view.removeFromSuperview()
+//            ticketNavigatorRouter.viewControllable.uiviewController.removeFromParent()
+//            detachChild(ticketNavigatorRouter)
+//            self.ticketNavigatorRouter = nil
+//        }
+//
+//        if let workCalendarRouter {
+//            workCalendarRouter.viewControllable.uiviewController.view.removeFromSuperview()
+//            workCalendarRouter.viewControllable.uiviewController.removeFromParent()
+//            detachChild(workCalendarRouter)
+//            self.workCalendarRouter = nil
+//        }
+//
+//        if let newTicketRouter {
+//            newTicketRouter.viewControllable.uiviewController.view.removeFromSuperview()
+//            newTicketRouter.viewControllable.uiviewController.removeFromParent()
+//            detachChild(newTicketRouter)
+//            self.newTicketRouter = nil
+//        }
+//
+//        if let inboxNavigatorRouter {
+//            inboxNavigatorRouter.viewControllable.uiviewController.view.removeFromSuperview()
+//            inboxNavigatorRouter.viewControllable.uiviewController.removeFromParent()
+//            detachChild(inboxNavigatorRouter)
+//            self.inboxNavigatorRouter = nil
+//        }
+//
+//        if let preferencesRouter {
+//            preferencesRouter.viewControllable.uiviewController.view.removeFromSuperview()
+//            preferencesRouter.viewControllable.uiviewController.removeFromParent()
+//            detachChild(preferencesRouter)
+//            self.preferencesRouter = nil
+//        }
+//
+//        viewControllable.uiviewController.dismiss(animated: false)
+//        viewControllable.uiviewController.view.subviews.forEach { $0.removeFromSuperview() }
+//        viewControllable.uiviewController.children.forEach { $0.removeFromParent() }
+//
+//        if let tabBar = viewControllable.uiviewController as? UITabBarController {
+//            tabBar.viewControllers = []
+//            tabBar.selectedIndex = 0
+//            tabBar.selectedViewController = nil
+//        }
+//    }
+    
+}

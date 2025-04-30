@@ -130,15 +130,15 @@ extension OnboardingInteractor {
     
     
     func configureViewModelForOngoingPendingApplication() {
-        guard let onboardingService = component.onboardingServiceProxy.backing, 
-              let networkingClient = component.networkingClientProxy.backing
+        guard let onbs = component.onboardingServiceProxy.backing, 
+              let nc = component.networkingClientProxy.backing
         else {
             fatalError("Should not invoke this method when onboardingservice is absent.")
         }
         
-        viewModel.applicationReceipt = .init(areaName: onboardingService.areaName, 
-                                             appliedOnDate: onboardingService.applicationSubmissionDate!, 
-                                             offerExpiryDate: onboardingService.applicationIdExpiryDate!)
+        viewModel.applicationReceipt = .init(areaName: onbs.areaName, 
+                                             appliedOnDate: onbs.applicationSubmissionDate!, 
+                                             offerExpiryDate: onbs.applicationIdExpiryDate!)
         VULogger.log("Added ApplicationReceipt")
         
         viewModel.applicationState = .undecided
@@ -152,13 +152,13 @@ extension OnboardingInteractor {
              && self?.viewModel.applicationState != .rejected 
             else { return }
             
-            Task {
-                switch await onboardingService.checkApplicationStatus() {
+            Task { [weak self] in
+                guard let networkingClient = self?.component.networkingClientProxy.backing else { return }
+                switch await self?.component.onboardingServiceProxy.backing?.checkApplicationStatus() {
                     
                     // Condition 1 -- Self application has been approved, and is now getting an authenticationCode to start
                     //                communicating with the backend more.
                     case .success(let authenticationCode):
-                        guard let self else { return }
                         VULogger.log("Application approved")
                         
                         switch await FPSessionIdentityService.exhangeForTokens(authenticationCode: authenticationCode, networkingClient: networkingClient) {
@@ -166,6 +166,8 @@ extension OnboardingInteractor {
                             // Subcondition 1 -- Successful exchange. Only invoked once.
                             case .success(let sessionIdentityService):
                                 VULogger.log("Successful token exchange")
+                                
+                                guard let self else { return }
                                 
                                 // <Prep for flow change>
                                 self.component.sessionIdentityServiceProxy.back(with: sessionIdentityService)
@@ -200,12 +202,12 @@ extension OnboardingInteractor {
                                     case .CODE_ALREADY_EXCHANGED:
                                         VULogger.log("ApplicationId has already been exchanged with tokens")
                                         
-                                        self.component.onboardingServiceProxy.backing?.cancelApplication()
-                                        self.viewModel.applicationReceipt = nil
-                                        self.viewModel.applicationState = .undecided
-                                        self.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPONBOARDINGSERVICE_MEMENTO_SNAPSHOT)
-                                        self.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_NETWORKING_CLIENT_MEMENTO_SNAPSHOT)
-                                        self.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPSESSION_IDENTITY_MEMENTO_SNAPSHOT)
+                                        self?.component.onboardingServiceProxy.backing?.cancelApplication()
+                                        self?.viewModel.applicationReceipt = nil
+                                        self?.viewModel.applicationState = .undecided
+                                        self?.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPONBOARDINGSERVICE_MEMENTO_SNAPSHOT)
+                                        self?.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_NETWORKING_CLIENT_MEMENTO_SNAPSHOT)
+                                        self?.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPSESSION_IDENTITY_MEMENTO_SNAPSHOT)
                                     
                                     // Subsubcondition 2 -- Other failure.
                                     default:
@@ -241,6 +243,9 @@ extension OnboardingInteractor {
                             default: 
                                 break
                         }
+                        
+                    case .none:
+                        break
                 }
             }
         }
@@ -254,7 +259,6 @@ extension OnboardingInteractor {
         VULogger.log("Added cancel logic")
         
         viewModel.queOperationalFlow = { [weak self] in
-            self?.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPONBOARDINGSERVICE_MEMENTO_SNAPSHOT)
             self?.listener?.didFinishPairing()
         }
         VULogger.log("Added que to operations logic")
@@ -272,7 +276,7 @@ extension OnboardingInteractor {
     func didFinishPairing() {
         guard
             component.networkingClientProxy.isBacked,
-            let onboardingService = component.onboardingServiceProxy.backing,
+            component.onboardingServiceProxy.isBacked,
             case .success = component.keychainStorageServicing.retrieve(for: .KEYCHAIN_KEY_FOR_NETWORKING_CLIENT_MEMENTO_SNAPSHOT, limit: 1),
             case .success = component.keychainStorageServicing.retrieve(for: .KEYCHAIN_KEY_FOR_FPONBOARDINGSERVICE_MEMENTO_SNAPSHOT, limit: 1)
         else {

@@ -14,4 +14,10 @@ extension String {
     
     static let KEYCHAIN_KEY_FOR_NETWORKING_CLIENT_MEMENTO_SNAPSHOT = "caa9da3d8f06a36b007e658b71a19c3a8c064436137b65d818e8864e898828b6"
     
+    
+    static let title = "title"
+    
+    
+    static let UNDERLYING_ERROR = "Underlying error"
+    
 }

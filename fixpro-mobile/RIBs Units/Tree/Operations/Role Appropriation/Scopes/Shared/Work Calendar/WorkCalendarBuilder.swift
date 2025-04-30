@@ -4,7 +4,9 @@ import RIBs
 
 /// An empty set of properties. As the ancestral RIB, 
 /// `WorkCalendarRIB` does not require any dependencies from its parent scope.
-protocol WorkCalendarDependency: Dependency {}
+protocol WorkCalendarDependency: Dependency {
+    var authorizationContext: FPRoleContext { get }
+}
 
 
 
@@ -16,6 +18,11 @@ final class WorkCalendarComponent: Component<WorkCalendarDependency> {
     /// Constructs a singleton instance of ``WorkCalendarViewController``.
     var workCalendarViewController: WorkCalendarViewControllable & WorkCalendarPresentable {
         shared { WorkCalendarViewController() }
+    }
+    
+    
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
     }
     
 }

@@ -32,6 +32,12 @@ final class MemberRoleScopingViewController: UITabBarController {
     override func viewDidLoad() {
         delegate = self
         super.viewDidLoad()
+        hidesBottomBarWhenPushed = true
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
     }
     
 }

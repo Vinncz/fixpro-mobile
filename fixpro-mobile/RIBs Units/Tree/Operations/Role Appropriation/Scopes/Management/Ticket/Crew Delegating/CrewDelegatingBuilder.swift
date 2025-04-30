@@ -4,7 +4,10 @@ import RIBs
 
 /// An empty set of properties. As the ancestral RIB, 
 /// `CrewDelegatingRIB` does not require any dependencies from its parent scope.
-protocol CrewDelegatingDependency: Dependency {}
+protocol CrewDelegatingDependency: Dependency {
+    var authorizationContext: FPRoleContext { get }
+    var networkingClient: FPNetworkingClient { get }
+}
 
 
 
@@ -16,6 +19,16 @@ final class CrewDelegatingComponent: Component<CrewDelegatingDependency> {
     /// Constructs a singleton instance of ``CrewDelegatingViewController``.
     var crewDelegatingViewController: CrewDelegatingViewControllable & CrewDelegatingPresentable {
         shared { CrewDelegatingViewController() }
+    }
+    
+    
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
+    }
+    
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }
@@ -34,7 +47,7 @@ protocol CrewDelegatingBuildable: Buildable {
     
     /// Constructs the `CrewDelegatingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: CrewDelegatingListener) -> CrewDelegatingRouting
+    func build(withListener listener: CrewDelegatingListener, ticketId: String, issueType: FPIssueType) -> CrewDelegatingRouting
     
 }
 
@@ -53,9 +66,9 @@ final class CrewDelegatingBuilder: Builder<CrewDelegatingDependency>, CrewDelega
     
     /// Constructs the `CrewDelegatingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: CrewDelegatingListener) -> CrewDelegatingRouting {
+    func build(withListener listener: CrewDelegatingListener, ticketId: String, issueType: FPIssueType) -> CrewDelegatingRouting {
         let component  = CrewDelegatingComponent(dependency: dependency)
-        let interactor = CrewDelegatingInteractor(component: component)
+        let interactor = CrewDelegatingInteractor(component: component, ticketId: ticketId, issueType: issueType)
             interactor.listener = listener
         
         return CrewDelegatingRouter(

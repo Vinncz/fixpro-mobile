@@ -4,7 +4,9 @@ import RIBs
 
 /// An empty set of properties. As the ancestral RIB, 
 /// `CrewNewWorkLogRIB` does not require any dependencies from its parent scope.
-protocol CrewNewWorkLogDependency: Dependency {}
+protocol CrewNewWorkLogDependency: Dependency {
+    var authorizationContext: FPRoleContext { get }
+}
 
 
 
@@ -16,6 +18,11 @@ final class CrewNewWorkLogComponent: Component<CrewNewWorkLogDependency> {
     /// Constructs a singleton instance of ``CrewNewWorkLogViewController``.
     var crewNewWorkLogViewController: CrewNewWorkLogViewControllable & CrewNewWorkLogPresentable {
         shared { CrewNewWorkLogViewController() }
+    }
+    
+    
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
     }
     
 }

@@ -1,4 +1,5 @@
 import RIBs
+import VinUtility
 import RxSwift
 
 
@@ -78,6 +79,11 @@ final class WorkCalendarInteractor: PresentableInteractor<WorkCalendarPresentabl
     /// Customization point that is invoked before self is fully detached.
     override func willResignActive() {
         super.willResignActive()
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
     }
     
     

@@ -1,4 +1,5 @@
 import Foundation
+import VinUtility
 import RIBs
 import RxSwift
 import SnapKit
@@ -9,7 +10,9 @@ import UIKit
 
 /// Contract adhered to by ``CrewDelegatingInteractor``, listing the attributes and/or actions 
 /// that ``CrewDelegatingViewController`` is allowed to access or invoke.
-protocol CrewDelegatingPresentableListener: AnyObject {}
+protocol CrewDelegatingPresentableListener: AnyObject {
+    func didGetDismissed()
+}
  
  
 
@@ -33,13 +36,36 @@ final class CrewDelegatingViewController: UIViewController {
     var activeFlow: (any ViewControllable)?
     
     
+    deinit {
+        VULogger.log("Deinitialized.")
+    }
+    
+    
     /// Customization point that is invoked after self enters the view hierarchy.
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.isModalInPresentation = true
+        
+        if let presentationController = presentationController as? UISheetPresentationController {
+            presentationController.detents = [
+                .medium(),
+                .large()
+            ]
+        }
+        
         guard hostingController != nil else {
             buildHostingController()
             return
+        }
+    }
+    
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        
+        if isBeingDismissed || isMovingFromParent {
+            presentableListener?.didGetDismissed()
         }
     }
     
@@ -82,7 +108,7 @@ extension CrewDelegatingViewController: CrewDelegatingViewControllable {
     /// and adds its view as a subview of the current view controller's view.
     /// - Note: The default implementation of this method REMOVES the previous `ViewControllable` from the view hierarchy.
     func transition(to newFlow: any ViewControllable, completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             
@@ -102,7 +128,7 @@ extension CrewDelegatingViewController: CrewDelegatingViewControllable {
     /// 
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             

@@ -43,6 +43,9 @@ protocol RoleAppropriationViewControllable: ViewControllable {
 final class RoleAppropriationRouter: ViewableRouter<RoleAppropriationInteractable, RoleAppropriationViewControllable> {
     
     
+    var activeRouting: Routing? = nil
+    
+    
     /// Constructs an instance of ``RoleAppropriationRouter``.
     /// - Parameter interactor: The interactor for this RIB.
     /// - Parameter viewController: The view controller for this RIB.
@@ -60,11 +63,15 @@ final class RoleAppropriationRouter: ViewableRouter<RoleAppropriationInteractabl
 extension RoleAppropriationRouter: RoleAppropriationRouting {
     
     
-    /// 
-    func provisionMemberScope(component: RoleAppropriationComponent) {
-        DispatchQueue.main.sync {
+    /// Transitions to role-scoped flow.
+    func provisionMemberScope(component: RoleAppropriationComponent, triggerNotification: FPNotificationDigest?) {
+        component.authorizationContextProxy.back(with: .init(role: .member))
+        
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             let builder = MemberRoleScopingBuilder(dependency: component)
-            let router = builder.build(withListener: interactor)
+            let router = builder.build(withListener: interactor, triggerNotification: triggerNotification)
+            self.activeRouting = router
             attachChild(router)
             
             viewController.transition(to: router.viewControllable, completion: nil)
@@ -72,10 +79,15 @@ extension RoleAppropriationRouter: RoleAppropriationRouting {
     }
     
     
-    func provisionCrewScope(component: RoleAppropriationComponent) {
-        DispatchQueue.main.sync {
+    /// Transitions to role-scoped flow.
+    func provisionCrewScope(component: RoleAppropriationComponent, triggerNotification: FPNotificationDigest?) {
+        component.authorizationContextProxy.back(with: .init(role: .crew))
+        
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             let builder = CrewRoleScopingBuilder(dependency: component)
-            let router = builder.build(withListener: interactor)
+            let router = builder.build(withListener: interactor, triggerNotification: triggerNotification)
+            self.activeRouting = router
             attachChild(router)
             
             viewController.transition(to: router.viewControllable, completion: nil)
@@ -83,14 +95,27 @@ extension RoleAppropriationRouter: RoleAppropriationRouting {
     }
     
     
-    func provisionManagementScope(component: RoleAppropriationComponent) {
-        DispatchQueue.main.sync {
+    /// Transitions to role-scoped flow.
+    func provisionManagementScope(component: RoleAppropriationComponent, triggerNotification: FPNotificationDigest?) {
+        component.authorizationContextProxy.back(with: .init(role: .management))
+        
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             let builder = ManagementRoleScopingBuilder(dependency: component)
-            let router = builder.build(withListener: interactor)
+            let router = builder.build(withListener: interactor, triggerNotification: triggerNotification)
+            self.activeRouting = router
             attachChild(router)
             
             viewController.transition(to: router.viewControllable, completion: nil)
         }
+    }
+    
+    
+    func cleanupViews() {
+        viewController.cleanUp(completion: nil)
+        guard let activeRouting else { return }
+        detachChild(activeRouting)
+        self.activeRouting = nil
     }
     
 }

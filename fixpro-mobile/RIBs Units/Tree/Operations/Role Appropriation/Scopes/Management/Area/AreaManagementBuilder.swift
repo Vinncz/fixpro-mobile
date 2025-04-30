@@ -4,7 +4,9 @@ import RIBs
 
 /// An empty set of properties. As the ancestral RIB, 
 /// `AreaManagementRIB` does not require any dependencies from its parent scope.
-protocol AreaManagementDependency: Dependency {}
+protocol AreaManagementDependency: Dependency {
+    var authorizationContext: FPRoleContext { get }
+}
 
 
 
@@ -16,6 +18,11 @@ final class AreaManagementComponent: Component<AreaManagementDependency> {
     /// Constructs a singleton instance of ``AreaManagementViewController``.
     var areaManagementViewController: AreaManagementViewControllable & AreaManagementPresentable {
         shared { AreaManagementViewController() }
+    }
+    
+    
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
     }
     
 }

@@ -1,4 +1,5 @@
 import RIBs
+import VinUtility
 import RxSwift
 
 
@@ -31,7 +32,9 @@ protocol WorkEvaluatingPresentable: Presentable {
 
 /// Contract adhered to by the Interactor of `WorkEvaluatingRIB`'s parent, listing the attributes and/or actions
 /// that ``WorkEvaluatingInteractor`` is allowed to access or invoke.
-protocol WorkEvaluatingListener: AnyObject {}
+protocol WorkEvaluatingListener: AnyObject {
+    func didDismissWorkEvaluating()
+}
 
 
 
@@ -56,15 +59,24 @@ final class WorkEvaluatingInteractor: PresentableInteractor<WorkEvaluatingPresen
     private var viewModel = WorkEvaluatingSwiftUIViewModel()
     
     
+    var logs: [FPTicketLog]
+    
+    
     /// Constructs an instance of ``WorkEvaluatingInteractor``.
     /// - Parameter component: The component of this RIB.
-    init(component: WorkEvaluatingComponent) {
+    init(component: WorkEvaluatingComponent, workLogs: [FPTicketLog]) {
         self.component = component
-        let presenter = component.workEvaluatingViewController
+        self.logs = workLogs
         
+        let presenter = component.workEvaluatingViewController
         super.init(presenter: presenter)
         
         presenter.presentableListener = self
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
     }
     
     
@@ -83,7 +95,16 @@ final class WorkEvaluatingInteractor: PresentableInteractor<WorkEvaluatingPresen
     
     /// Configures the view model.
     private func configureViewModel() {
-        // TODO: Configure the view model.
+        viewModel.workProgressLogs = logs
+        viewModel.didIntendToDismiss = { [weak self] in
+            self?.didGetDismissed()
+        }
+        viewModel.didIntendToApprove = { [weak self] in 
+            // TODO: Add logic
+        }
+        viewModel.didIntendToReject = { [weak self] in 
+            // TODO: Add logic
+        }
         presenter.bind(viewModel: self.viewModel)
     }
     
@@ -93,4 +114,8 @@ final class WorkEvaluatingInteractor: PresentableInteractor<WorkEvaluatingPresen
 
 /// Conformance to the ``WorkEvaluatingPresentableListener`` protocol.
 /// Contains everything accessible or invokable by ``WorkEvaluatingViewController``.
-extension WorkEvaluatingInteractor: WorkEvaluatingPresentableListener {}
+extension WorkEvaluatingInteractor: WorkEvaluatingPresentableListener {
+    func didGetDismissed() {
+        listener?.didDismissWorkEvaluating()
+    }
+}

@@ -56,4 +56,11 @@ final class NewTicketRouter: ViewableRouter<NewTicketInteractable, NewTicketView
 
 /// Conformance extension to the ``NewTicketRouting`` protocol.
 /// Contains everything accessible or invokable by ``NewTicketInteractor``.
-extension NewTicketRouter: NewTicketRouting {}
+extension NewTicketRouter: NewTicketRouting {
+    
+    
+    func dismiss() {
+        viewController.uiviewController.dismiss(animated: true)
+    }
+    
+}

@@ -1,4 +1,5 @@
 import FirebaseCore
+import RIBs
 import FirebaseMessaging
 import UIKit
 import VinUtility
@@ -87,4 +88,30 @@ extension AppDelegate {
     /// Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {}
     
+}
+
+
+
+import SwiftData
+
+@MainActor
+final class AppModelContainer {
+    static let shared = AppModelContainer()
+
+    let container: ModelContainer
+
+    private init() {
+        do {
+            container = try ModelContainer(
+                for: FPLightweightIssueTicket.self,
+                configurations: ModelConfiguration(for: FPLightweightIssueTicket.self)
+            )
+        } catch {
+            fatalError("Failed to set up SwiftData container: \(error)")
+        }
+    }
+
+    var context: ModelContext {
+        container.mainContext
+    }
 }

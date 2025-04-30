@@ -6,7 +6,6 @@ import VinUtility
 /// An empty set of properties. As the ancestral RIB, 
 /// `OperationsRIB` does not require any dependencies from its parent scope.
 protocol OperationsDependency: Dependency {
-    var operationsViewController: OperationsViewControllable { get }
     var keychainStorageServicing: any FPTextStorageServicing { get }
     
     var networkingClientProxy: any VUProxy<FPNetworkingClient> { get }
@@ -21,11 +20,6 @@ protocol OperationsDependency: Dependency {
 /// Concrete implementation of the ``OperationsDependency`` protocol. 
 /// Provides dependencies needed by all RIBs that will ever attach themselves to ``OperationsRouter``.
 final class OperationsComponent: Component<OperationsDependency> {
-    
-    
-    var operationsViewController: OperationsViewControllable & OperationsPresentable {
-        shared { OperationsViewController() }
-    }
     
     
     var keychainStorageServicing: any FPTextStorageServicing {
@@ -57,7 +51,14 @@ final class OperationsComponent: Component<OperationsDependency> {
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension OperationsComponent: RoleAppropriationDependency {}
+extension OperationsComponent: RoleAppropriationDependency {
+    
+    
+    var locationBeacon: VULocationBeacon {
+        shared { VULocationBeacon() }
+    }
+    
+}
 
 
 
@@ -88,13 +89,15 @@ final class OperationsBuilder: Builder<OperationsDependency>, OperationsBuildabl
     /// Constructs the `OperationsRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
     func build(withListener listener: OperationsListener, triggerNotification: FPNotificationDigest?) -> OperationsRouting {
-        let component  = OperationsComponent(dependency: dependency)
-        let interactor = OperationsInteractor(component: component, triggerNotification: triggerNotification)
-            interactor.listener = listener
+        let viewController = OperationsViewController()
+        let component = OperationsComponent(dependency: dependency)
+        let interactor = OperationsInteractor(component: component, presenter: viewController, triggerNotification: triggerNotification)
+        
+        interactor.listener = listener
         
         return OperationsRouter(
             interactor: interactor, 
-            viewController: component.operationsViewController,
+            viewController: viewController,
             roleAppropriationBuilder: RoleAppropriationBuilder(dependency: component)
         )
     }

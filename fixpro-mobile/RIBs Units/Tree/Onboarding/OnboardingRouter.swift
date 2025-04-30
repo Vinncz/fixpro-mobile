@@ -37,7 +37,7 @@ protocol OnboardingViewControllable: ViewControllable {
     
     
     func present(_ flow: ViewControllable)
-    func dismiss()
+    func dismiss(withoutDetachingView: Bool)
     
 }
 
@@ -83,7 +83,7 @@ extension OnboardingRouter: OnboardingRouting {
         
         VULogger.log("Detached AreaJoinningRIB")
         
-        self.viewController.dismiss()
+        self.viewController.dismiss(withoutDetachingView: true)
         self.detachChild(areaJoinningRouter)
         self.areaJoinningRouter = nil
     }

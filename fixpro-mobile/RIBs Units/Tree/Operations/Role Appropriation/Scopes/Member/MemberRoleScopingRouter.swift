@@ -7,7 +7,7 @@ import UIKit
 /// that ``MemberRoleScopingRouter`` is allowed to access or invoke.
 /// 
 /// Conform this `Interactable` protocol with this RIB's children's `Listener` protocols.
-protocol MemberRoleScopingInteractable: Interactable, TicketListsListener, NewTicketListener, InboxListener, PreferencesListener {
+protocol MemberRoleScopingInteractable: Interactable, TicketNavigatorListener, NewTicketListener, InboxNavigatorListener, PreferencesListener {
     
     
     /// Reference to ``MemberRoleScopingRouter``.
@@ -33,14 +33,14 @@ protocol MemberRoleScopingViewControllable: ViewControllable {
 final class MemberRoleScopingRouter: ViewableRouter<MemberRoleScopingInteractable, MemberRoleScopingViewControllable> {
     
     
-    var ticketListBuilder: TicketListsBuildable
-    var ticketListRouter: TicketListsRouting?
+    var ticketNavigatorBuilder: TicketNavigatorBuildable
+    var ticketNavigatorRouter: TicketNavigatorRouting?
     
     var newTicketBuilder: NewTicketBuildable
     var newTicketRouter: NewTicketRouting?
     
-    var inboxBuilder: InboxBuildable
-    var inboxRouter: InboxRouting?
+    var inboxNavigatorBuilder: InboxNavigatorBuildable
+    var inboxNavigatorRouter: InboxNavigatorRouting?
     
     var preferencesBuilder: PreferencesBuildable
     var preferencesRouter: PreferencesRouting?
@@ -49,10 +49,10 @@ final class MemberRoleScopingRouter: ViewableRouter<MemberRoleScopingInteractabl
     /// Constructs an instance of ``MemberRoleScopingRouter``.
     /// - Parameter interactor: The interactor for this RIB.
     /// - Parameter viewController: The view controller for this RIB.
-    init(interactor: MemberRoleScopingInteractable, viewController: MemberRoleScopingViewControllable, ticketListBuilder: TicketListsBuildable, newTicketBuilder: NewTicketBuildable, inboxBuilder: InboxBuildable, preferencesBuilder: PreferencesBuildable) {
-        self.ticketListBuilder = ticketListBuilder
+    init(interactor: MemberRoleScopingInteractable, viewController: MemberRoleScopingViewControllable, ticketNavigatorBuilder: TicketNavigatorBuildable, newTicketBuilder: NewTicketBuildable, inboxNavigatorBuilder: InboxNavigatorBuildable, preferencesBuilder: PreferencesBuildable) {
+        self.ticketNavigatorBuilder = ticketNavigatorBuilder
         self.newTicketBuilder = newTicketBuilder
-        self.inboxBuilder = inboxBuilder
+        self.inboxNavigatorBuilder = inboxNavigatorBuilder
         self.preferencesBuilder = preferencesBuilder
         
         super.init(interactor: interactor, viewController: viewController)
@@ -65,13 +65,9 @@ final class MemberRoleScopingRouter: ViewableRouter<MemberRoleScopingInteractabl
     override func didLoad() {
         super.didLoad()
         
-        let ticketNav = UINavigationController()
-        let ticketListRouter = ticketListBuilder.build(withListener: interactor)
-        let ticketListRouterUITabBarItem = UITabBarItem(title: "Tickets", image: UIImage(systemName: "ticket"), selectedImage: UIImage(systemName: "ticket.fill"))
-        ticketListRouter.viewControllable.uiviewController.tabBarItem = ticketListRouterUITabBarItem
-        ticketNav.viewControllers = [ticketListRouter.viewControllable.uiviewController]
-        self.ticketListRouter = ticketListRouter
-        attachChild(ticketListRouter)
+        let ticketNavigatorRouter = ticketNavigatorBuilder.build(withListener: interactor)
+        self.ticketNavigatorRouter = ticketNavigatorRouter
+        attachChild(ticketNavigatorRouter)
         
         let nonViewOwningButton = UIViewController()
         nonViewOwningButton.tabBarItem = UITabBarItem(title: "New", image: UIImage(systemName: "plus.circle.fill"), tag: .MODALLY_PRESENTED_VIEW_CONTROLLER)
@@ -79,13 +75,9 @@ final class MemberRoleScopingRouter: ViewableRouter<MemberRoleScopingInteractabl
         self.newTicketRouter = newTicketRouter
         attachChild(newTicketRouter)
         
-        let inboxNav = UINavigationController()
-        let inboxRouter = inboxBuilder.build(withListener: interactor)
-        let inboxRouterUITabBarItem = UITabBarItem(title: "Inbox", image: UIImage(systemName: "bell"), selectedImage: UIImage(systemName: "bell.fill"))
-        inboxRouter.viewControllable.uiviewController.tabBarItem = inboxRouterUITabBarItem
-        inboxNav.viewControllers = [inboxRouter.viewControllable.uiviewController]
-        self.inboxRouter = inboxRouter
-        attachChild(inboxRouter)
+        let inboxNavigatorRouter = inboxNavigatorBuilder.build(withListener: interactor)
+        self.inboxNavigatorRouter = inboxNavigatorRouter
+        attachChild(inboxNavigatorRouter)
         
         let preferencesNav = UINavigationController()
         let preferencesRouter = preferencesBuilder.build(withListener: interactor)
@@ -96,7 +88,10 @@ final class MemberRoleScopingRouter: ViewableRouter<MemberRoleScopingInteractabl
         attachChild(preferencesRouter)
         
         (viewControllable.uiviewController as? UITabBarController)?.viewControllers = [
-            ticketNav, nonViewOwningButton, inboxNav, preferencesNav
+            ticketNavigatorRouter.viewControllable.uiviewController, 
+            nonViewOwningButton, 
+            inboxNavigatorRouter.viewControllable.uiviewController, 
+            preferencesNav
         ]
         
         viewController.newTicketViewController = {

@@ -6,7 +6,7 @@ struct AppConfig {
     
     
     
-//    static let environment: FPAppEnvironment: =
+    static let environment: FPAppEnvironment = .preview
     
 }
 

@@ -1,4 +1,5 @@
 import Foundation
+import VinUtility
 import RIBs
 import RxSwift
 import SnapKit
@@ -37,10 +38,19 @@ final class PreferencesViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.title = "Preferences"
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+        
         guard hostingController != nil else {
             buildHostingController()
             return
         }
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
     }
     
     
@@ -82,7 +92,7 @@ extension PreferencesViewController: PreferencesViewControllable {
     /// and adds its view as a subview of the current view controller's view.
     /// - Note: The default implementation of this method REMOVES the previous `ViewControllable` from the view hierarchy.
     func transition(to newFlow: any ViewControllable, completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             
@@ -102,7 +112,7 @@ extension PreferencesViewController: PreferencesViewControllable {
     /// 
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
             

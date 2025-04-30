@@ -33,12 +33,14 @@ final class AreaJoinningRouter: ViewableRouter<AreaJoinningInteractable, AreaJoi
     
     
     private let areaJoinningCodeScanningBuilder: AreaJoinningCodeScanningBuildable
-    private let areaJoinningFormFillingBuilder: AreaJoinningFormFillingBuildable
-    private let areaJoinningCTAShowingBuilder: AreaJoinningCTAShowingBuildable
-    
     private var areaJoinningCodeScanningRouter: AreaJoinningCodeScanningRouting? = nil
+    
+    private let areaJoinningFormFillingBuilder: AreaJoinningFormFillingBuildable
     private var areaJoinningFormFillingRouter: AreaJoinningFormFillingRouting? = nil
+    
+    private let areaJoinningCTAShowingBuilder: AreaJoinningCTAShowingBuildable
     private var areaJoinningCTAShowingRouter: AreaJoinningCTAShowingRouting? = nil
+    
     
     private var activeStep: Routing? = nil
     
@@ -89,7 +91,7 @@ extension AreaJoinningRouter: AreaJoinningRouting {
     
     // MARK: -- Code Scan Flow
     func walkBackFromCodeScan () {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
             guard let areaJoinningCodeScanningRouter else { return }
             self.detachChild(areaJoinningCodeScanningRouter)
             self.areaJoinningCodeScanningRouter = nil
@@ -104,7 +106,7 @@ extension AreaJoinningRouter: AreaJoinningRouting {
     
     // MARK: -- Entry Request Form Flow
     func stepToEntryRequestForm (withFieldsOf fields: [String]) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
             guard areaJoinningFormFillingRouter == nil else { return }
             
             let areaJoinningFormFillingRouter = areaJoinningFormFillingBuilder.build(withListener: self.interactor, fields: fields)
@@ -119,7 +121,7 @@ extension AreaJoinningRouter: AreaJoinningRouting {
     }
     
     func walkBackFromEntryRequestForm () {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
             guard let areaJoinningFormFillingRouter else { return }
             guard let navcon = self.viewController.uiviewController as? UINavigationController else { return }
             navcon.popToRootViewController(animated: true)
@@ -134,7 +136,7 @@ extension AreaJoinningRouter: AreaJoinningRouting {
     
     // MARK: -- Post Signup CTA Flow
     func stepToPostSignupCTA() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
             let areaJoinningCTAShowingRouter = areaJoinningCTAShowingBuilder.build(withListener: self.interactor)
             self.areaJoinningCTAShowingRouter = areaJoinningCTAShowingRouter
             
@@ -147,7 +149,7 @@ extension AreaJoinningRouter: AreaJoinningRouting {
     }
     
     func dismissPostSignupCTAFlow() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
             guard let areaJoinningCTAShowingRouter else { return }
             self.detachChild(areaJoinningCTAShowingRouter)
             self.areaJoinningCTAShowingRouter = nil

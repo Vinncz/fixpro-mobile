@@ -1,4 +1,5 @@
 import Foundation
+import VinUtility
 import RIBs
 import RxSwift
 import UIKit
@@ -31,6 +32,12 @@ final class CrewRoleScopingViewController: UITabBarController {
     override func viewDidLoad() {
         delegate = self
         super.viewDidLoad()
+        hidesBottomBarWhenPushed = true
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
     }
     
 }

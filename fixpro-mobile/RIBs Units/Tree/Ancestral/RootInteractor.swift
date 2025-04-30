@@ -1,7 +1,6 @@
 import RIBs
-import VinUtility
-import OpenAPIURLSession
 import RxSwift
+import VinUtility
 
 
 
@@ -10,6 +9,7 @@ import RxSwift
 protocol RootRouting: ViewableRouting {
     func operationalFlow(fromNotification: FPNotificationDigest?)
     func onboardingFlow()
+    func clearAllFlows()
 }
 
 
@@ -51,9 +51,8 @@ final class RootInteractor: PresentableInteractor<RootPresentable>, RootInteract
     
     /// Constructs an instance of ``RootInteractor``.
     /// - Parameter component: The component of this RIB.
-    init(component: RootComponent) {
+    init(component: RootComponent, presenter: RootPresentable) {
         self.component = component
-        let presenter = component.rootViewController
         
         super.init(presenter: presenter)
         
@@ -68,10 +67,6 @@ final class RootInteractor: PresentableInteractor<RootPresentable>, RootInteract
     /// Customization point that is invoked after self becomes active.
     override func didBecomeActive() {
         super.didBecomeActive()
-        
-//        component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPSESSION_IDENTITY_MEMENTO_SNAPSHOT)
-//        component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_NETWORKING_CLIENT_MEMENTO_SNAPSHOT)
-//        component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPONBOARDINGSERVICE_MEMENTO_SNAPSHOT)
         
         switch component.bootstrappedVerifierService.verifyBootstrapped() {
         case .success(let snapshots):
@@ -124,7 +119,9 @@ final class RootInteractor: PresentableInteractor<RootPresentable>, RootInteract
     }
     
     
+    /// Routes to a destination specified by the notification digest.
     /// 
+    /// - Parameter notification: The notification responsible for citing deeplinking.
     func deeplink(notification: FPNotificationDigest) {
         guard isBootstrapped else { return }
         
@@ -148,16 +145,18 @@ extension RootInteractor {
     /// - ``RootComponent/sessionIdentityServiceMementoAgentProxy`` is operational.
     func didFinishPairing() {
         guard
-            component.networkingClientProxy.isBacked,
-            component.sessionIdentityServiceProxy.isBacked,
-            component.sessionIdentityServiceMementoAgentProxy.isBacked,
+            component.networkingClientProxy.isBacked &&
+            component.sessionIdentityServiceProxy.isBacked &&
+            component.sessionIdentityServiceMementoAgentProxy.isBacked &&
             component.sessionIdentityUpkeeperProxy.isBacked
         else { 
             VULogger.log(tag: .critical, "Not all required proxies have been initialized. Solve this in debug before going to production.")
+            VULogger.log(component.networkingClientProxy.isBacked, component.sessionIdentityServiceProxy.isBacked, component.sessionIdentityServiceMementoAgentProxy.isBacked, component.sessionIdentityUpkeeperProxy.isBacked)
             return 
         }
         
         isBootstrapped = true
+        router?.clearAllFlows()
         router?.operationalFlow(fromNotification: nil)
     }
     
@@ -173,7 +172,8 @@ extension RootInteractor {
     /// Detaches the `OperationsRIB` and replaces it with `OnboardingRIB`.
     /// 
     /// The RIB who invoked this method MUST ensure the cleanup of every last traces of pairing.
-    func didLogOut() {
+    func didIntendLogOut() {
+        router?.clearAllFlows()
         isBootstrapped = false
         router?.onboardingFlow()
     }

@@ -1,11 +1,14 @@
 import RIBs
+import VinUtility
 import RxSwift
 
 
 
 /// Contract adhered to by ``ManagementRoleScopingRouter``, listing the attributes and/or actions 
 /// that ``ManagementRoleScopingInteractor`` is allowed to access or invoke.
-protocol ManagementRoleScopingRouting: ViewableRouting {}
+protocol ManagementRoleScopingRouting: ViewableRouting {
+    var ticketNavigatorRouter: TicketNavigatorRouting? { get }
+}
 
 
 
@@ -23,7 +26,9 @@ protocol ManagementRoleScopingPresentable: Presentable {
 
 /// Contract adhered to by the Interactor of `ManagementRoleScopingRIB`'s parent, listing the attributes and/or actions
 /// that ``ManagementRoleScopingInteractor`` is allowed to access or invoke.
-protocol ManagementRoleScopingListener: AnyObject {}
+protocol ManagementRoleScopingListener: AnyObject {
+    func didIntendToLogOut()
+}
 
 
 
@@ -44,11 +49,15 @@ final class ManagementRoleScopingInteractor: PresentableInteractor<ManagementRol
     var component: ManagementRoleScopingComponent
     
     
+    /// Others.
+    var triggerNotification: FPNotificationDigest?
+    
+    
     /// Constructs an instance of ``ManagementRoleScopingInteractor``.
     /// - Parameter component: The component of this RIB.
-    init(component: ManagementRoleScopingComponent) {
+    init(component: ManagementRoleScopingComponent, presenter: ManagementRoleScopingPresentable, triggerNotification: FPNotificationDigest?) {
         self.component = component
-        let presenter = component.managementRoleScopingViewController
+        self.triggerNotification = triggerNotification
         
         super.init(presenter: presenter)
         
@@ -65,6 +74,22 @@ final class ManagementRoleScopingInteractor: PresentableInteractor<ManagementRol
     /// Customization point that is invoked before self is detached.
     override func willResignActive() {
         super.willResignActive()
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
+    }
+    
+}
+
+
+
+extension ManagementRoleScopingInteractor {
+    
+    
+    func didIntendToLogOut() {
+        listener?.didIntendToLogOut()
     }
     
 }

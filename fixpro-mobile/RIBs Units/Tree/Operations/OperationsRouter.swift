@@ -36,6 +36,10 @@ protocol OperationsViewControllable: ViewControllable {
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?)
     
+    
+    /// Removes the hosting controller from the view hierarchy and deallocates it.
+    func nilHostingViewController()
+    
 }
 
 
@@ -66,16 +70,37 @@ final class OperationsRouter: ViewableRouter<OperationsInteractable, OperationsV
 extension OperationsRouter: OperationsRouting {
     
     
-    func routeToRoleAppropriation(fromNotification: FPNotificationDigest? = nil) {
-        guard roleAppropriationRouter == nil else { return }
-        
-        VULogger.log("Routing to RoleAppropriation")
-        
-        let roleAppropriationRouter = roleAppropriationBuilder.build(withListener: interactor)
-        self.roleAppropriationRouter = roleAppropriationRouter
-        
-        attachChild(roleAppropriationRouter)
-        self.viewController.transition(to: roleAppropriationRouter.viewControllable, completion: nil)
+    func routeToRoleAppropriation(fromNotification notif: FPNotificationDigest? = nil) {
+        Task { @MainActor in
+            guard roleAppropriationRouter == nil else { return }
+            
+            VULogger.log("Routing to RoleAppropriation")
+            
+            let roleAppropriationRouter = roleAppropriationBuilder.build(withListener: interactor, triggerNotification: notif)
+            self.roleAppropriationRouter = roleAppropriationRouter
+            
+            attachChild(roleAppropriationRouter)
+            self.viewController.transition(to: roleAppropriationRouter.viewControllable, completion: nil)
+        }
+    }
+    
+    
+    func cleanupViews() {
+        Task { @MainActor in
+            guard let roleAppropriationRouter else { return }
+            
+            VULogger.log("Detaching role appropriation")
+            viewController.cleanUp(completion: nil)
+            
+            detachChild(roleAppropriationRouter)
+            
+            self.roleAppropriationRouter = nil
+        }
+    }
+    
+    
+    func removeSwiftUI() {
+        viewController.nilHostingViewController()
     }
     
 }

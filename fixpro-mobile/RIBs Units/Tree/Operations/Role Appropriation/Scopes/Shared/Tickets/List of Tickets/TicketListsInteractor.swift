@@ -1,5 +1,7 @@
+import Foundation
 import RIBs
 import RxSwift
+import VinUtility
 
 
 
@@ -18,6 +20,10 @@ protocol TicketListsPresentable: Presentable {
     var presentableListener: TicketListsPresentableListener? { get set }
     
     
+    /// Reference to the view model.
+    var viewModel: TicketListsSwiftUIViewModel? { get set }
+    
+    
     /// Binds the view model to the view.
     func bind(viewModel: TicketListsSwiftUIViewModel)
     
@@ -31,7 +37,9 @@ protocol TicketListsPresentable: Presentable {
 
 /// Contract adhered to by the Interactor of `TicketListsRIB`'s parent, listing the attributes and/or actions
 /// that ``TicketListsInteractor`` is allowed to access or invoke.
-protocol TicketListsListener: AnyObject {}
+protocol TicketListsListener: AnyObject {
+    func navigateToTicketDetail(forId ticketId: String)
+}
 
 
 
@@ -52,10 +60,6 @@ final class TicketListsInteractor: PresentableInteractor<TicketListsPresentable>
     var component: TicketListsComponent
     
     
-    /// Bridge to the ``TicketListsSwiftUIVIew``.
-    private var viewModel = TicketListsSwiftUIViewModel()
-    
-    
     /// Constructs an instance of ``TicketListsInteractor``.
     /// - Parameter component: The component of this RIB.
     init(component: TicketListsComponent) {
@@ -72,6 +76,9 @@ final class TicketListsInteractor: PresentableInteractor<TicketListsPresentable>
     override func didBecomeActive() {
         super.didBecomeActive()
         configureViewModel()
+        Task { @MainActor in
+            presenter.viewModel?.tickets = try await self.fetchTicketList().get()
+        }
     }
     
     
@@ -81,10 +88,68 @@ final class TicketListsInteractor: PresentableInteractor<TicketListsPresentable>
     }
     
     
+    deinit {
+        VULogger.log("Deinitialized.")
+    }
+    
+    
     /// Configures the view model.
     private func configureViewModel() {
-        // TODO: Configure the view model.
-        presenter.bind(viewModel: self.viewModel)
+        let viewModel = TicketListsSwiftUIViewModel(
+            roleContext: component.authorizationContext, 
+            tickets: [/* TODO: fetch from cache */], 
+            didIntendToRefreshTicketList: {}, 
+            didTapTicket: { [weak self] ticket in
+                self?.listener?.navigateToTicketDetail(forId: ticket.id)
+            }
+        )
+        
+        viewModel.didIntendToRefreshTicketList = { [weak self] in 
+            guard let self else { return }
+            if let tickets = try? await self.fetchTicketList().get() {
+                viewModel.tickets = tickets
+            }
+        }
+        
+        presenter.bind(viewModel: viewModel)
+    }
+    
+}
+
+
+
+extension TicketListsInteractor {
+    
+    
+    func fetchTicketList() async -> Result<[FPLightweightIssueTicket], FPError> {
+        do {
+            let attemptedRequest = try await component.networkingClient.gateway.getTickets(.init(headers: .init(accept: [.init(contentType: .json)])))
+            
+            switch attemptedRequest {
+                case .ok(let response): 
+                    let encoder = JSONEncoder()
+                    let decoder = JSONDecoder()
+                    let encodedResponse = try encoder.encode(response.body.json.data)
+                    let decodedResponse = try decoder.decode([FPLightweightIssueTicketDTO].self, from: encodedResponse)
+                    
+                    return .success(decodedResponse.map { $0.toDomainModel() })
+                    
+                case .undocumented(statusCode: let code, let payload):
+                    VULogger.log(tag: .error, "\(code) -- \(payload)")
+                    return .failure(.UNEXPECTED_RESPONSE)
+            }
+            
+        } catch {
+            VULogger.log(tag: .error, error)
+            return .failure(.UNREACHABLE)
+            
+        }
+    }
+    
+    
+    func didMake(ticket: FPLightweightIssueTicket) {
+        presenter.viewModel?.tickets.append(ticket)
+        VULogger.log("Did append the new ticket to the viewmodel")
     }
     
 }

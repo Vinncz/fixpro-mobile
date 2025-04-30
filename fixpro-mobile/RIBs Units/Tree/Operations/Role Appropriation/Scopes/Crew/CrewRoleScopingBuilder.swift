@@ -1,10 +1,16 @@
+import Foundation
 import RIBs
+import VinUtility
 
 
 
 /// A set of properties that are required by `CrewRoleScopingRIB` to function, 
 /// supplied from the scope of its parent.
-protocol CrewRoleScopingDependency: Dependency {}
+protocol CrewRoleScopingDependency: Dependency {
+    var authorizationContext: FPRoleContext { get }
+    var locationBeacon: VULocationBeacon { get }
+    var networkingClient: FPNetworkingClient { get }
+}
 
 
 
@@ -13,9 +19,18 @@ protocol CrewRoleScopingDependency: Dependency {}
 final class CrewRoleScopingComponent: Component<CrewRoleScopingDependency> {
     
     
-    /// Constructs a singleton instance of ``CrewRoleScopingViewController``.
-    var crewRoleScopingViewController: CrewRoleScopingViewControllable & CrewRoleScopingPresentable {
-        shared { CrewRoleScopingViewController() }
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
+    }
+    
+    
+    var locationBeacon: VULocationBeacon {
+        dependency.locationBeacon
+    }
+    
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }
@@ -23,7 +38,7 @@ final class CrewRoleScopingComponent: Component<CrewRoleScopingDependency> {
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension CrewRoleScopingComponent: TicketListsDependency, WorkCalendarDependency, NewTicketDependency, InboxDependency, PreferencesDependency {}
+extension CrewRoleScopingComponent: TicketNavigatorDependency, WorkCalendarDependency, NewTicketDependency, InboxNavigatorDependency, PreferencesDependency {}
 
 
 
@@ -34,7 +49,7 @@ protocol CrewRoleScopingBuildable: Buildable {
     
     /// Constructs the `CrewRoleScopingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: CrewRoleScopingListener) -> CrewRoleScopingRouting
+    func build(withListener listener: CrewRoleScopingListener, triggerNotification: FPNotificationDigest?) -> CrewRoleScopingRouting
     
 }
 
@@ -53,18 +68,19 @@ final class CrewRoleScopingBuilder: Builder<CrewRoleScopingDependency>, CrewRole
     
     /// Constructs the `CrewRoleScopingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: CrewRoleScopingListener) -> CrewRoleScopingRouting {
+    func build(withListener listener: CrewRoleScopingListener, triggerNotification: FPNotificationDigest?) -> CrewRoleScopingRouting {
+        let viewController = CrewRoleScopingViewController()
         let component  = CrewRoleScopingComponent(dependency: dependency)
-        let interactor = CrewRoleScopingInteractor(component: component)
-            interactor.listener = listener
+        let interactor = CrewRoleScopingInteractor(component: component, presenter: viewController, triggerNotification: triggerNotification)
+        interactor.listener = listener
         
         return CrewRoleScopingRouter(
             interactor: interactor, 
-            viewController: component.crewRoleScopingViewController,
-            ticketListBuilder: TicketListsBuilder(dependency: component),
+            viewController: viewController,
+            ticketNavigatorBuilder: TicketNavigatorBuilder(dependency: component),
             workCalendarBuilder: WorkCalendarBuilder(dependency: component),
             newTicketBuilder: NewTicketBuilder(dependency: component),
-            inboxBuilder: InboxBuilder(dependency: component),
+            inboxNavigatorBuilder: InboxNavigatorBuilder(dependency: component),
             preferencesBuilder: PreferencesBuilder(dependency: component)
         )
     }

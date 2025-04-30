@@ -15,11 +15,6 @@ extension EmptyComponent: RootDependency {}
 final class RootComponent: Component<RootDependency> {
     
     
-    var rootViewController: RootViewControllable & RootPresentable & OperationsViewControllable {
-        shared { RootViewController() }
-    }
-    
-    
     /// Keychain storage.
     var keychainStorageServicing: any FPTextStorageServicing {
         shared { FPKeychainQueristServiceFPTextStorageServicingAdapter(FPKeychainQueristService()) }
@@ -63,11 +58,6 @@ final class RootComponent: Component<RootDependency> {
 extension RootComponent: OnboardingDependency, OperationsDependency {
     
     
-    var operationsViewController: any OperationsViewControllable {
-        rootViewController
-    }
-    
-    
     var sessionIdentityService: any FPSessionIdentityServicing {
         sessionIdentityServiceProxy.backing!
     }
@@ -108,12 +98,13 @@ final class RootBuilder: Builder<RootDependency>, RootBuildable {
     
     /// Constructs the `RootRIB`.
     func build() -> LaunchRouting {
+        let viewController = RootViewController()
         let component  = RootComponent(dependency: dependency)
-        let interactor = RootInteractor(component: component)
+        let interactor = RootInteractor(component: component, presenter: viewController)
         
         return RootRouter(
             interactor: interactor, 
-            viewController: component.rootViewController,
+            viewController: viewController,
             onboardingBuilder: OnboardingBuilder(dependency: component),
             operationsBuilder: OperationsBuilder(dependency: component)
         )

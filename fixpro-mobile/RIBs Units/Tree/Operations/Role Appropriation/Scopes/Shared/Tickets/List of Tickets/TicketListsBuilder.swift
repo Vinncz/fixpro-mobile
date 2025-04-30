@@ -4,7 +4,10 @@ import RIBs
 
 /// An empty set of properties. As the ancestral RIB, 
 /// `TicketListsRIB` does not require any dependencies from its parent scope.
-protocol TicketListsDependency: Dependency {}
+protocol TicketListsDependency: Dependency {
+    var authorizationContext: FPRoleContext { get }
+    var networkingClient: FPNetworkingClient { get }
+}
 
 
 
@@ -16,6 +19,16 @@ final class TicketListsComponent: Component<TicketListsDependency> {
     /// Constructs a singleton instance of ``TicketListsViewController``.
     var ticketListsViewController: TicketListsViewControllable & TicketListsPresentable {
         shared { TicketListsViewController() }
+    }
+    
+    
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
+    }
+    
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }

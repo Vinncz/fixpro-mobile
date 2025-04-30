@@ -40,4 +40,13 @@ extension FPError {
         ]
     )
     
+    static let EXPIRED_REFRESH_TOKEN = FPError(
+        name: "EXPIRED_REFRESH_TOKEN",
+        code: 0b0000_0100,
+        domain: .Custom,
+        userInfo: [
+            :
+        ]
+    )
+    
 }

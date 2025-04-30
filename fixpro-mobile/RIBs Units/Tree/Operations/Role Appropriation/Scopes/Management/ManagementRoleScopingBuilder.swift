@@ -1,10 +1,14 @@
+import Foundation
 import RIBs
 
 
 
 /// A set of properties that are required by `ManagementRoleScopingRIB` to function, 
 /// supplied from the scope of its parent.
-protocol ManagementRoleScopingDependency: Dependency {}
+protocol ManagementRoleScopingDependency: Dependency {
+    var authorizationContext: FPRoleContext { get }
+    var networkingClient: FPNetworkingClient { get }
+}
 
 
 
@@ -13,9 +17,13 @@ protocol ManagementRoleScopingDependency: Dependency {}
 final class ManagementRoleScopingComponent: Component<ManagementRoleScopingDependency> {
     
     
-    /// Constructs a singleton instance of ``ManagementRoleScopingViewController``.
-    var managementRoleScopingViewController: ManagementRoleScopingViewControllable & ManagementRoleScopingPresentable {
-        shared { ManagementRoleScopingViewController() }
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
+    }
+    
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }
@@ -23,7 +31,7 @@ final class ManagementRoleScopingComponent: Component<ManagementRoleScopingDepen
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension ManagementRoleScopingComponent: TicketListsDependency, WorkCalendarDependency, AreaManagementDependency, InboxDependency, PreferencesDependency {}
+extension ManagementRoleScopingComponent: TicketNavigatorDependency, WorkCalendarDependency, AreaManagementDependency, InboxNavigatorDependency, PreferencesDependency {}
 
 
 
@@ -34,7 +42,7 @@ protocol ManagementRoleScopingBuildable: Buildable {
     
     /// Constructs the `ManagementRoleScopingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: ManagementRoleScopingListener) -> ManagementRoleScopingRouting
+    func build(withListener listener: ManagementRoleScopingListener, triggerNotification: FPNotificationDigest?) -> ManagementRoleScopingRouting
     
 }
 
@@ -53,18 +61,19 @@ final class ManagementRoleScopingBuilder: Builder<ManagementRoleScopingDependenc
     
     /// Constructs the `ManagementRoleScopingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: ManagementRoleScopingListener) -> ManagementRoleScopingRouting {
+    func build(withListener listener: ManagementRoleScopingListener, triggerNotification: FPNotificationDigest?) -> ManagementRoleScopingRouting {
+        let viewController = ManagementRoleScopingViewController()
         let component  = ManagementRoleScopingComponent(dependency: dependency)
-        let interactor = ManagementRoleScopingInteractor(component: component)
+        let interactor = ManagementRoleScopingInteractor(component: component, presenter: viewController, triggerNotification: triggerNotification)
             interactor.listener = listener
         
         return ManagementRoleScopingRouter(
             interactor: interactor, 
-            viewController: component.managementRoleScopingViewController,
-            ticketListBuilder: TicketListsBuilder(dependency: component),
+            viewController: viewController,
+            ticketNavigatorBuilder: TicketNavigatorBuilder(dependency: component),
             workCalendarBuilder: WorkCalendarBuilder(dependency: component),
             areaManagementBuilder: AreaManagementBuilder(dependency: component),
-            inboxBuilder: InboxBuilder(dependency: component),
+            inboxNavigatorBuilder: InboxNavigatorBuilder(dependency: component),
             preferencesBuilder: PreferencesBuilder(dependency: component)
         )
     }

@@ -34,6 +34,10 @@ protocol AreaManagementViewControllable: ViewControllable {
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?)
     
+    
+    /// Removes the hosting controller from the view hierarchy and deallocates it.
+    func nilHostingViewController()
+    
 }
 
 
@@ -56,4 +60,20 @@ final class AreaManagementRouter: ViewableRouter<AreaManagementInteractable, Are
 
 /// Conformance extension to the ``AreaManagementRouting`` protocol.
 /// Contains everything accessible or invokable by ``AreaManagementInteractor``.
-extension AreaManagementRouter: AreaManagementRouting {}
+extension AreaManagementRouter: AreaManagementRouting {
+    
+    
+    /// Removes the view hierarchy from any `ViewControllable` instances this RIB may have added.
+    func clearViewControllers() {
+        viewController.cleanUp(completion: nil)
+        // TODO: detach any child RIBs
+        // TODO: nullify any references to child RIBs
+    }
+    
+    
+    /// Removes the hosting controller (swiftui embed) from the view hierarchy and deallocates it.
+    func detachSwiftUI() {
+        viewController.nilHostingViewController()
+    }
+    
+}

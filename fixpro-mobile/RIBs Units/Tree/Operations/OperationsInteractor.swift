@@ -1,15 +1,25 @@
 import RIBs
 import RxSwift
-import UIKit
 import VinUtility
-import FirebaseMessaging
 
 
 
 /// Contract adhered to by ``OperationsRouter``, listing the attributes and/or actions 
 /// that ``OperationsInteractor`` is allowed to access or invoke.
 protocol OperationsRouting: ViewableRouting {
+    
+    
+    /// Attaches the RoleAppropriation RIB.
     func routeToRoleAppropriation(fromNotification: FPNotificationDigest?)
+    
+    
+    /// Removes the view hierarchy from any `ViewControllable` instances this RIB may have added.
+    func cleanupViews()
+    
+    
+    /// Removes the hosting controller (swiftui embed) from the view hierarchy and deallocates it.
+    func removeSwiftUI()
+    
 }
 
 
@@ -21,6 +31,10 @@ protocol OperationsPresentable: Presentable {
     
     /// Reference to ``OperationsInteractor``.
     var presentableListener: OperationsPresentableListener? { get set }
+    
+    
+    /// Reference to the view model.
+    var viewModel: OperationsSwiftUIViewModel? { get }
     
     
     /// Binds the view model to the view.
@@ -37,7 +51,7 @@ protocol OperationsPresentable: Presentable {
 /// Contract adhered to by the Interactor of `OperationsRIB`'s parent, listing the attributes and/or actions
 /// that ``OperationsInteractor`` is allowed to access or invoke.
 protocol OperationsListener: AnyObject {
-    func didLogOut()
+    func didIntendLogOut()
 }
 
 
@@ -69,10 +83,9 @@ final class OperationsInteractor: PresentableInteractor<OperationsPresentable>, 
     
     /// Constructs an instance of ``OperationsInteractor``.
     /// - Parameter component: The component of this RIB.
-    init(component: OperationsComponent, triggerNotification: FPNotificationDigest?) {
+    init(component: OperationsComponent, presenter: OperationsPresentable, triggerNotification: FPNotificationDigest?) {
         self.component = component
         self.triggerNotification = triggerNotification
-        let presenter = component.operationsViewController
         
         super.init(presenter: presenter)
         
@@ -92,6 +105,14 @@ final class OperationsInteractor: PresentableInteractor<OperationsPresentable>, 
     /// Customization point that is invoked before self is fully detached.
     override func willResignActive() {
         super.willResignActive()
+        presenter.unbindViewModel()
+        router?.cleanupViews()
+        router?.removeSwiftUI()
+    }
+    
+    
+    deinit {
+        VULogger.log("Deinitialized.")
     }
     
     
@@ -111,8 +132,21 @@ final class OperationsInteractor: PresentableInteractor<OperationsPresentable>, 
                     try await self.component.sessionidentityServiceUpkeeper.renew()
                     
                 } catch let error as FPError {
-                    self.viewModel.state = .failure("\(error.errorDescription ?? "") \(error.recoverySuggestion ?? "")", "Try again") {
-                        self.performLaunchBootstrapping()
+                    switch error {
+                    case .INVALID_TOKEN:
+                        self.viewModel.state = .failure("Cannot establish a connection with the Area. This can happen either through a network issue or they are down for maintenance.", "Try again") { [weak self] in
+                            self?.performLaunchBootstrapping()
+                        }
+                        
+                    case .EXPIRED_REFRESH_TOKEN:
+                        self.viewModel.state = .failure("Session has expired.", "Back to pairing") { [weak self] in
+                            self?.didIntendToLogOut()
+                        }
+                        
+                    default: 
+                        self.viewModel.state = .failure("\(error.errorDescription ?? "") \(error.recoverySuggestion ?? "")", "Try again") { [weak self] in
+                            self?.performLaunchBootstrapping()
+                        }
                     }
                     
                     return
@@ -121,6 +155,27 @@ final class OperationsInteractor: PresentableInteractor<OperationsPresentable>, 
             
             router?.routeToRoleAppropriation(fromNotification: triggerNotification)
         }
+    }
+    
+}
+
+
+
+extension OperationsInteractor {
+    
+    
+    /// Informs `RootRIB` to detach self and remove any traces of pairing.
+    func didIntendToLogOut() {
+        component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPONBOARDINGSERVICE_MEMENTO_SNAPSHOT)
+        component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_NETWORKING_CLIENT_MEMENTO_SNAPSHOT)
+        component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPSESSION_IDENTITY_MEMENTO_SNAPSHOT)
+        
+        presenter.unbindViewModel()
+        
+        router?.cleanupViews()
+        router?.removeSwiftUI()
+        
+        listener?.didIntendLogOut()
     }
     
 }

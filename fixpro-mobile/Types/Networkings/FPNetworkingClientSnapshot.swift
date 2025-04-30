@@ -7,8 +7,14 @@ struct FPNetworkingClientSnapshot: VUMementoSnapshot {
     
     
     var id: UUID
+    
+    
     var tag: String?
+    
+    
     var takenOn: Date
+    
+    
     var version: String?
     
     

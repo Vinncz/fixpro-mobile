@@ -147,7 +147,7 @@ extension AreaJoinningFormFillingInteractor: AreaJoinningFormFillingPresentableL
                         
                         
                         // Step 8 -- Transition to next step (CTA).
-                        DispatchQueue.main.sync { [weak self] in
+                        Task { @MainActor [weak self] in
                             self?.listener?.didFinishFillingOutTheFormAndSubmittedItWhileAlsoSavedPairingInformationToPairingService()
                         }
                     }

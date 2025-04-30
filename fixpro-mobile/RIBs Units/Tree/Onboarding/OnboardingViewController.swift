@@ -82,18 +82,16 @@ extension OnboardingViewController: OnboardingViewControllable {
     /// and adds its view as a subview of the current view controller's view.
     /// - Note: The default implementation of this method REMOVES the previous `ViewControllable` from the view hierarchy.
     func transition(to newFlow: any ViewControllable, completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.activeFlow?.uiviewController.view.removeFromSuperview()
-            self.activeFlow?.uiviewController.removeFromParent()
-            
-            self.activeFlow = newFlow
-            
-            self.addChild(newFlow.uiviewController)
-            self.view.addSubview(newFlow.uiviewController.view)
-            newFlow.uiviewController.didMove(toParent: self)
-            
-            completion?()
-        }
+        self.activeFlow?.uiviewController.view.removeFromSuperview()
+        self.activeFlow?.uiviewController.removeFromParent()
+        
+        self.activeFlow = newFlow
+        
+        self.addChild(newFlow.uiviewController)
+        self.view.addSubview(newFlow.uiviewController.view)
+        newFlow.uiviewController.didMove(toParent: self)
+        
+        completion?()
     }
     
     
@@ -102,14 +100,12 @@ extension OnboardingViewController: OnboardingViewControllable {
     /// 
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.activeFlow?.uiviewController.view.removeFromSuperview()
-            self.activeFlow?.uiviewController.removeFromParent()
-            
-            self.activeFlow = nil
-            
-            completion?()
-        }
+        self.activeFlow?.uiviewController.view.removeFromSuperview()
+        self.activeFlow?.uiviewController.removeFromParent()
+        
+        self.activeFlow = nil
+        
+        completion?()
     }
     
     
@@ -118,9 +114,16 @@ extension OnboardingViewController: OnboardingViewControllable {
         self.present(flow.uiviewController, animated: true)
     }
     
-    func dismiss() {
-        if self.activeFlow != nil {
+    
+    func dismiss(withoutDetachingView: Bool) {
+        if let activeFlow {
             self.dismiss(animated: true)
+            
+            if !withoutDetachingView {
+                activeFlow.uiviewController.view.removeFromSuperview()
+                activeFlow.uiviewController.removeFromParent()
+            }
+            
             self.activeFlow = nil
         }
     }

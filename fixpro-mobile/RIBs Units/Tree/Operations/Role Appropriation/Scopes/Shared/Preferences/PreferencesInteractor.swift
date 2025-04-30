@@ -1,4 +1,5 @@
 import RIBs
+import VinUtility
 import RxSwift
 
 
@@ -31,7 +32,9 @@ protocol PreferencesPresentable: Presentable {
 
 /// Contract adhered to by the Interactor of `PreferencesRIB`'s parent, listing the attributes and/or actions
 /// that ``PreferencesInteractor`` is allowed to access or invoke.
-protocol PreferencesListener: AnyObject {}
+protocol PreferencesListener: AnyObject {
+    func didIntendToLogOut()
+}
 
 
 
@@ -81,9 +84,17 @@ final class PreferencesInteractor: PresentableInteractor<PreferencesPresentable>
     }
     
     
+    deinit {
+        VULogger.log("Deinitialized.")
+    }
+    
+    
     /// Configures the view model.
     private func configureViewModel() {
-        // TODO: Configure the view model.
+        viewModel.logOut = { [weak self] in
+            self?.listener?.didIntendToLogOut()
+        }
+        
         presenter.bind(viewModel: self.viewModel)
     }
     
