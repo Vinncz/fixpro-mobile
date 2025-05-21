@@ -14,26 +14,31 @@ struct FPPerson: Codable, Hashable, Identifiable {
     var role: FPTokenRole
     
     
-    var speciality: [FPIssueType]
-    
-    
     var title: String?
     
     
-    var memberSince: Date
+    var specialties: [FPIssueType]
     
     
-    var memberUntil: Date?
+    var specialtiesName: String {
+        specialties.map { $0.name }.coalesce()
+    }
     
     
-    var moreInformation: [String: String] = [:]
+    var memberSince: String
+    
+    
+    var memberUntil: String?
+    
+    
+    var extras: [String: String] = [:]
     
     
     enum CodingKeys: String, CodingKey {
         case id
         case name
         case role
-        case speciality
+        case specialties
         case title
         case memberSince = "member_since"
         case memberUntil = "member_until"

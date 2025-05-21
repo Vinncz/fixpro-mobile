@@ -1,6 +1,7 @@
+import Foundation
 import RIBs
-import VinUtility
 import RxSwift
+import VinUtility
 
 
 
@@ -89,8 +90,47 @@ final class WorkCalendarInteractor: PresentableInteractor<WorkCalendarPresentabl
     
     /// Configures the view model.
     private func configureViewModel() {
-        // TODO: Configure the view model.
+        viewModel.didIntendToRefresh = { [weak self] in
+            await self?.refresh()
+        }
+        Task { @MainActor in
+            await refresh()
+        }
+        
         presenter.bind(viewModel: self.viewModel)
+    }
+    
+}
+
+
+
+extension WorkCalendarInteractor {
+    
+    
+    func refresh() async {
+        do {
+            let attemptedRequest = try await component.networkingClient.gateway.getCalendar(.init(
+                query: .init(
+                    from: -1,
+                    to: 4
+                ),
+                headers: .init(accept: [.init(contentType: .json)])
+            ))
+            
+            switch attemptedRequest {
+                case .ok(let output):
+                    let response = try output.body.json
+                    let encodedData = try JSONEncoder().encode(response.data)
+                    let decodedData = try decode(encodedData, to: [FPCalendarEvent].self).get()
+                    
+                    viewModel.events = decodedData
+                case .undocumented(statusCode: let code, let payload):
+                    VULogger.log(tag: .error, code, payload)
+            }
+            
+        } catch {
+            VULogger.log(tag: .error, error)
+        }
     }
     
 }

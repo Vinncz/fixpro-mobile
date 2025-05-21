@@ -56,4 +56,11 @@ final class WorkEvaluatingRouter: ViewableRouter<WorkEvaluatingInteractable, Wor
 
 /// Conformance extension to the ``WorkEvaluatingRouting`` protocol.
 /// Contains everything accessible or invokable by ``WorkEvaluatingInteractor``.
-extension WorkEvaluatingRouter: WorkEvaluatingRouting {}
+extension WorkEvaluatingRouter: WorkEvaluatingRouting {
+    
+    
+    func dismiss() {
+        viewController.uiviewController.dismiss(animated: true)
+    }
+    
+}

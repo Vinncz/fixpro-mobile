@@ -146,10 +146,6 @@ extension TicketNavigatorInteractor {
                     
                     return .success(decodedData)
                     
-                case .badRequest:
-                    VULogger.log(tag: .error, "BAD REQUEST FOR TICKET DETAIL")
-                    return .failure(.BAD_REQUEST)
-                    
                 case .undocumented(statusCode: let code, let payload):
                     VULogger.log(tag: .error, "UNDOCUMENTED FOR TICKET DETAIL \(code) -- \(payload)")
                     return .failure(.UNEXPECTED_RESPONSE)

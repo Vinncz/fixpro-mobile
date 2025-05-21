@@ -14,16 +14,16 @@ struct FPTicketLog: Codable, Hashable, Identifiable {
     var type: FPTIcketLogType
     
     
-    var issuer: FPContactInformation
+    var issuer: FPPerson
     
     
-    var recordedOn: Date
+    var recordedOn: String
 
 
     var news: String
     
     
-    var attachment: [FPSupportiveDocument]
+    var attachments: [FPSupportiveDocument]
     
     
     var actionable: FPRemoteNotificationActionable
@@ -32,11 +32,11 @@ struct FPTicketLog: Codable, Hashable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id
         case owningTicketId = "owning_ticket_id"
-        case type = "log_type"
+        case type
         case issuer
         case recordedOn = "recorded_on"
         case news
-        case attachment
+        case attachments
         case actionable
     }
     

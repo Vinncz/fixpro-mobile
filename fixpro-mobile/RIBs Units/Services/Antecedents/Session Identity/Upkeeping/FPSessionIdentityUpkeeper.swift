@@ -12,9 +12,13 @@ final class FPSessionIdentityUpkeeper: FPSessionIdentityUpkeeping {
     var networkingClient: FPNetworkingClient
     
     
-    init(storage: any FPSessionIdentityServicing, networkingClient: FPNetworkingClient) {
+    var mementoAgent: FPMementoAgent<FPSessionIdentityService, FPSessionIdentityServiceSnapshot>
+    
+    
+    init(storage: any FPSessionIdentityServicing, networkingClient: FPNetworkingClient, mementoAgent: FPMementoAgent<FPSessionIdentityService, FPSessionIdentityServiceSnapshot>) {
         self.storage = storage
         self.networkingClient = networkingClient
+        self.mementoAgent = mementoAgent
     }
     
     
@@ -26,7 +30,7 @@ final class FPSessionIdentityUpkeeper: FPSessionIdentityUpkeeping {
         do {
             VULogger.log(tag: .network, "Renewing credentials.")
             
-            switch try await networkingClient.gateway.refreshAccessTokenWithRefreshToken(.init(
+            switch try await networkingClient.gateway.oauthRefresh(.init(
                 headers: .init(accept: [.init(contentType: .json)]),
                 body: .json(.init(refresh_token: storage.refreshToken))
             )) {
@@ -34,8 +38,7 @@ final class FPSessionIdentityUpkeeper: FPSessionIdentityUpkeeping {
                     guard 
                         let accessToken = jsonBody.data?.access_token,
                         let accessTokenExpirationDate = jsonBody.data?.access_expiry_interval,
-                        let roleString = jsonBody.data?.role_scope?.rawValue,
-                        let role = FPTokenRole(rawValue: roleString)
+                        let role = FPTokenRole(rawValue: "\(jsonBody.data?.role_scope?.value ?? "")")
                     else {
                         throw FPError.DECODE_FAILURE
                     }
@@ -52,6 +55,7 @@ final class FPSessionIdentityUpkeeper: FPSessionIdentityUpkeeping {
                         let refreshTokenExpirationDate = jsonBody.data?.refresh_expiry_interval
                     else {
                         VULogger.log(tag: .network, "Successful refresh with scope of \(role). No refresh token issued.")
+                        await mementoAgent.snap()
                         return
                     }
                     
@@ -59,20 +63,9 @@ final class FPSessionIdentityUpkeeper: FPSessionIdentityUpkeeping {
                     await storage.set(refreshTokenExpirationDate: .now.addingTimeInterval(Double(refreshTokenExpirationDate)))
                     
                     VULogger.log(tag: .network, "Successful refresh with scope of \(role). New refresh token issued.")
+                    await mementoAgent.snap()
                     return
                 }
-                    
-                case .badRequest:
-                    VULogger.log(tag: .network, "RefreshToken was not provided in the request.")
-                    throw FPError.INCOMPLETE_ARGUMENT
-                    
-                case .unauthorized:
-                    VULogger.log(tag: .network, "RefreshToken was invalid or has gone expired.")
-                    throw FPError.INVALID_TOKEN
-                
-                case .forbidden:
-                    VULogger.log(tag: .network, "No more refreshes allowed.")
-                    throw FPError.FORBIDDEN
                     
                 case .undocumented(statusCode: let code, let payload):
                     VULogger.log(tag: .network, "Area responded with an unexpected response. \(code) • \(payload)")

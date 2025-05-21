@@ -1,4 +1,5 @@
 import RIBs
+import Foundation
 import VinUtility
 import RxSwift
 
@@ -6,7 +7,9 @@ import RxSwift
 
 /// Contract adhered to by ``WorkEvaluatingRouter``, listing the attributes and/or actions 
 /// that ``WorkEvaluatingInteractor`` is allowed to access or invoke.
-protocol WorkEvaluatingRouting: ViewableRouting {}
+protocol WorkEvaluatingRouting: ViewableRouting {
+    func dismiss()
+}
 
 
 
@@ -34,6 +37,7 @@ protocol WorkEvaluatingPresentable: Presentable {
 /// that ``WorkEvaluatingInteractor`` is allowed to access or invoke.
 protocol WorkEvaluatingListener: AnyObject {
     func didDismissWorkEvaluating()
+    func didEvaluateWork(log: FPTicketLog)
 }
 
 
@@ -97,15 +101,120 @@ final class WorkEvaluatingInteractor: PresentableInteractor<WorkEvaluatingPresen
     private func configureViewModel() {
         viewModel.workProgressLogs = logs
         viewModel.didIntendToDismiss = { [weak self] in
-            self?.didGetDismissed()
+            self?.router?.dismiss()
         }
         viewModel.didIntendToApprove = { [weak self] in 
-            // TODO: Add logic
+            self?.approve()
         }
         viewModel.didIntendToReject = { [weak self] in 
-            // TODO: Add logic
+            self?.reject()
         }
         presenter.bind(viewModel: self.viewModel)
+    }
+    
+}
+
+
+
+extension WorkEvaluatingInteractor {
+    
+    
+    enum ValidationError: String, Error {
+        case MISSING_REASON = "Do let your colleagues know what could be improved."
+    }
+    
+    private func approve() {
+        Task {
+            let attemptedRequest = try await makeRequest(news: "Work was approved.", 
+                                                         attachments: [], 
+                                                         logType: .init(stringLiteral: "Work Evaluation"))
+            switch attemptedRequest {
+                case .created(let made):
+                    viewModel.reset()
+                    DispatchQueue.main.sync {
+                        self.router?.dismiss()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            self.router?.dismiss()
+                        }
+                    }
+                    
+                    do {
+                        let response = try made.body.json
+                        let encoder = JSONEncoder()
+                        let encodedData = try encoder.encode(response.data)
+                        let decodedData = try decode(encodedData, to: FPTicketLog.self).get()
+                        listener?.didEvaluateWork(log: decodedData)
+                    } catch {
+                        VULogger.log(tag: .error, error)
+                    }
+                    
+                    break
+                case .undocumented(statusCode: let code, let payload):
+                    VULogger.log(tag: .error, code, payload)
+            }
+        }
+    }
+    
+    
+    private func reject() {
+        if case let .failure(errorMessage) = validate() {
+            viewModel.validationMessage = errorMessage.rawValue
+            return
+        }
+        
+        Task {
+            let attemptedRequest = try await makeRequest(news: viewModel.rejectionReason, 
+                                                         attachments: [], 
+                                                         logType: .init(stringLiteral: "Work Progress"))
+            switch attemptedRequest {
+                case .created(let made):
+                    viewModel.reset()
+                    DispatchQueue.main.sync {
+                        self.router?.dismiss()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            self.router?.dismiss()
+                        }
+                    }
+                    
+                    do {
+                        let response = try made.body.json
+                        let encoder = JSONEncoder()
+                        let encodedData = try encoder.encode(response.data)
+                        let decodedData = try decode(encodedData, to: FPTicketLog.self).get()
+                        listener?.didEvaluateWork(log: decodedData)
+                    } catch {
+                        VULogger.log(tag: .error, error)
+                    }
+                    
+                    break
+                case .undocumented(statusCode: let code, let payload):
+                    VULogger.log(tag: .error, code, payload)
+            }
+        }
+    }
+    
+    
+    private func validate() -> Result<Void, ValidationError> {
+        guard !viewModel.rejectionReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return .failure(.MISSING_REASON)
+        }
+        
+        return .success(())
+    }
+    
+    
+    private func makeRequest(news: String, attachments: [Components.Schemas.TOBEMADE_hyphen_supportive_hyphen_document]?, logType: Components.Schemas.ticket_hyphen_log_hyphen_type) async throws -> Operations.postTicketLog.Output {
+        try await self.component.networkingClient.gateway.postTicketLog(.init(
+            path: .init(ticket_id: self.logs.first?.id ?? ""),
+            headers: .init(accept: [.init(contentType: .json)]),
+            body: .json(.init(
+                data: .init(
+                    news: news, 
+                    supportive_documents: attachments, 
+                    _type: logType
+                )
+            ))
+        ))
     }
     
 }

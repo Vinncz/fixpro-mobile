@@ -8,13 +8,25 @@ import Observation
 @Observable class CrewNewWorkLogSwiftUIViewModel {
     
     
-    var selectedFiles: [URL] = []
+    var selectedFiles: [URL] = [] { 
+        didSet {
+            validationLabel = .EMPTY
+        }
+    }
     
     
-    var workDescription: String = .EMPTY
+    var news: String = .EMPTY { 
+        didSet {
+            validationLabel = .EMPTY
+        }
+    }
     
     
-    var logType: FPTIcketLogType = .select
+    var logType: FPTIcketLogType = .select { 
+        didSet {
+            validationLabel = .EMPTY
+        }
+    }
     
     
     var validationLabel: String = .EMPTY
@@ -24,5 +36,13 @@ import Observation
     
     
     var didIntendToAddWorkLog: (()->Void)?
+    
+    
+    func reset() {
+        news = .EMPTY
+        selectedFiles = []
+        logType = .select
+        validationLabel = .EMPTY
+    }
     
 }

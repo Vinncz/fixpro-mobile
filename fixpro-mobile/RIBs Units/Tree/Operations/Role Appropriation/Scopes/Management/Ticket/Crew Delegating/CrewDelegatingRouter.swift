@@ -56,4 +56,11 @@ final class CrewDelegatingRouter: ViewableRouter<CrewDelegatingInteractable, Cre
 
 /// Conformance extension to the ``CrewDelegatingRouting`` protocol.
 /// Contains everything accessible or invokable by ``CrewDelegatingInteractor``.
-extension CrewDelegatingRouter: CrewDelegatingRouting {}
+extension CrewDelegatingRouter: CrewDelegatingRouting {
+    
+    
+    func dismiss() {
+        viewController.uiviewController.dismiss(animated: true)
+    }
+    
+}

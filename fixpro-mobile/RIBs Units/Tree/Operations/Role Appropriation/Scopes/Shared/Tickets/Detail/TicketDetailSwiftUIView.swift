@@ -20,7 +20,7 @@ struct TicketDetailSwiftUIView: View {
     
     @State var mapLocation: FPGPSLocation?
     @State var previewedSupportiveDocument: FPSupportiveDocument?
-    @State var previewedHandler: FPContactInformation?
+    @State var previewedHandler: FPPerson?
     
     
     var body: some View {
@@ -61,7 +61,13 @@ struct TicketDetailSwiftUIView: View {
                     Section("Name") {
                         Text(handler.name)
                     }
-                    ForEach(handler.additionalInformation.map({ ($0.key, $0.value) }).map({ Wrapper(key: $0, value: $1) })) { info in
+                    Section("Title") {
+                        Text(handler.title ?? "")
+                    }
+                    Section("Specialties") {
+                        Text(handler.specialtiesName)
+                    }
+                    ForEach(handler.extras.map({ ($0.key, $0.value) }).map({ Wrapper(key: $0, value: $1) })) { info in
                         Section(info.key) {
                             HStack {
                                 Text(info.value)
@@ -111,10 +117,11 @@ extension TicketDetailSwiftUIView {
             HStack {
                 Text("Issue type")
                 Spacer()
-                Text(viewModel.issueType?.rawValue ?? "issue-type-placeholder")
+                Text(viewModel.issueTypes.map{ $0.name }.coalesce())
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .redacted(reason: viewModel.issueType == nil ? .placeholder : [])
+                    .redacted(reason: viewModel.issueTypes.isEmpty ? .placeholder : [])
+                    .multilineTextAlignment(.trailing)
             }
             HStack {
                 Text("Response level")
@@ -127,7 +134,7 @@ extension TicketDetailSwiftUIView {
             HStack {
                 Text("Raised on")
                 Spacer()
-                Text("\(viewModel.raisedOn?.ISO8601Format() ?? Date.distantPast.ISO8601Format())")
+                Text("\(Date.parse(viewModel.raisedOn ?? "")?.formatted(date: .abbreviated, time: .shortened) ?? "")")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .redacted(reason: viewModel.raisedOn == nil ? .placeholder : [])
@@ -217,7 +224,7 @@ extension TicketDetailSwiftUIView {
                         VStack(alignment: .leading) {
                             Text(log.news)
                                 .lineLimit(1)
-                            Text(log.recordedOn.ISO8601Format())
+                            Text("\(Date.parse(log.recordedOn)?.formatted(date: .abbreviated, time: .shortened) ?? "")")
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                         }
@@ -229,7 +236,7 @@ extension TicketDetailSwiftUIView {
                             VStack(alignment: .leading) {
                                 Text(log.news)
                                     .lineLimit(1)
-                                Text(log.recordedOn.ISO8601Format())
+                                Text("\(Date.parse(log.recordedOn)?.formatted(date: .abbreviated, time: .shortened) ?? "")")
                                     .font(.callout)
                                     .foregroundStyle(.secondary)
                             }
@@ -258,9 +265,10 @@ extension TicketDetailSwiftUIView {
                         HStack {
                             Text(handler.name)
                             Spacer()
-                            Text(handler.additionalInformation[.title] ?? "")
+                            Text(handler.title ?? "")
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.trailing)
                         }
                     }
                 }
@@ -283,30 +291,5 @@ extension TicketDetailSwiftUIView {
     @Previewable var viewModel = TicketDetailSwiftUIViewModel(role: .member)
     NavigationStack {
         TicketDetailSwiftUIView(viewModel: viewModel)
-            .onAppear {
-                viewModel.issueType = .engineering
-                viewModel.raisedOn = Date().addingTimeInterval(-(24 * 3600))
-                viewModel.statedIssue = "You"
-                viewModel.location = .init(reportedLocation: "Fifth floor by the north wing balcony.", gpsCoordinates: .init(latitude: 52.107406, longitude: -3.63841))
-                viewModel.supportiveDocuments = [
-                    .init(filename: "Genericfile.png", hostedOn: URL(string: "http://www.apple.com")!)
-                ]
-                viewModel.logs = [
-                    .init(id: "",
-                          owningTicketId: "", 
-                          type: .activity, 
-                          issuer: .init(name: "Me"), 
-                          recordedOn: .now, 
-                          news: "Ticket was opened", 
-                          attachment: [], 
-                          actionable: .init(genus: .SEGUE, species: .TICKET_LOG))
-                ]
-                viewModel.handlers = [
-                    .init(name: "Hendro", additionalInformation: [.title:"Janitor", "Contactable Phone Number": "0853 0111 9922"])
-                ]
-                viewModel.responseLevel = .urgentEmergency
-                viewModel.status = .closed
-                viewModel.role = .crew
-            }
     }
 }

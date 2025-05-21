@@ -8,6 +8,16 @@ import Observation
 @Observable class WorkEvaluatingSwiftUIViewModel {
     
     
+    var validationMessage: String = .EMPTY
+    
+    
+    var rejectionReason: String = .EMPTY {
+        didSet {
+            validationMessage = .EMPTY
+        }
+    }
+    
+    
     var workProgressLogs: [FPTicketLog] = []
     
     
@@ -18,5 +28,12 @@ import Observation
     
     
     var didIntendToReject: (()->Void)?
+    
+    
+    func reset() {
+        validationMessage = .EMPTY
+        rejectionReason = .EMPTY
+        workProgressLogs = []
+    }
     
 }

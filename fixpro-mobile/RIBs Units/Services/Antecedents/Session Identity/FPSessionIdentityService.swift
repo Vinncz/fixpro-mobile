@@ -8,12 +8,20 @@ final actor FPSessionIdentityService: FPSessionIdentityServicing {
     
     
     /// Short-lived token that authenticate you from another 'user' using the service.
-    var accessToken: String?
+    var accessToken: String? {
+        didSet {
+            VULogger.log("Did set accessToken to: \(accessToken?.prefix(12))")
+        }
+    }
     var accessTokenExpirationDate: Date?
     
     
     /// Long-lived token that enables ``accessToken`` renewal.
-    var refreshToken: String
+    var refreshToken: String {
+        didSet {
+            VULogger.log("Did set refreshToken to: \(refreshToken.prefix(12))")
+        }
+    }
     var refreshTokenExpirationDate: Date
     
     
@@ -47,13 +55,12 @@ final actor FPSessionIdentityService: FPSessionIdentityServicing {
     /// - Returns: An initialized instance of ``FPSessionIdentityService`` via the ``FPSessionIdentityServicing`` interface.
     static func exhangeForTokens(authenticationCode: String, networkingClient: FPNetworkingClient) async -> Result<any FPSessionIdentityServicing, FPError> {
         do {
-            switch try await networkingClient.gateway.exchangeAuthenticationCodeForAccessAndRefreshTokens(.init(
+            switch try await networkingClient.gateway.oauthToken(.init(
                 headers: .init(
                     accept: [.init(contentType: .json)]
                 ),
                 body: .json(.init(
-                    authentication_code: authenticationCode, 
-                    grant_type: "authentication_code"
+                    authentication_code: authenticationCode
                 ))
             )) {
                 case .ok(let output): switch output.body { case .json(let jsonBody):
@@ -62,8 +69,7 @@ final actor FPSessionIdentityService: FPSessionIdentityServicing {
                         let accessTokenExpirationDateString = jsonBody.data?.access_expiry_interval,
                         let refreshToken = jsonBody.data?.refresh_token,
                         let refreshTokenExpirationDateString = jsonBody.data?.refresh_expiry_interval,
-                        let roleString = jsonBody.data?.role_scope?.rawValue,
-                        let role = FPTokenRole(rawValue: roleString)
+                        let role = FPTokenRole(rawValue: "\(jsonBody.data?.role_scope?.value ?? "")")
                     else {
                         throw FPError.DECODE_FAILURE
                     }
@@ -75,14 +81,6 @@ final actor FPSessionIdentityService: FPSessionIdentityServicing {
                                                                 role: role)
                     return .success(selfInstance)
                 }
-                    
-                case .noContent:
-                    VULogger.log(tag: .network, "AuthenticationCode can only be redeemed once.")
-                    return .failure(.CODE_ALREADY_EXCHANGED)
-                
-                case .badRequest:
-                    VULogger.log(tag: .network, "Request was missing a valid AuthenticationCode (either empty or an invalid value)")
-                    return .failure(.BAD_REQUEST)
                     
                 case .undocumented(statusCode: let code, let payload):
                     VULogger.log(tag: .network, "Area responded with an unexpected response. \(code) • \(payload)")

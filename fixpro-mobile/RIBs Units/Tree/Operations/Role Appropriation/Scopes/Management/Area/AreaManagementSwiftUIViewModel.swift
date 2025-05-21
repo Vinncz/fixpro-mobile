@@ -11,22 +11,22 @@ import Observation
     var areaName: String?
     
     
+    var areaJoinCodeEndpoint: String?
+    
+    
     var joinPolicy: FPAreaJoinPolicy?
     
     
     var didUpdateJoinPolicy: ((FPAreaJoinPolicy)->Void)?
     
     
-    var routeToAreaJoinCode: (()->Void)?
-    
-    
-    var routeToPendingMembership: (()->Void)?
-    
-    
     var routeToManageMembers: (()->Void)?
     
     
     var routeToStatisticView: (()->Void)?
+    
+    
+    var routeToSLAAndIssueTypesManagement: (()->Void)?
     
     
     var ticketCount: Int?

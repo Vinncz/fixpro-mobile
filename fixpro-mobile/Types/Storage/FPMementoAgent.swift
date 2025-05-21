@@ -32,10 +32,16 @@ final class FPMementoAgent<Target, TargetSnapshot> where Target: VUMementoSnapsh
                     return .failure(.TYPE_MISMATCH) 
                 }
                 
-                storage.place(for: targetStorageKey, data: stringSnapshot.base64EncodedString())
+                do {
+                    storage.remove(for: targetStorageKey)
+                    _ = try storage.place(for: targetStorageKey, data: stringSnapshot.base64EncodedString()).get()
+                } catch {
+                    VULogger.log("Did fail to save snapshot: \(error)")
+                }
                 return .success(snp)
                 
             case .failure(let error):
+                VULogger.log("Did fail to snap: \(error)")
                 return .failure(error as! FPError)
         }
     }

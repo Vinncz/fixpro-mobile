@@ -1,4 +1,5 @@
 import Foundation
+import VinUtility
 
 
 
@@ -8,13 +9,13 @@ struct FPTicketDetail: Codable, Hashable, Identifiable {
     var id: String
     
     
-    var issueType: FPIssueType
+    var issueTypes: [FPIssueType]
     
     
     var responseLevel: FPIssueTicketResponseLevel
     
     
-    var raisedOn: Date
+    var raisedOn: String
     
     
     var status: FPIssueTicketStatus
@@ -32,21 +33,21 @@ struct FPTicketDetail: Codable, Hashable, Identifiable {
     var supportiveDocuments: [FPSupportiveDocument]
     
     
-    var issuer: FPContactInformation
+    var issuer: VUExtrasPreservingDecodable<FPPerson>
     
     
     var logs: [FPTicketLog]
     
     
-    var handlers: [FPContactInformation]
+    var handlers: [VUExtrasPreservingDecodable<FPPerson>]
     
     
-    var closedOn: Date?
+    var closedOn: String?
     
     
     enum CodingKeys: String, CodingKey {
-        case id = "ticket_id"
-        case issueType = "issue_type"
+        case id
+        case issueTypes = "issue_types"
         case responseLevel = "response_level"
         case raisedOn = "raised_on"
         case status
@@ -58,6 +59,16 @@ struct FPTicketDetail: Codable, Hashable, Identifiable {
         case logs
         case handlers
         case closedOn = "closed_on"
+    }
+    
+    
+    static func == (lhs: FPTicketDetail, rhs: FPTicketDetail) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
     
 }

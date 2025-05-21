@@ -79,8 +79,8 @@ final class TicketDetailRouter: ViewableRouter<TicketDetailInteractable, TicketD
 extension TicketDetailRouter: TicketDetailRouting {
     
     
-    func attachFlowAddWorkReport() {
-        let router = crewNewWorkLogBuilder.build(withListener: interactor)
+    func attachFlowAddWorkReport(ticketId: String) {
+        let router = crewNewWorkLogBuilder.build(withListener: interactor, ticketId: ticketId)
         self.crewNewWorkLogRouter = router
         
         self.attachChild(router)
@@ -96,8 +96,8 @@ extension TicketDetailRouter: TicketDetailRouting {
     }
     
     
-    func attachFlowDelegateTicket(ticketId: String, issueType: FPIssueType) {
-        let router = crewDelegatingBuilder.build(withListener: interactor, ticketId: ticketId, issueType: issueType)
+    func attachFlowDelegateTicket(ticket: FPTicketDetail) {
+        let router = crewDelegatingBuilder.build(withListener: interactor, ticket: ticket)
         self.crewDelegatingRouter = router
         
         self.attachChild(router)

@@ -90,6 +90,31 @@ final class NewTicketInteractor: PresentableInteractor<NewTicketPresentable>, Ne
     
     /// Configures the view model.
     private func configureViewModel() {
+        Task {
+            do {
+                let attemptedRequest = try await component.networkingClient.gateway.getIssueTypes(.init(headers: .init(accept: [.init(contentType: .json)])))
+                switch attemptedRequest {
+                    case .ok(let response):
+                        let jsonBody = try response.body.json.data
+                        let issueTypes: [FPIssueType?] = jsonBody!.compactMap({ element in
+                            guard
+                                let id = element.id,
+                                let name = element.name,
+                                let serviceLevelAgreementDurationHour = element.service_level_agreement_duration_hour
+                            else { return nil }
+                            
+                            return FPIssueType(id: id, name: name, serviceLevelAgreementDurationHour: Int(serviceLevelAgreementDurationHour))
+                        })
+                        viewModel.issueTypes = issueTypes.compactMap{ $0 }
+                        
+                    case .undocumented(statusCode: let code, let payload):
+                        VULogger.log(tag: .error, code, payload)
+                }
+            } catch {
+                
+            }
+        }
+        
         viewModel.didIntendToSubmit = { [weak self] in
             self?.submit()
         }
@@ -105,10 +130,11 @@ extension NewTicketInteractor {
     
     
     enum ValidationError: String, Error {
-        case PLACEHOLDER_NOT_FILLED = "Do select the appropriate issue type."
-        case INCOMPLETE_ANSWER = "All fields are required."
-        case NO_DOCUMENTS = "No documents were attached. Select some first."
-        case FILE_TOO_LARGE = "One or more files are above the 5MB limit."
+        case PLACEHOLDER_NOT_FILLED = "Select at least one category that closely matches the prolem you encounter."
+        case INCOMPLETE_ANSWER = "Issue description or location may be empty."
+        case NO_DOCUMENTS = "No documents were attached. At least one is expected."
+        case FILE_TOO_LARGE = "One or more documents are above the 5MB limit."
+        case SUMMARY_TOO_LONG = "Summary should not be above 127 characters."
     }
     
     
@@ -121,10 +147,10 @@ extension NewTicketInteractor {
         var continueOn = true
         VUPresentLoadingAlert(
             on: router?.viewControllable.uiviewController,
-            title: "Submitting your application..", 
-            message: "Once approved, you can start using FixPro. Your progress is saved in case you cancel this submission.", 
+            title: "Hang tight while we process your request.", 
+            message: "We are taking GPS position to mark where the issue occured. This should take less than 30 seconds. Your answer is be saved should you cancel.", 
             cancelButtonCTA: "Cancel", 
-            delay: 20, 
+            delay: 30, 
             cancelAction: {
                 continueOn = false
             }
@@ -132,69 +158,69 @@ extension NewTicketInteractor {
         
         component.locationBeacon.locate { locationRetrievalResult in
             switch locationRetrievalResult {
-                case .success(let location):
-                    VULogger.log("Located self")
+            case .success(let location):
+                VULogger.log("Located self")
+                
+                if !continueOn {
+                    VULogger.log("Cancelled network request")
+                    return
+                }
+                
+                Task { [weak self] in
+                    guard let self else { return }
                     
-                    if !continueOn {
-                        VULogger.log("Cancelled network request")
-                        return
-                    }
-                    
-                    Task { [weak self] in
-                        guard let self else { return }
-                        
-                        do {
-                            let attemptedSubmission = try await component.networkingClient.gateway.raiseTicket(.init(
-                                headers: .init(accept: [.init(contentType: .json)]),
-                                body: .json(.init(
-                                    issue_type: .init(rawValue: viewModel.issueType.rawValue)!,
-                                    response_level: .init(rawValue: viewModel.suggestedResponseLevel.rawValue)!, 
-                                    stated_issue: viewModel.statedIssue, 
-                                    location: .init(
-                                        stated_location: viewModel.statedLocation,
-                                        gps_location: .init(
-                                            latitude: location.latitude,
-                                            longitude: location.longitude
-                                        )
-                                    ),
-                                    supportive_documents: viewModel.selectedFiles.map { file in .init(
-                                        resource_type: .init(rawValue: UTType(file.pathExtension)?.identifier ?? UTType.data.identifier),
-                                        resource_name: file.lastPathComponent,
-                                        resource_size: Double(inferFileSize(from: file) ?? 0), 
-                                        resource_content: fileToBase64(on: file)
-                                    )}
-                                ))
-                            ))
-                            
-                            switch attemptedSubmission {
-                            case .created(let made):
-                                VULogger.log(tag: .network, "Did submit a new ticket")
-                                viewModel.reset()
-                                    
-                                DispatchQueue.main.sync {
-                                    self.router?.dismiss()
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                        self.router?.dismiss()
-                                    }
+                    do {
+                        let attemptedSubmission = try await component.networkingClient.gateway.postTicket(.init(
+                            headers: .init(accept: [.init(contentType: .json)]),
+                            body: .json(.init(data: .init(
+                                issue_type_ids: viewModel.selectedIssueTypes.map { $0.id }, 
+                                response_level: .init(stringLiteral: viewModel.suggestedResponseLevel.rawValue), 
+                                executive_summary: viewModel.executiveSummary,
+                                stated_issue: viewModel.statedIssue, 
+                                location: .init(
+                                    stated_location: viewModel.statedLocation,
+                                    gps_location: .init(
+                                        latitude: location.latitude,
+                                        longitude: location.longitude
+                                    )
+                                ), 
+                                supportive_documents: viewModel.selectedFiles.map {
+                                    .init(
+                                        resource_type: VUInferMimeType(for: $0), 
+                                        resource_name: $0.lastPathComponent, 
+                                        resource_size: Double(inferFileSize(from: $0) ?? 0), 
+                                        resource_content: fileToBase64(on: $0)
+                                    )
                                 }
-                                 
-                                let response = try made.body.json
-                                self.talkBackToParentAfterAssemblingTicketResponse(response)
-                                    
-                            case .badRequest(let errorResponse):
-                                VULogger.log(tag: .error, errorResponse)
-                                    
-                            case .undocumented(statusCode: let code, let payload):
-                                VULogger.log(tag: .error, "\(code) -- \(payload)")
+                            )))
+                        ))
+                        
+                        switch attemptedSubmission {
+                        case .created(let made):
+                            VULogger.log(tag: .network, "Did submit a new ticket")
+                            viewModel.reset()
+                                
+                            DispatchQueue.main.sync {
+                                self.router?.dismiss()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    self.router?.dismiss()
+                                }
                             }
-                            
-                        } catch {
-                            VULogger.log(tag: .error, error)
+                             
+                            let response = try made.body.json
+                            self.talkBackToParentAfterAssemblingTicketResponse(response)
+                                
+                        case .undocumented(statusCode: let code, let payload):
+                            VULogger.log(tag: .error, "\(code) -- \(payload)")
                         }
+                        
+                    } catch {
+                        VULogger.log(tag: .error, error)
                     }
-                    
-                case .failure(let error):
-                    VULogger.log(tag: .error, error)
+                }
+                
+            case .failure(let error):
+                VULogger.log(tag: .error, error)
             }
         }
         
@@ -202,7 +228,7 @@ extension NewTicketInteractor {
     
     
     private func validate() -> Result<Void, ValidationError> {
-        guard viewModel.issueType != .select else {
+        guard viewModel.selectedIssueTypes.count > 0 else {
             return .failure(.PLACEHOLDER_NOT_FILLED)
         }
         
@@ -220,6 +246,10 @@ extension NewTicketInteractor {
             return .failure(.FILE_TOO_LARGE)
         }
         
+        guard viewModel.executiveSummary.count <= 127 else {
+            return .failure(.SUMMARY_TOO_LONG)
+        }
+        
         return .success(())
     }
     
@@ -230,7 +260,7 @@ extension NewTicketInteractor {
 extension NewTicketInteractor {
     
     
-    private func talkBackToParentAfterAssemblingTicketResponse(_ response: Components.Schemas.inline_response_201) {
+    private func talkBackToParentAfterAssemblingTicketResponse(_ response: Components.Responses.newly_hyphen_made_hyphen_ticket.Body.jsonPayload) {
         do {
             let encoder = JSONEncoder()
             let encodedData = try encoder.encode(response.data)

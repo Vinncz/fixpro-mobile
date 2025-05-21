@@ -56,4 +56,11 @@ final class CrewNewWorkLogRouter: ViewableRouter<CrewNewWorkLogInteractable, Cre
 
 /// Conformance extension to the ``CrewNewWorkLogRouting`` protocol.
 /// Contains everything accessible or invokable by ``CrewNewWorkLogInteractor``.
-extension CrewNewWorkLogRouter: CrewNewWorkLogRouting {}
+extension CrewNewWorkLogRouter: CrewNewWorkLogRouting {
+    
+    
+    func dismiss() {
+        viewController.uiviewController.dismiss(animated: true)
+    }
+    
+}

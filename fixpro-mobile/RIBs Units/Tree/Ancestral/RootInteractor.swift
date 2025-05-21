@@ -96,7 +96,7 @@ final class RootInteractor: PresentableInteractor<RootPresentable>, RootInteract
                    
                    
             // Substep 3 -- Pair the upkeeper of credentials with the client (to renew) and the storage (so it updates them).
-               let sessionIdentityUpkeeper = FPSessionIdentityUpkeeper(storage: sessionIdentityServicing, networkingClient: networkingClient)
+               let sessionIdentityUpkeeper = FPSessionIdentityUpkeeper(storage: sessionIdentityServicing, networkingClient: networkingClient, mementoAgent: sessionIdentityServiceMementoAgent)
                component.sessionIdentityUpkeeperProxy.back(with: sessionIdentityUpkeeper)
               
               

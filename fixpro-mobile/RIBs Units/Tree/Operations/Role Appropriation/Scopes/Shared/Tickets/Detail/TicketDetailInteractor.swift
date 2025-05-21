@@ -10,11 +10,11 @@ import VinUtility
 protocol TicketDetailRouting: ViewableRouting {
     
     
-    func attachFlowAddWorkReport()
+    func attachFlowAddWorkReport(ticketId: String)
     func detachFlowAddWorkReport()
     
     
-    func attachFlowDelegateTicket(ticketId: String, issueType: FPIssueType)
+    func attachFlowDelegateTicket(ticket: FPTicketDetail)
     func detachFlowDelegateTicket()
     
     
@@ -134,8 +134,12 @@ final class TicketDetailInteractor: PresentableInteractor<TicketDetailPresentabl
             viewModel.supportiveDocuments = ticket.supportiveDocuments
             viewModel.status = ticket.status
             viewModel.statedIssue = ticket.statedIssue
-            viewModel.handlers = ticket.handlers
-            viewModel.issueType = ticket.issueType
+            viewModel.handlers = ticket.handlers.map {
+                var mod = $0.model
+                mod.extras = $0.extrasAsStringMap()
+                return mod
+            }
+            viewModel.issueTypes = ticket.issueTypes
             viewModel.logs = ticket.logs
             viewModel.raisedOn = ticket.raisedOn
             viewModel.closedOn = ticket.closedOn
@@ -171,6 +175,30 @@ final class TicketDetailInteractor: PresentableInteractor<TicketDetailPresentabl
 extension TicketDetailInteractor {
     
     
+    func didAdd(log: FPTicketLog) {
+        viewModel.logs.append(log)
+        if log.type == .workEvaluationRequest {
+            viewModel.status = .workEvaluation
+        }
+    }
+    
+    
+    func didAdd(handlers: [FPPerson]) {
+        viewModel.handlers.append(contentsOf: handlers)
+    }
+    
+    
+    func didEvaluateWork(log: FPTicketLog) {
+        viewModel.logs.append(log)
+    }
+    
+}
+
+
+
+extension TicketDetailInteractor {
+    
+    
     func fetchTicketDetail(forId ticketId: String) async -> Result<FPTicketDetail, FPError> {
         do {
             let attemptedRequest = try await component.networkingClient.gateway.getTicket(.init(
@@ -182,13 +210,12 @@ extension TicketDetailInteractor {
                 case .ok(let response):
                     let encoder = JSONEncoder()
                     let encodedData = try encoder.encode(response.body.json.data)
+                    
                     let decodedData = try decode(encodedData, to: FPTicketDetail.self).get()
                     
-                    return .success(decodedData)
+                    self.ticket = decodedData
                     
-                case .badRequest:
-                    VULogger.log(tag: .error, "BAD REQUEST FOR TICKET DETAIL")
-                    return .failure(.BAD_REQUEST)
+                    return .success(decodedData)
                     
                 case .undocumented(statusCode: let code, let payload):
                     VULogger.log(tag: .error, "UNDOCUMENTED FOR TICKET DETAIL \(code) -- \(payload)")
@@ -210,8 +237,12 @@ extension TicketDetailInteractor {
             viewModel.supportiveDocuments = ticket.supportiveDocuments
             viewModel.status = ticket.status
             viewModel.statedIssue = ticket.statedIssue
-            viewModel.handlers = ticket.handlers
-            viewModel.issueType = ticket.issueType
+            viewModel.handlers = ticket.handlers.map {
+                var mod = $0.model
+                mod.extras = $0.extrasAsStringMap()
+                return mod
+            }
+            viewModel.issueTypes = ticket.issueTypes
             viewModel.logs = ticket.logs
             viewModel.raisedOn = ticket.raisedOn
             viewModel.closedOn = ticket.closedOn
@@ -221,6 +252,8 @@ extension TicketDetailInteractor {
             Task { @MainActor in
                 presenter.updateToolbar()
             }
+            
+            self.ticket = ticket
         }
     }
     
@@ -239,7 +272,37 @@ extension TicketDetailInteractor: TicketDetailPresentableListener {
     
     
     func didIntedToCloseTicket() {
-        VULogger.log("didIntedToCloseTicket")
+        Task {
+            if case .member = component.authorizationContext.role {
+                let attemptedRequest = try await component.networkingClient.gateway.postCancelTicket(.init(path: .init(ticket_id: ticket!.id), headers: .init(accept: [.init(contentType: .json)])))
+                switch attemptedRequest {
+                    case .ok:
+                        await updateViewModelAttributes(ticketId: ticket!.id)
+                        viewModel.status = .cancelled
+                        viewModel.closedOn = Date.now.ISO8601Format()
+                        
+                    case .undocumented(statusCode: let code, let payload):
+                        VULogger.log(tag: .error, code, payload)
+                }
+                
+            } else {
+                let attemptedRequest = try await component.networkingClient.gateway.postRejectTicket(.init(
+                    path: .init(ticket_id: ticket!.id), 
+                    headers: .init(accept: [.init(contentType: .json)]), 
+                    body: .json(.init(reason: viewModel.rejectionReason))
+                ))
+                switch attemptedRequest {
+                    case .ok:
+                        await updateViewModelAttributes(ticketId: ticket!.id)
+                        viewModel.status = .rejected
+                        viewModel.closedOn = Date.now.ISO8601Format()
+                        
+                    case .undocumented(statusCode: let code, let payload):
+                        VULogger.log(tag: .error, code, payload)
+                }
+                
+            }
+        }
     }
     
 }
@@ -250,17 +313,23 @@ extension TicketDetailInteractor {
     
     
     func didIntendToAddWorkReport() {
-        router?.attachFlowAddWorkReport()
+        router?.attachFlowAddWorkReport(ticketId: viewModel.id!)
     }
     
     
     func didIntendToDelegateTicket() {
-        router?.attachFlowDelegateTicket(ticketId: viewModel.id!, issueType: viewModel.issueType!)
+        router?.attachFlowDelegateTicket(ticket: ticket!)
     }
     
     
     func didIntendToEvaluateWorkReport() {
-        router?.attachFlowEvaluateWorkReport(logs: viewModel.logs.filter { [.workEvaluationRequest, .workProgress].contains($0.type) })
+        let workRelatedLogs = viewModel.logs.filter { [.workEvaluationRequest, .workProgress].contains($0.type) }
+        guard workRelatedLogs.count > 0 else {
+            VULogger.log(tag: .warning, "No work-related logs. This shouldn't be happening.")
+            return
+        }
+        
+        router?.attachFlowEvaluateWorkReport(logs: workRelatedLogs)
     }
     
     

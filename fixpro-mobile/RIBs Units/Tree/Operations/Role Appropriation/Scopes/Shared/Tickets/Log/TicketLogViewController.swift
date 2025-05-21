@@ -40,6 +40,8 @@ final class TicketLogViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        title = "Ticket Log"
+        
         guard hostingController != nil else {
             buildHostingController()
             return

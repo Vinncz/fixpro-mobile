@@ -8,6 +8,13 @@ import Observation
 @Observable class NewTicketSwiftUIViewModel {
     
     
+    var executiveSummary: String = "" {
+        didSet {
+            errorLabel = nil
+        }
+    }
+    
+    
     var statedIssue: String = "" {
         didSet {
             errorLabel = nil
@@ -22,7 +29,14 @@ import Observation
     }
     
     
-    var issueType: FPIssueType = .select {
+    var issueTypes: [FPIssueType] = [] {
+        didSet {
+            errorLabel = nil
+        }
+    }
+    
+    
+    var selectedIssueTypes: [FPIssueType] = [] {
         didSet {
             errorLabel = nil
         }
@@ -49,10 +63,19 @@ import Observation
     var didIntendToSubmit: () -> Void = {}
     
     
+    func toggleSelection(for issueType: FPIssueType) {
+        if selectedIssueTypes.contains(issueType) {
+            selectedIssueTypes.removeAll(where: {$0 == issueType})
+        } else {
+            selectedIssueTypes.append(issueType)
+        }
+    }
+    
+    
     func reset() {
         self.statedIssue = .EMPTY
         self.statedLocation = .EMPTY
-        self.issueType = .select
+        self.selectedIssueTypes = []
         self.suggestedResponseLevel = .normal
         self.errorLabel = nil
         self.selectedFiles = []

@@ -2,53 +2,6 @@ import SwiftUI
 
 
 
-struct InlineImageListView: View {
-    
-    
-    var urls: [URL]
-    
-    
-    @State var reloadId = UUID()
-    
-    
-    var body: some View {
-        ForEach(urls) { url in
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .empty:
-                    ProgressView()
-                        .frame(width: 200, height: 200)
-                        .background(.regularMaterial)
-                        .aspectRatio(contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                case .success(let image):
-                    image
-                        .resizable()
-                        .frame(width: 200, height: 200)
-                        .background(.regularMaterial)
-                        .aspectRatio(contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                case .failure:
-                    Image(systemName: "arrow.clockwise")
-                        .frame(width: 200, height: 200)
-                        .background(.regularMaterial)
-                        .aspectRatio(contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .onTapGesture {
-                            reloadId = UUID()
-                        }
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            .id(reloadId)
-        }
-    }
-    
-}
-
-
-
 /// The SwiftUI View that is bound to be presented in ``WorkEvaluatingViewController``.
 struct WorkEvaluatingSwiftUIView: View {
     
@@ -66,8 +19,7 @@ struct WorkEvaluatingSwiftUIView: View {
                         
                         ScrollView(.horizontal) {
                             HStack {
-//                                InlineImageListView(urls: log.attachment.map { $0.hostedOn })
-                                ForEach(log.attachment.map { $0.hostedOn }) { url in 
+                                ForEach(log.attachments.map { $0.hostedOn }) { url in 
                                     FPWebView(contentAddressToPreview: url, previewFault: .constant(.EMPTY), scrollEnabled: false)
                                         .frame(width: 200, height: 200)
                                         .background(.regularMaterial)
@@ -78,7 +30,7 @@ struct WorkEvaluatingSwiftUIView: View {
                         }
                         
                     } header: {
-                        Text(dateToString(date: log.recordedOn))
+                        Text(dateToString(date: (try? Date(log.recordedOn, strategy: .iso8601)) ?? .now))
                     } footer: {
                         Text(LocalizedStringResource(
                             """
@@ -91,7 +43,16 @@ struct WorkEvaluatingSwiftUIView: View {
                     }
                 }
                 
+                if !viewModel.validationMessage.isEmpty {
+                    Section("Validation") {
+                        Text(viewModel.validationMessage)
+                            .foregroundStyle(.red)
+                    }
+                }
+                
                 Section {
+                    TextField("Rejection reason", text: $viewModel.rejectionReason, axis: .vertical)
+                        .lineLimit(2...4)
                     Button("Reject work report", role: .destructive) {
                         viewModel.didIntendToReject?()
                     }
@@ -105,6 +66,7 @@ struct WorkEvaluatingSwiftUIView: View {
                         """)
                 }
             }
+                .scrollDismissesKeyboard(.immediately)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) { 
                         Button("Cancel") {
@@ -131,48 +93,52 @@ struct WorkEvaluatingSwiftUIView: View {
 #Preview {
     @Previewable var viewModel = WorkEvaluatingSwiftUIViewModel()
     WorkEvaluatingSwiftUIView(viewModel: viewModel)
-        .onAppear {
-            viewModel.workProgressLogs = [
-                .init(id: "yes", 
-                      owningTicketId: "", 
-                      type: .workProgress, 
-                      issuer: .init(name: "Dawg"), 
-                      recordedOn: .now, 
-                      news: "Lorem ipsum dolor sit amet", 
-                      attachment: [
-                        .init(filename: "Genericfile.png", hostedOn: URL(string: "https://picsum.photos/200")!)
-                      ], 
-                      actionable: .init(genus: .INERT, species: .INERT)),
-                .init(id: "nope", 
-                      owningTicketId: "", 
-                      type: .workProgress, 
-                      issuer: .init(name: "Dawg"), 
-                      recordedOn: .now.addingTimeInterval(-1 * (24 * 3600)), 
-                      news: "Lorem ipsum dolor sit amet", 
-                      attachment: [
-                        .init(filename: "Genericfile.png", hostedOn: URL(string: "https://picsum.photos/200")!)
-                      ], 
-                      actionable: .init(genus: .INERT, species: .INERT)),
-                .init(id: "nope", 
-                      owningTicketId: "", 
-                      type: .workProgress, 
-                      issuer: .init(name: "Dawg"), 
-                      recordedOn: .now.addingTimeInterval(-1 * (24 * 3600)), 
-                      news: "Lorem ipsum dolor sit amet", 
-                      attachment: [
-                        .init(filename: "Genericfile.png", hostedOn: URL(string: "https://picsum.photos/200")!)
-                      ], 
-                      actionable: .init(genus: .INERT, species: .INERT)),
-                .init(id: "nope", 
-                      owningTicketId: "", 
-                      type: .workProgress, 
-                      issuer: .init(name: "Dawg"), 
-                      recordedOn: .now.addingTimeInterval(-1 * (24 * 3600)), 
-                      news: "Lorem ipsum dolor sit amet", 
-                      attachment: [
-                        .init(filename: "Genericfile.png", hostedOn: URL(string: "https://picsum.photos/200")!)
-                      ], 
-                      actionable: .init(genus: .INERT, species: .INERT))
-            ]
-        }
+//        .onAppear {
+//            viewModel.workProgressLogs = [
+//                .init(id: "yes", 
+//                      owningTicketId: "", 
+//                      type: .workProgress, 
+//                      issuer: .init(name: "Dawg"), 
+//                      recordedOn: Date.now.ISO8601Format(), 
+//                      news: "Lorem ipsum dolor sit amet", 
+//                      attachments: [
+////                        .init(filename: "Genericfile.png", mimetype: "png",
+////                              filesize: "2048", hostedOn: URL(string: "https://picsum.photos/200")!)
+//                      ], 
+//                      actionable: .init(genus: .INERT, species: .INERT)),
+//                .init(id: "nope", 
+//                      owningTicketId: "", 
+//                      type: .workProgress, 
+//                      issuer: .init(name: "Dawg"), 
+//                      recordedOn: Date.now.addingTimeInterval(-1 * (24 * 3600)).ISO8601Format(), 
+//                      news: "Lorem ipsum dolor sit amet", 
+//                      attachments: [
+////                        .init(filename: "Genericfile.png", mimetype: "png",
+////                              filesize: "2048", hostedOn: URL(string: "https://picsum.photos/200")!)
+//                      ], 
+//                      actionable: .init(genus: .INERT, species: .INERT)),
+//                .init(id: "nope", 
+//                      owningTicketId: "", 
+//                      type: .workProgress, 
+//                      issuer: .init(name: "Dawg"), 
+//                      recordedOn: Date.now.addingTimeInterval(-1 * (24 * 3600)).ISO8601Format(), 
+//                      news: "Lorem ipsum dolor sit amet", 
+//                      attachments: [
+////                        .init(filename: "Genericfile.png", mimetype: "png",
+////                              filesize: "2048", hostedOn: URL(string: "https://picsum.photos/200")!)
+//                      ], 
+//                      actionable: .init(genus: .INERT, species: .INERT)),
+//                .init(id: "nope", 
+//                      owningTicketId: "", 
+//                      type: .workProgress, 
+//                      issuer: .init(name: "Dawg"), 
+//                      recordedOn: Date.now.addingTimeInterval(-1 * (24 * 3600)).ISO8601Format(), 
+//                      news: "Lorem ipsum dolor sit amet", 
+//                      attachments: [
+////                        .init(filename: "Genericfile.png", mimetype: "png",
+////                              filesize: "2048", hostedOn: URL(string: "https://picsum.photos/200")!)
+//                      ], 
+//                      actionable: .init(genus: .INERT, species: .INERT))
+//            ]
+//        }
 }

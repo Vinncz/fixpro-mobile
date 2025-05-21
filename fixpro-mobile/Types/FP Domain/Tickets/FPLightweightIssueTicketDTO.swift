@@ -8,10 +8,10 @@ struct FPLightweightIssueTicketDTO: Codable, Hashable, Identifiable {
     var id: String
     
     
-    var issueType: FPIssueType
+    var issueTypes: [FPIssueType]
     
     
-    var raisedOn: Date
+    var raisedOn: String
     
     
     var responseLevel: FPIssueTicketResponseLevel
@@ -23,12 +23,12 @@ struct FPLightweightIssueTicketDTO: Codable, Hashable, Identifiable {
     var executiveSummary: String?
     
     
-    var closedOn: Date?
+    var closedOn: String?
     
     
     enum CodingKeys: String, CodingKey {
-        case id = "ticket_id"
-        case issueType = "issue_type"
+        case id
+        case issueTypes = "issue_types"
         case responseLevel = "response_level"
         case status
         case raisedOn = "raised_on"
@@ -39,7 +39,7 @@ struct FPLightweightIssueTicketDTO: Codable, Hashable, Identifiable {
     
     func toDomainModel() -> FPLightweightIssueTicket {
         .init(id: self.id, 
-              issueType: self.issueType, 
+              issueTypes: self.issueTypes, 
               raisedOn: self.raisedOn, 
               responseLevel: self.responseLevel, 
               status: self.status, 

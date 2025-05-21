@@ -1,4 +1,5 @@
 import SwiftUI
+import VinUtility
 
 
 
@@ -78,10 +79,10 @@ extension TicketListSwiftUIViewForManagement {
             } children: { 
                 HStack {
                     VStack(alignment: .leading) {
-                        Text(ticket.issueType.rawValue)
+                        Text(ticket.issueTypes.map{ $0.name }.coalesce())
                             .lineLimit(1)
                         
-                        Text(dateToString(date: ticket.raisedOn))
+                        Text(dateToString(date: (try? Date(ticket.raisedOn, strategy: .iso8601)) ?? .now))
                             .foregroundStyle(.secondary)
                             .font(.callout)
                     }
@@ -103,10 +104,10 @@ extension TicketListSwiftUIViewForManagement {
             } children: { 
                 HStack {
                     VStack(alignment: .leading) {
-                        Text(ticket.issueType.rawValue)
+                        Text(ticket.issueTypes.map{ $0.name }.coalesce())
                             .lineLimit(1)
                         
-                        Text(dateToString(date: ticket.raisedOn))
+                        Text(dateToString(date: (try? Date(ticket.raisedOn, strategy: .iso8601)) ?? .now))
                             .foregroundStyle(.secondary)
                             .font(.callout)
                     }
@@ -128,10 +129,10 @@ extension TicketListSwiftUIViewForManagement {
             } children: { 
                 HStack {
                     VStack(alignment: .leading) {
-                        Text(ticket.issueType.rawValue)
+                        Text(ticket.issueTypes.map{ $0.name }.coalesce())
                             .lineLimit(1)
                         
-                        Text(dateToString(date: ticket.raisedOn))
+                        Text(dateToString(date: (try? Date(ticket.raisedOn, strategy: .iso8601)) ?? .now))
                             .foregroundStyle(.secondary)
                             .font(.callout)
                     }
@@ -153,10 +154,10 @@ extension TicketListSwiftUIViewForManagement {
             } children: { 
                 HStack {
                     VStack(alignment: .leading) {
-                        Text(ticket.issueType.rawValue)
+                        Text(ticket.issueTypes.map{ $0.name }.coalesce())
                             .lineLimit(1)
                         
-                        Text(dateToString(date: ticket.raisedOn))
+                        Text(dateToString(date: (try? Date(ticket.raisedOn, strategy: .iso8601)) ?? .now))
                             .foregroundStyle(.secondary)
                             .font(.callout)
                     }

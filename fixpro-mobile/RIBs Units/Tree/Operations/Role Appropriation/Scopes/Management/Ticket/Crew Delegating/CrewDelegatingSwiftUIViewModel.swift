@@ -11,7 +11,7 @@ import Observation
     var availablePersonnel: [FPPerson] = []
     
     
-    var selectedPersonnel: Set<FPPerson> = [] {
+    var selectedPersonnel: [FPPerson] = [] {
         didSet {
             validationLabel = .EMPTY
         }
@@ -27,9 +27,9 @@ import Observation
     
     func toggleSelection(for person: FPPerson) {
         if selectedPersonnel.contains(person) {
-            selectedPersonnel.remove(person)
+            selectedPersonnel.removeAll(where: {$0 == person})
         } else {
-            selectedPersonnel.insert(person)
+            selectedPersonnel.append(person)
         }
     }
     

@@ -67,17 +67,14 @@ final class TicketReportInteractor: PresentableInteractor<TicketReportPresentabl
     
     
     /// Bridge to the ``TicketReportSwiftUIVIew``.
-    private var viewModel = TicketReportSwiftUIViewModel()
-    
-    
-    var urlToReport: URL
+    private var viewModel: TicketReportSwiftUIViewModel
     
     
     /// Constructs an instance of ``TicketReportInteractor``.
     /// - Parameter component: The component of this RIB.
     init(component: TicketReportComponent, presenter: TicketReportPresentable, urlToReport: URL) {
         self.component = component
-        self.urlToReport = urlToReport
+        self.viewModel = TicketReportSwiftUIViewModel(urlToReport: urlToReport)
         
         super.init(presenter: presenter)
         
@@ -108,9 +105,11 @@ final class TicketReportInteractor: PresentableInteractor<TicketReportPresentabl
     
     /// Configures the view model.
     private func configureViewModel() {
-        viewModel.urlToReport = urlToReport
         viewModel.didIntendToDismiss = { [weak self] in
             self?.didGetDismissed()
+        }
+        viewModel.didIntendToDownload = { [weak self] in 
+//            self?.did
         }
         presenter.bind(viewModel: self.viewModel)
     }

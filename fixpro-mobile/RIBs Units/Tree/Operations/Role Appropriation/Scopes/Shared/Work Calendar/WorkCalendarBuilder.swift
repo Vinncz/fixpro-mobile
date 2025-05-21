@@ -6,6 +6,7 @@ import RIBs
 /// `WorkCalendarRIB` does not require any dependencies from its parent scope.
 protocol WorkCalendarDependency: Dependency {
     var authorizationContext: FPRoleContext { get }
+    var networkingClient: FPNetworkingClient { get }
 }
 
 
@@ -23,6 +24,11 @@ final class WorkCalendarComponent: Component<WorkCalendarDependency> {
     
     var authorizationContext: FPRoleContext {
         dependency.authorizationContext
+    }
+    
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }

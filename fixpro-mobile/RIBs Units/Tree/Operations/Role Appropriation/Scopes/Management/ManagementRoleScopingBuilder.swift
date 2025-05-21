@@ -31,7 +31,7 @@ final class ManagementRoleScopingComponent: Component<ManagementRoleScopingDepen
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension ManagementRoleScopingComponent: TicketNavigatorDependency, WorkCalendarDependency, AreaManagementDependency, InboxNavigatorDependency, PreferencesDependency {}
+extension ManagementRoleScopingComponent: TicketNavigatorDependency, WorkCalendarDependency, AreaManagementNavigatorDependency, InboxNavigatorDependency, PreferencesDependency {}
 
 
 
@@ -72,7 +72,7 @@ final class ManagementRoleScopingBuilder: Builder<ManagementRoleScopingDependenc
             viewController: viewController,
             ticketNavigatorBuilder: TicketNavigatorBuilder(dependency: component),
             workCalendarBuilder: WorkCalendarBuilder(dependency: component),
-            areaManagementBuilder: AreaManagementBuilder(dependency: component),
+            areaManagementNavigatorBuilder: AreaManagementNavigatorBuilder(dependency: component),
             inboxNavigatorBuilder: InboxNavigatorBuilder(dependency: component),
             preferencesBuilder: PreferencesBuilder(dependency: component)
         )

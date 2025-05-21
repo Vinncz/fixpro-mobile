@@ -6,6 +6,7 @@ import RIBs
 /// `CrewNewWorkLogRIB` does not require any dependencies from its parent scope.
 protocol CrewNewWorkLogDependency: Dependency {
     var authorizationContext: FPRoleContext { get }
+    var networkingClient: FPNetworkingClient { get }
 }
 
 
@@ -25,6 +26,11 @@ final class CrewNewWorkLogComponent: Component<CrewNewWorkLogDependency> {
         dependency.authorizationContext
     }
     
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
+    }
+    
 }
 
 
@@ -41,7 +47,7 @@ protocol CrewNewWorkLogBuildable: Buildable {
     
     /// Constructs the `CrewNewWorkLogRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: CrewNewWorkLogListener) -> CrewNewWorkLogRouting
+    func build(withListener listener: CrewNewWorkLogListener, ticketId: String) -> CrewNewWorkLogRouting
     
 }
 
@@ -60,9 +66,9 @@ final class CrewNewWorkLogBuilder: Builder<CrewNewWorkLogDependency>, CrewNewWor
     
     /// Constructs the `CrewNewWorkLogRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: CrewNewWorkLogListener) -> CrewNewWorkLogRouting {
+    func build(withListener listener: CrewNewWorkLogListener, ticketId: String) -> CrewNewWorkLogRouting {
         let component  = CrewNewWorkLogComponent(dependency: dependency)
-        let interactor = CrewNewWorkLogInteractor(component: component)
+        let interactor = CrewNewWorkLogInteractor(component: component, ticketId: ticketId)
             interactor.listener = listener
         
         return CrewNewWorkLogRouter(

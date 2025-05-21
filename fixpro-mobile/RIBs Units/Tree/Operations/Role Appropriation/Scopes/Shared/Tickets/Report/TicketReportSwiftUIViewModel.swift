@@ -8,9 +8,19 @@ import Observation
 @Observable class TicketReportSwiftUIViewModel {
     
     
-    var urlToReport: URL = URL(string: "localhost:80")!
+    var urlToReport: URL
     
     
     var didIntendToDismiss: (() -> Void)?
+    
+    
+    var didIntendToDownload: (() -> Void)?
+    
+    
+    init(urlToReport: URL, didIntendToDismiss: (() -> Void)? = nil, didIntendToDownload: (() -> Void)? = nil) {
+        self.urlToReport = urlToReport
+        self.didIntendToDismiss = didIntendToDismiss
+        self.didIntendToDownload = didIntendToDownload
+    }
     
 }

@@ -9,10 +9,10 @@ import SwiftData
     var id: String
     
     
-    var issueType: FPIssueType
+    var issueTypes: [FPIssueType]
     
     
-    var raisedOn: Date
+    var raisedOn: String
     
     
     var responseLevel: FPIssueTicketResponseLevel
@@ -24,23 +24,12 @@ import SwiftData
     var executiveSummary: String?
     
     
-    var closedOn: Date?
+    var closedOn: String?
     
     
-    enum CodingKeys: String, CodingKey {
-        case id = "ticket_id"
-        case issueType = "issue_type"
-        case responseLevel = "response_level"
-        case status
-        case raisedOn = "raised_on"
-        case executiveSummary = "executive_summary"
-        case closedOn = "closed_on"
-    }
-    
-    
-    init(id: String, issueType: FPIssueType, raisedOn: Date, responseLevel: FPIssueTicketResponseLevel, status: FPIssueTicketStatus, executiveSummary: String?, closedOn: Date? = nil) {
+    init(id: String, issueTypes: [FPIssueType], raisedOn: String, responseLevel: FPIssueTicketResponseLevel, status: FPIssueTicketStatus, executiveSummary: String?, closedOn: String? = nil) {
         self.id = id
-        self.issueType = issueType
+        self.issueTypes = issueTypes
         self.raisedOn = raisedOn
         self.responseLevel = responseLevel
         self.status = status

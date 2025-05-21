@@ -23,6 +23,9 @@ enum FPTIcketLogType: String, CaseIterable, Codable, Hashable, Identifiable {
     case activity = "Activity"
     
     
-    var id: Self { self }
+    case timeExtension = "Time Extension"
+    
+    
+    var id: Self { self } 
     
 }

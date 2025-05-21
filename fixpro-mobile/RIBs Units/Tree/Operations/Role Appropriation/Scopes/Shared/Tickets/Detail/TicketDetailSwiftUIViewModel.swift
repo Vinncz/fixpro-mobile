@@ -11,13 +11,13 @@ import Observation
     var id: String?
     
     
-    var issueType: FPIssueType?
+    var issueTypes: [FPIssueType] = []
     
     
     var responseLevel: FPIssueTicketResponseLevel?
     
     
-    var raisedOn: Date?
+    var raisedOn: String?
     
     
     var status: FPIssueTicketStatus?
@@ -41,15 +41,18 @@ import Observation
     var logs: [FPTicketLog] = []
     
     
-    var handlers: [FPContactInformation] = []
+    var handlers: [FPPerson] = []
     
     
-    var closedOn: Date?
+    var closedOn: String?
     
     
     init(role: FPTokenRole) {
         self.role = role
     }
+    
+    
+    var rejectionReason: String = .EMPTY
     
     
     var role: FPTokenRole

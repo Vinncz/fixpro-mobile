@@ -70,7 +70,7 @@ final class TicketLogInteractor: PresentableInteractor<TicketLogPresentable>, Ti
     
     
     /// Bridge to the ``TicketLogSwiftUIVIew``.
-    private var viewModel = TicketLogSwiftUIViewModel()
+    private var viewModel: TicketLogSwiftUIViewModel
     
     
     var ticketLog: FPTicketLog
@@ -81,6 +81,7 @@ final class TicketLogInteractor: PresentableInteractor<TicketLogPresentable>, Ti
     init(component: TicketLogComponent, presenter: TicketLogPresentable, ticketLog: FPTicketLog) {
         self.component = component
         self.ticketLog = ticketLog
+        self.viewModel = TicketLogSwiftUIViewModel(log: ticketLog)
         
         super.init(presenter: presenter)
         
@@ -111,7 +112,7 @@ final class TicketLogInteractor: PresentableInteractor<TicketLogPresentable>, Ti
     
     /// Configures the view model.
     private func configureViewModel() {
-        // TODO: Configure the view model.
+        
         presenter.bind(viewModel: self.viewModel)
     }
     

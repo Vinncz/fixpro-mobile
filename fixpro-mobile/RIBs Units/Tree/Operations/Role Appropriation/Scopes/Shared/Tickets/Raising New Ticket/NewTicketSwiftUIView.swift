@@ -31,11 +31,16 @@ struct NewTicketSwiftUIView: View {
             Form {
                 StatedIssueInputView()
                 LocationInputView()
-                IssueCharacteristicInputView()
+                ResponseLevelPickerView()
                 SupportiveDocumentsInputView()
+                IssueCharacteristicInputView()
+                ExecutiveSummaryInputView()
                 if let errorMsg = viewModel.errorLabel {
                     ValidationLabel(errorMsg)
                 }
+                Spacer()
+                    .frame(minHeight: VUViewSize.cCompact.val / 2)
+                    .listRowBackground(Color.clear)
             }
             .scrollDismissesKeyboard(.immediately)
             .navigationTitle("Raising an issue ticket")
@@ -88,7 +93,7 @@ extension NewTicketSwiftUIView {
         } header: {
             Text("What happened? • Required")
         } footer: {
-            Text(LocalizedStringResource("A good description is concise, has causal and effect, and explains the context of the issue. [Learn more](https://google.com)."))
+            Text(LocalizedStringResource("A good description is concise, has causal and effect, and explains the context of the issue. [Learn more](https://google.com).\n"))
         }
         .keyboardDismissableByTappingNearlyAnywhere()
     }
@@ -101,21 +106,14 @@ extension NewTicketSwiftUIView {
         } header: {
             Text("Where did you find it? • Required")
         } footer: {
-            Text(LocalizedStringResource("Be specific. By providing a landmark, you could help the maintenance crew to locate the issue quicker."))
+            Text(LocalizedStringResource("Be specific. By providing a landmark, you could help the maintenance crew to locate the issue quicker.\n"))
         }
         .keyboardDismissableByTappingNearlyAnywhere()
     }
     
     
-    @ViewBuilder func IssueCharacteristicInputView() -> some View {
+    @ViewBuilder func ResponseLevelPickerView() -> some View {
         Section {
-            Picker(selection: $viewModel.issueType) {
-                ForEach(FPIssueType.allCases) { issueType in 
-                    Text(issueType.rawValue).tag(issueType)
-                }
-            } label: {
-                Text("Issue type")
-            }
             Picker(selection: $viewModel.suggestedResponseLevel) {
                 ForEach(FPIssueTicketResponseLevel.allCases) { responseLevel in 
                     Text(responseLevel.rawValue).tag(responseLevel)
@@ -124,9 +122,41 @@ extension NewTicketSwiftUIView {
                 Text("Response level")
             }
         } header: {
-            Text("What is the nature of the issue? • Required")
+            Text("How pressing is the matter? • Required")
+        } footer: {
+            Text("Some severity are prioritized over others.\n")
         }
-        .keyboardDismissableByTappingNearlyAnywhere()
+    }
+    
+    @ViewBuilder func IssueCharacteristicInputView() -> some View {
+        Section {
+            ForEach(viewModel.issueTypes) { issueType in 
+                ToggleableButton(forType: issueType)
+            }
+        } header: {
+            Text("Which of these categories? • Required")
+        } footer: {
+            Text("Select only those that best describe your issue. Selecting too many may cause your ticket to be delayed or even rejected.\n")
+        }
+    }
+    
+    
+    @ViewBuilder func ToggleableButton(forType type: FPIssueType) -> some View {
+        Button {
+            viewModel.toggleSelection(for: type)
+        } label: {
+            HStack {
+                Text(type.name)
+                Spacer()
+                Text("Approx. \(type.serviceLevelAgreementDurationHour) hours")
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+                Image(systemName: "checkmark")
+                    .opacity(viewModel.selectedIssueTypes.contains(type) ? 1 : 0)
+                    .foregroundStyle(.blue)
+            }
+        }
+        .tint(.primary)
     }
     
     
@@ -156,8 +186,20 @@ extension NewTicketSwiftUIView {
                     .foregroundStyle(.red)
                     .font(.caption)
             } else {
-                Text(LocalizedStringResource("Tap the name of the file to preview, and swipe leftwards to delete. Selecting a helpful supportive documents helps management to understand your issue better [Learn more](https://google.com)."))
+                Text(LocalizedStringResource("Tap the name of the file to preview, and swipe leftwards to delete. Selecting a helpful supportive documents helps management to understand your issue better [Learn more](https://google.com).\n"))
             }
+        }
+    }
+    
+    
+    @ViewBuilder func ExecutiveSummaryInputView() -> some View {
+        Section {
+            TextField("", text: $viewModel.executiveSummary, axis: .vertical)
+                .lineLimit(1...2)
+        } header: {
+            Text("Summary in one sentence • Optional")
+        } footer: {
+            Text("Catchy or serious summary may catch the attention of management sooner.\n")
         }
     }
     

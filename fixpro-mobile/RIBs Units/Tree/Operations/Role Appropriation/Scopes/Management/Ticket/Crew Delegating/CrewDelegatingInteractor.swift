@@ -7,7 +7,9 @@ import VinUtility
 
 /// Contract adhered to by ``CrewDelegatingRouter``, listing the attributes and/or actions 
 /// that ``CrewDelegatingInteractor`` is allowed to access or invoke.
-protocol CrewDelegatingRouting: ViewableRouting {}
+protocol CrewDelegatingRouting: ViewableRouting {
+    func dismiss()
+}
 
 
 
@@ -35,6 +37,8 @@ protocol CrewDelegatingPresentable: Presentable {
 /// that ``CrewDelegatingInteractor`` is allowed to access or invoke.
 protocol CrewDelegatingListener: AnyObject {
     func didDismissCrewDelegating()
+    func didAdd(handlers: [FPPerson])
+    func didAdd(log: FPTicketLog)
 }
 
 
@@ -60,16 +64,14 @@ final class CrewDelegatingInteractor: PresentableInteractor<CrewDelegatingPresen
     private var viewModel = CrewDelegatingSwiftUIViewModel()
     
     
-    var ticketId: String
-    var issueType: FPIssueType
+    var ticket: FPTicketDetail
     
     
     /// Constructs an instance of ``CrewDelegatingInteractor``.
     /// - Parameter component: The component of this RIB.
-    init(component: CrewDelegatingComponent, ticketId: String, issueType: FPIssueType) {
+    init(component: CrewDelegatingComponent, ticket: FPTicketDetail) {
         self.component = component
-        self.ticketId = ticketId
-        self.issueType = issueType
+        self.ticket = ticket
         
         let presenter = component.crewDelegatingViewController
         super.init(presenter: presenter)
@@ -101,8 +103,9 @@ final class CrewDelegatingInteractor: PresentableInteractor<CrewDelegatingPresen
         Task { 
             let personnels = await retrieveMatchingPersonnels()
             
-            Task { @MainActor in
-                viewModel.availablePersonnel = personnels.filter { $0.speciality.contains(issueType) }
+            Task { @MainActor in 
+                viewModel.selectedPersonnel = personnels.filter { ticket.handlers.map{$0.model.name}.contains($0.name) }
+                viewModel.availablePersonnel = personnels.filter { $0.specialties.contains(ticket.issueTypes) }
             }
         }
         
@@ -136,9 +139,25 @@ extension CrewDelegatingInteractor {
         let selectedPersonnel = viewModel.selectedPersonnel
         Task {
             do {
-                try await commitToDelegatingPersonnel(selectedPersonnel.map{ $0 }).get()
                 Task { @MainActor in
-                    listener?.didDismissCrewDelegating()
+                    VUPresentLoadingAlert(
+                        on: router?.viewControllable.uiviewController,
+                        title: "Submitting your contribution", 
+                        message: "This shouldn't take more than a minute. Should you cancel this submission, your progress is saved.", 
+                        cancelButtonCTA: "Cancel", 
+                        delay: 30, 
+                        cancelAction: {}
+                    )
+                }
+                
+                try await commitToDelegatingPersonnel(selectedPersonnel.map{ $0 }).get()
+                listener?.didAdd(handlers: selectedPersonnel)
+                
+                DispatchQueue.main.sync {
+                    self.router?.dismiss()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self.router?.dismiss()
+                    }
                 }
                 
             } catch {
@@ -150,22 +169,28 @@ extension CrewDelegatingInteractor {
     
     func commitToDelegatingPersonnel(_ personnels: [FPPerson]) async -> Result<Void, FPError> {
         do {
-            let attemptedRequest = try await component.networkingClient.gateway.delegateIssueTicket(.init(
-                path: .init(ticket_id: ticketId),
+            let attemptedRequest = try await component.networkingClient.gateway.postTicketHandlers(.init(
+                path: .init(ticket_id: ticket.id),
                 headers: .init(accept: [.init(contentType: .json)]),
                 body: .json(.init(
-                    target_member_id: personnels.map { $0.id },
-                    executive_summary: viewModel.executiveSummary
+                    appointed_member_ids: [], 
+                    work_description: "", 
+                    issue_types: ""
                 ))
             ))
             
             switch attemptedRequest {
-                case .created:
-                    return .success(())
-                    
-                case .undocumented(statusCode: let code, let payload):
-                    VULogger.log(tag: .error, code, payload)
-                    return .failure(.UNEXPECTED_RESPONSE)
+            case .ok(let made):
+                let response = try made.body.json
+                let encoder = JSONEncoder()
+                let encodedData = try encoder.encode(response.data)
+                let decodedData = try decode(encodedData, to: FPTicketLog.self).get()
+                listener?.didAdd(log: decodedData)
+                return .success(())
+                
+            case .undocumented(statusCode: let code, let payload):
+                VULogger.log(tag: .error, code, payload)
+                return .failure(.UNEXPECTED_RESPONSE)
             }
             
         } catch {
@@ -187,9 +212,6 @@ extension CrewDelegatingInteractor {
                     let decodedResponse = try decode(encodedResponse, to: [FPPerson].self).get()
                     
                     return decodedResponse
-                    
-                case .forbidden:
-                    VULogger.log(tag: .error, "Forbidden")
                     
                 case .undocumented(statusCode: let code, let payload):
                     VULogger.log(tag: .error, code, payload)

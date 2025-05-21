@@ -17,12 +17,12 @@ struct CrewNewWorkLogSwiftUIView: View {
     var body: some View {
         NavigationView {
             Form {
-                StatedIssueInputView()
-                IssueCharacteristicInputView()
-                SupportiveDocumentsInputView()
                 if !viewModel.validationLabel.isEmpty {
                     ValidationLabel(viewModel.validationLabel)
                 }
+                StatedIssueInputView()
+                IssueCharacteristicInputView()
+                SupportiveDocumentsInputView()
             }
                 .scrollDismissesKeyboard(.immediately)
                 .toolbarTitleDisplayMode(.inline)
@@ -64,7 +64,7 @@ extension CrewNewWorkLogSwiftUIView {
     
     @ViewBuilder func StatedIssueInputView() -> some View {
         Section {
-            TextField("A water dispenser had its gallon leaked, dirtying the floor and caused an elderly to fell.", text: $viewModel.workDescription, axis: .vertical)
+            TextField("A water dispenser had its gallon leaked, dirtying the floor and caused an elderly to fell.", text: $viewModel.news, axis: .vertical)
                 .lineLimit(4...8)
         } header: {
             Text("What has been done? • Required")
@@ -122,8 +122,8 @@ extension CrewNewWorkLogSwiftUIView {
     
     
     @ViewBuilder func ValidationLabel(_ errorMsg: String) -> some View {
-        Section {
-            Text(errorMsg)
+        Section("Validation") {
+            Text(LocalizedStringResource(stringLiteral: errorMsg))
                 .foregroundStyle(.red)
         }
     }

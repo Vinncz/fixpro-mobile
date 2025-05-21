@@ -24,7 +24,7 @@ struct CrewDelegatingSwiftUIView: View {
                     TextField("Gallon replacement for the 5th floor dispenser.", text: $viewModel.executiveSummary, axis: .vertical)
                         .lineLimit(2...4)
                 } header: {
-                    Text("Executive summary")
+                    Text("Work Direction • Required")
                 } footer: {
                     Text("Help your colleagues by telling them what's wrong and what needs to be done.")
                 }
@@ -34,7 +34,7 @@ struct CrewDelegatingSwiftUIView: View {
                         ToggleableButton(forPersonnel: personnel)
                     }
                 } header: {
-                    Text("Available Personnel")
+                    Text("Personnel to Delegate to • Required")
                 } footer: {
                     Text(LocalizedStringResource(
                         """
@@ -74,7 +74,7 @@ struct CrewDelegatingSwiftUIView: View {
             HStack {
                 Text(personnel.name)
                 Spacer()
-                Text(personnel.moreInformation[.title] ?? "")
+                Text(personnel.title ?? "")
                     .foregroundStyle(.secondary)
                     .font(.callout)
                 Image(systemName: "checkmark")
@@ -91,28 +91,25 @@ struct CrewDelegatingSwiftUIView: View {
 #Preview {
     @Previewable var viewModel = CrewDelegatingSwiftUIViewModel()
     CrewDelegatingSwiftUIView(viewModel: viewModel)
-        .onAppear {
-            var A = FPPerson(id: "A", 
-                          name: "Kodok", 
-                          role: .member, 
-                             speciality: [.engineering], 
-                          memberSince: .now)
-            A.moreInformation[.title] = "Janitor"
-            
-            
-            viewModel.availablePersonnel = [
-                A,
-                .init(id: "B", 
-                      name: "Dog", 
-                      role: .member, 
-                      speciality: [.engineering], 
-                      memberSince: .now,
-                     ),
-                .init(id: "C", 
-                      name: "Birb", 
-                      role: .member, 
-                      speciality: [.engineering], 
-                      memberSince: .now)
-            ]
-        }
+//        .onAppear {
+//            var A = FPPerson(id: "A", 
+//                          name: "Kodok", 
+//                          role: .member, 
+//                             specialities: [.init(id: "1", name: "Engineering", serviceLevelAgreementDurationHour: 2)])
+//            
+//            
+//            viewModel.availablePersonnel = [
+//                A,
+//                .init(id: "B", 
+//                      name: "Dog", 
+//                      role: .member, 
+//                      specialities: [.init(id: "1", name: "Engineering", serviceLevelAgreementDurationHour: 2)]
+//                     ),
+//                .init(id: "C", 
+//                      name: "Birb", 
+//                      role: .member, 
+//                      specialities: [.init(id: "1", name: "Engineering", serviceLevelAgreementDurationHour: 2)]
+//                      )
+//            ]
+//        }
 }

@@ -47,7 +47,7 @@ protocol CrewDelegatingBuildable: Buildable {
     
     /// Constructs the `CrewDelegatingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: CrewDelegatingListener, ticketId: String, issueType: FPIssueType) -> CrewDelegatingRouting
+    func build(withListener listener: CrewDelegatingListener, ticket: FPTicketDetail) -> CrewDelegatingRouting
     
 }
 
@@ -66,9 +66,9 @@ final class CrewDelegatingBuilder: Builder<CrewDelegatingDependency>, CrewDelega
     
     /// Constructs the `CrewDelegatingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
-    func build(withListener listener: CrewDelegatingListener, ticketId: String, issueType: FPIssueType) -> CrewDelegatingRouting {
+    func build(withListener listener: CrewDelegatingListener, ticket: FPTicketDetail) -> CrewDelegatingRouting {
         let component  = CrewDelegatingComponent(dependency: dependency)
-        let interactor = CrewDelegatingInteractor(component: component, ticketId: ticketId, issueType: issueType)
+        let interactor = CrewDelegatingInteractor(component: component, ticket: ticket)
             interactor.listener = listener
         
         return CrewDelegatingRouter(

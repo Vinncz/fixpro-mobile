@@ -6,6 +6,7 @@ import RIBs
 /// `WorkEvaluatingRIB` does not require any dependencies from its parent scope.
 protocol WorkEvaluatingDependency: Dependency {
     var authorizationContext: FPRoleContext { get }
+    var networkingClient: FPNetworkingClient { get }
 }
 
 
@@ -23,6 +24,11 @@ final class WorkEvaluatingComponent: Component<WorkEvaluatingDependency> {
     
     var authorizationContext: FPRoleContext {
         dependency.authorizationContext
+    }
+    
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }

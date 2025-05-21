@@ -139,15 +139,15 @@ fileprivate extension TicketDetailViewController {
                 
                 items.append(UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil))
                 
-                let reportButton = createToolbarButton(
-                    title: "Report", 
-                    systemImage: "arrow.down.document", 
+                let printViewButton = createToolbarButton(
+                    title: "Print", 
+                    systemImage: "printer.inverse", 
                     actionHandler: { [weak self] in
                         self?.presentableListener?.didIntendToSeeTicketReport()
                     },
-                    isEnabled: [.closed, .cancelled, .rejected].contains(viewModel.status) && viewModel.status != nil
+                    isEnabled: viewModel.status != nil
                 )
-                items.append(reportButton)
+                items.append(printViewButton)
                 
             case .crew:
                 let addWorkReportButton = createToolbarButton(
@@ -162,15 +162,15 @@ fileprivate extension TicketDetailViewController {
 
                 items.append(UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil))
                 
-                let reportButton =  createToolbarButton(
-                    title: "Report", 
-                    systemImage: "arrow.down.document", 
+                let printViewButton =  createToolbarButton(
+                    title: "Print", 
+                    systemImage: "printer.inverse", 
                     actionHandler: { [weak self] in 
                         self?.presentableListener?.didIntendToSeeTicketReport()
                     },
-                    isEnabled: [.closed, .cancelled, .rejected].contains(viewModel.status) && viewModel.status != nil
+                    isEnabled: viewModel.status != nil
                 )
-                items.append(reportButton)
+                items.append(printViewButton)
                 
             case .management:
                 if viewModel.status == .workEvaluation {
@@ -196,15 +196,27 @@ fileprivate extension TicketDetailViewController {
 
                 items.append(UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil))
                 
-                let reportButton =  createToolbarButton(
-                    title: "Report", 
-                    systemImage: "arrow.down.document", 
+                let cancelTicketButton = createToolbarButton(
+                    title: "Cancel ticket", 
+                    systemImage: "xmark.bin", 
+                    actionHandler: {  [weak self] in
+                        self?.presentableListener?.didIntedToCloseTicket()
+                    },
+                    isEnabled: [.open, .inAssessment, .onProgress, .workEvaluation].contains(viewModel.status)
+                )
+                items.append(cancelTicketButton)
+                
+                items.append(UIBarButtonItem(barButtonSystemItem: .fixedSpace, target: nil, action: nil))
+                
+                let printViewButton =  createToolbarButton(
+                    title: "Print", 
+                    systemImage: "printer.inverse", 
                     actionHandler: {  [weak self] in
                         self?.presentableListener?.didIntendToSeeTicketReport()
                     },
-                    isEnabled: [.closed, .cancelled, .rejected].contains(viewModel.status) && viewModel.status != nil
+                    isEnabled: viewModel.status != nil
                 )
-                items.append(reportButton)
+                items.append(printViewButton)
         }
         self.toolbarItems = items
     }

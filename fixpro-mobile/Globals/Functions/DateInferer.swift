@@ -55,11 +55,11 @@ fileprivate func handlePastConversion(date: Date) -> RelativeDate {
         return .yesterday
     } else if calendar.isDate(date, equalTo: now, toGranularity: .weekOfYear) {
         return .thisWeek
-    } else if let weekDifference = calendar.dateComponents([.weekOfYear], from: date, to: now).weekOfYear, weekDifference == 1 {
+    } else if let weekDifference = calendar.dateComponents([.weekOfYear], from: date, to: now).weekOfYear, weekDifference <= 2 {
         return .lastWeek
     } else if calendar.isDate(date, equalTo: now, toGranularity: .month) {
         return .thisMonth
-    } else if let monthDifference = calendar.dateComponents([.month], from: date, to: now).month, monthDifference == 1 {
+    } else if let monthDifference = calendar.dateComponents([.month], from: date, to: now).month, monthDifference <= 2 {
         return .lastMonth
     } else if calendar.isDate(date, equalTo: now, toGranularity: .year) {
         return .thisYear

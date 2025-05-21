@@ -7,7 +7,7 @@ import UIKit
 /// that ``ManagementRoleScopingRouter`` is allowed to access or invoke.
 /// 
 /// Conform this `Interactable` protocol with this RIB's children's `Listener` protocols.
-protocol ManagementRoleScopingInteractable: Interactable, TicketNavigatorListener, WorkCalendarListener, AreaManagementListener, InboxNavigatorListener, PreferencesListener {
+protocol ManagementRoleScopingInteractable: Interactable, TicketNavigatorListener, WorkCalendarListener, AreaManagementNavigatorListener, InboxNavigatorListener, PreferencesListener {
     
     
     /// Reference to ``ManagementRoleScopingRouter``.
@@ -37,8 +37,8 @@ final class ManagementRoleScopingRouter: ViewableRouter<ManagementRoleScopingInt
     var workCalendarBuilder: WorkCalendarBuildable
     var workCalendarRouter: WorkCalendarRouting?
     
-    var areaManagementBuilder: AreaManagementBuildable
-    var areaManagementRouter: AreaManagementRouting?
+    var areaManagementNavigatorBuilder: AreaManagementNavigatorBuildable
+    var areaManagementNavigatorRouter: AreaManagementNavigatorRouting?
     
     var inboxNavigatorBuilder: InboxNavigatorBuildable
     var inboxNavigatorRouter: InboxNavigatorRouting?
@@ -50,10 +50,10 @@ final class ManagementRoleScopingRouter: ViewableRouter<ManagementRoleScopingInt
     /// Constructs an instance of ``ManagementRoleScopingRouter``.
     /// - Parameter interactor: The interactor for this RIB.
     /// - Parameter viewController: The view controller for this RIB.
-    init(interactor: ManagementRoleScopingInteractable, viewController: ManagementRoleScopingViewControllable, ticketNavigatorBuilder: TicketNavigatorBuildable, workCalendarBuilder: WorkCalendarBuildable, areaManagementBuilder: AreaManagementBuildable, inboxNavigatorBuilder: InboxNavigatorBuildable, preferencesBuilder: PreferencesBuildable) {
+    init(interactor: ManagementRoleScopingInteractable, viewController: ManagementRoleScopingViewControllable, ticketNavigatorBuilder: TicketNavigatorBuildable, workCalendarBuilder: WorkCalendarBuildable, areaManagementNavigatorBuilder: AreaManagementNavigatorBuildable, inboxNavigatorBuilder: InboxNavigatorBuildable, preferencesBuilder: PreferencesBuildable) {
         self.ticketNavigatorBuilder = ticketNavigatorBuilder
         self.workCalendarBuilder = workCalendarBuilder
-        self.areaManagementBuilder = areaManagementBuilder
+        self.areaManagementNavigatorBuilder = areaManagementNavigatorBuilder
         self.inboxNavigatorBuilder = inboxNavigatorBuilder
         self.preferencesBuilder = preferencesBuilder
         
@@ -71,21 +71,13 @@ final class ManagementRoleScopingRouter: ViewableRouter<ManagementRoleScopingInt
         self.ticketNavigatorRouter = ticketNavigatorRouter
         attachChild(ticketNavigatorRouter)
         
-        let workCalendarNav = UINavigationController()
         let workCalendarRouter = workCalendarBuilder.build(withListener: interactor)
-        let workCalendarRouterUITabBarItem = UITabBarItem(title: "Calendar", image: UIImage(systemName: "calendar"), selectedImage: UIImage(systemName: "calendar.fill"))
-        workCalendarRouter.viewControllable.uiviewController.tabBarItem = workCalendarRouterUITabBarItem
-        workCalendarNav.viewControllers = [workCalendarRouter.viewControllable.uiviewController]
         self.workCalendarRouter = workCalendarRouter
         attachChild(workCalendarRouter)
         
-        let areaManagementNav = UINavigationController()
-        let areaManegementRouter = areaManagementBuilder.build(withListener: interactor)
-        let areaManagementRouterUITabBarItem = UITabBarItem(title: "Areas", image: UIImage(systemName: "shield.lefthalf.filled"), selectedImage: UIImage(systemName: "shield.fill"))
-        areaManegementRouter.viewControllable.uiviewController.tabBarItem = areaManagementRouterUITabBarItem
-        areaManagementNav.viewControllers = [areaManegementRouter.viewControllable.uiviewController]
-        self.areaManagementRouter = areaManegementRouter
-        attachChild(areaManegementRouter)
+        let manageAreaRouter = areaManagementNavigatorBuilder.build(withListener: interactor)
+        self.areaManagementNavigatorRouter = manageAreaRouter
+        attachChild(manageAreaRouter)
         
         let inboxNavigatorRouter = inboxNavigatorBuilder.build(withListener: interactor)
         self.inboxNavigatorRouter = inboxNavigatorRouter
@@ -101,8 +93,8 @@ final class ManagementRoleScopingRouter: ViewableRouter<ManagementRoleScopingInt
         
         (viewControllable.uiviewController as? UITabBarController)?.viewControllers = [
             ticketNavigatorRouter.viewControllable.uiviewController, 
-            workCalendarNav, 
-            areaManagementNav, 
+            workCalendarRouter.viewControllable.uiviewController, 
+            manageAreaRouter.viewControllable.uiviewController, 
             inboxNavigatorRouter.viewControllable.uiviewController, 
             preferencesNav
         ]

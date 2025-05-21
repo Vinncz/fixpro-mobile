@@ -41,7 +41,11 @@ protocol AreaManagementPresentable: Presentable {
 
 /// Contract adhered to by the Interactor of `AreaManagementRIB`'s parent, listing the attributes and/or actions
 /// that ``AreaManagementInteractor`` is allowed to access or invoke.
-protocol AreaManagementListener: AnyObject {}
+protocol AreaManagementListener: AnyObject {
+    func navigateToApplicationReviewAndManagement()
+    func navigateToIssueTypesWithSLARegistrar()
+    func navigateToStatistics()
+}
 
 
 
@@ -100,6 +104,18 @@ final class AreaManagementInteractor: PresentableInteractor<AreaManagementPresen
         viewModel.didUpdateJoinPolicy = { [weak self] newPolicy in
             self?.viewModel.joinPolicy = newPolicy
         }
+        viewModel.routeToManageMembers = { [weak self] in
+            self?.listener?.navigateToApplicationReviewAndManagement()
+        }
+        viewModel.routeToSLAAndIssueTypesManagement = { [weak self] in
+            self?.listener?.navigateToIssueTypesWithSLARegistrar()
+        }
+        viewModel.routeToStatisticView = { [weak self] in
+            self?.listener?.navigateToStatistics()
+        }
+        viewModel.areaJoinCodeEndpoint = { [weak self] in
+            (self?.component.networkingClient.endpoint.absoluteString  ?? "") + "/area/join"
+        }()
         
         presenter.bind(viewModel: self.viewModel)
     }

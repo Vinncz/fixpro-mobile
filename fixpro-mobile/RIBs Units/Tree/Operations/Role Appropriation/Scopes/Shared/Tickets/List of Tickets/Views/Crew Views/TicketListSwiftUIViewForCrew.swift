@@ -60,7 +60,7 @@ extension TicketListSwiftUIViewForCrew {
                         Text(ticket.executiveSummary ?? ticket.id)
                             .lineLimit(1)
                         
-                        Text(dateToString(date: ticket.raisedOn))
+                        Text(dateToString(date: (try? Date(ticket.raisedOn, strategy: .iso8601)) ?? .now))
                             .foregroundStyle(.secondary)
                             .font(.callout)
                     }
@@ -90,7 +90,7 @@ extension TicketListSwiftUIViewForCrew {
                         Text(ticket.executiveSummary ?? ticket.id)
                             .lineLimit(1)
                         
-                        Text(dateToString(date: ticket.closedOn ?? Date()))
+                        Text(dateToString(date: (try? Date(ticket.closedOn ?? "", strategy: .iso8601)) ?? .now))
                             .foregroundStyle(.secondary)
                             .font(.callout)
                     }

@@ -6,6 +6,7 @@ import RIBs
 /// `AreaManagementRIB` does not require any dependencies from its parent scope.
 protocol AreaManagementDependency: Dependency {
     var authorizationContext: FPRoleContext { get }
+    var networkingClient: FPNetworkingClient { get }
 }
 
 
@@ -23,6 +24,11 @@ final class AreaManagementComponent: Component<AreaManagementDependency> {
     
     var authorizationContext: FPRoleContext {
         dependency.authorizationContext
+    }
+    
+    
+    var networkingClient: FPNetworkingClient {
+        dependency.networkingClient
     }
     
 }

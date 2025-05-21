@@ -9,6 +9,10 @@ struct AreaManagementSwiftUIView: View {
     /// Two-ways communicator between ``AreaManagementInteractor`` and self.
     @Bindable var viewModel: AreaManagementSwiftUIViewModel
     
+    
+    @State var shouldShowAreaJoinCode = false
+    
+    
     var body: some View {
         Form {
             Section {
@@ -33,39 +37,46 @@ struct AreaManagementSwiftUIView: View {
                     Text("Closed").tag(FPAreaJoinPolicy.CLOSED)
                 }
                 
-                DisclosureGroup("Area Join Code", isExpanded: .constant(false)) { 
-                    Button("Area Join Code") { viewModel.routeToAreaJoinCode?() }
-                }.tint(.secondary)
-                
-                DisclosureGroup(isExpanded: .constant(false)) { 
-                    Button("Pending Membership") { viewModel.routeToPendingMembership?() }
-                } label: {
+                FPChevronRowView{
+                    shouldShowAreaJoinCode = true
+                } children: { 
                     HStack {
-                        Text("Pending Membership")
+                        Text("Area Join Code")
                         Spacer()
-                        Text("0 requests")
+                        Text("Show")
                             .foregroundStyle(.secondary)
                     }
                 }
-                .tint(.secondary)
                 
-                DisclosureGroup(isExpanded: .constant(false)) { 
-                    Button("Manage Members") { viewModel.routeToManageMembers?() }
-                } label: {
+                FPChevronRowView{
+                    viewModel.routeToManageMembers?()
+                } children: { 
                     HStack {
-                        Text("Manage Members")
+                        Text("Manage Membership")
                         Spacer()
                         Text("0 people")
                             .foregroundStyle(.secondary)
                     }
                 }
-                .tint(.secondary)
-                
             } header: {
                 Text("Membership controls")
-                
             } footer: {
                 Text(LocalizedStringResource("Approve or reject membership to your Area, by selecting approval-required mode as your Join Policy. [Learn more](http://localhost:80)."))
+            }
+            
+            Section {
+                FPChevronRowView {
+                    viewModel.routeToSLAAndIssueTypesManagement?()
+                } children: {
+                    VStack(alignment: .leading) {
+                        Text("Issue Type Registrar")
+                        Text("Manage your Service Level Agreement for a given type of issue.")
+                            .foregroundStyle(.secondary)
+                            .font(.footnote)
+                    }
+                }
+            } header: {
+                Text("Administration")
             }
             
             Section {
@@ -89,6 +100,11 @@ struct AreaManagementSwiftUIView: View {
                 Text(LocalizedStringResource("Learn all the trends happening to your Area, by churning Tickets into actionable data."))
             }
         }
+        .sheet(isPresented: $shouldShowAreaJoinCode) { 
+            if let endpoint = URL(string: viewModel.areaJoinCodeEndpoint ?? "") {
+                FPWebView(contentAddressToPreview: endpoint, previewFault: .constant(.EMPTY), scrollEnabled: true)
+            }
+        }
     }
     
 }
@@ -103,9 +119,6 @@ struct AreaManagementSwiftUIView: View {
             viewModel.didUpdateJoinPolicy = { newPolicy in
                 viewModel.joinPolicy = newPolicy
                 print(newPolicy)
-            }
-            viewModel.routeToPendingMembership = {
-                print("Pending")
             }
         }
 }

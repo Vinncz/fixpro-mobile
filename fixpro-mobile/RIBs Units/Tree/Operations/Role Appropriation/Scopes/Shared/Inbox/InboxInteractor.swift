@@ -1,6 +1,7 @@
+import Foundation
 import RIBs
-import VinUtility
 import RxSwift
+import VinUtility
 
 
 
@@ -127,19 +128,16 @@ fileprivate extension InboxInteractor {
                         _ = receivedNotifications.map { notifications in
                             notifications.map { notification in
                                 guard 
-                                    let notification_id = notification.notification_id, 
                                     let title = notification.title, 
                                     let body = notification.body, 
                                     let actionable = notification.actionable,
-                                    let actionableGenusString = actionable.genus?.rawValue,
-                                    let actionableGenus = FPRemoteNotificationActionable.Genus(rawValue: actionableGenusString),
-                                    let actionableSpeciesString = actionable.species?.rawValue,
-                                    let actionableSpecies = FPRemoteNotificationActionable.Species(rawValue: actionableSpeciesString)
+                                    let actionableGenus = FPRemoteNotificationActionable.Genus(rawValue: "\(actionable.genus?.value ?? "")"),
+                                    let actionableSpecies = FPRemoteNotificationActionable.Species(rawValue: "\(actionable.species?.value ?? "")")
                                 else { return }
                                 
                                 notifs.append(
                                     FPNotificationDigest(
-                                        id: notification_id, 
+                                        id: UUID().uuidString, 
                                         title: title, 
                                         body: body, 
                                         actionable: FPRemoteNotificationActionable(

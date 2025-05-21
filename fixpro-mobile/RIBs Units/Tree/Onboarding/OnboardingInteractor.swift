@@ -131,7 +131,7 @@ extension OnboardingInteractor {
     
     func configureViewModelForOngoingPendingApplication() {
         guard let onbs = component.onboardingServiceProxy.backing, 
-              let nc = component.networkingClientProxy.backing
+                component.networkingClientProxy.backing != nil
         else {
             fatalError("Should not invoke this method when onboardingservice is absent.")
         }
@@ -177,14 +177,16 @@ extension OnboardingInteractor {
                                                                                                                                                     storageKey: .KEYCHAIN_KEY_FOR_FPSESSION_IDENTITY_MEMENTO_SNAPSHOT)
                                 self.component.sessionIdentityServiceMementoAgentProxy.back(with: sessionIdentityServiceMementoAgent)
                                 
-                                let sessionIdentityServiceUpkeeper = FPSessionIdentityUpkeeper(storage: sessionIdentityService, networkingClient: networkingClient)
+                                let sessionIdentityServiceUpkeeper = FPSessionIdentityUpkeeper(storage: sessionIdentityService, networkingClient: networkingClient, mementoAgent: sessionIdentityServiceMementoAgent)
                                 self.component.sessionIdentityUpkeeperProxy.back(with: sessionIdentityServiceUpkeeper)
                                 
-                                self.component.networkingClientProxy.back(with: networkingClient)
+                                await sessionIdentityServiceMementoAgent.snap()
                                 
-                                Task {
-                                    await sessionIdentityServiceMementoAgent.snap()
-                                }
+                                let sessionIdentityMiddleware = FPSessionIdentityMiddleware(storage: sessionIdentityService)
+                                
+                                let nc = FPNetworkingClient(endpoint: networkingClient.endpoint, middlewares: [sessionIdentityMiddleware])
+                                self.component.networkingClientProxy.back(with: nc)
+                                sessionIdentityServiceUpkeeper.networkingClient = nc
                                 // </Prep for flow change>
                                 
                                 
@@ -198,16 +200,10 @@ extension OnboardingInteractor {
                                 switch error {
                                         
                                     // Subsubcondition 1 -- Code was exchanged while self didn't receive any tokens.
-                                    //                      No helping this one.
+                                    //                      Perhaps double request was sent. However, when absolutely no tokens are received, then there's no helping this one.
                                     case .CODE_ALREADY_EXCHANGED:
                                         VULogger.log("ApplicationId has already been exchanged with tokens")
-                                        
-                                        self?.component.onboardingServiceProxy.backing?.cancelApplication()
-                                        self?.viewModel.applicationReceipt = nil
-                                        self?.viewModel.applicationState = .undecided
-                                        self?.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPONBOARDINGSERVICE_MEMENTO_SNAPSHOT)
-                                        self?.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_NETWORKING_CLIENT_MEMENTO_SNAPSHOT)
-                                        self?.component.keychainStorageServicing.remove(for: .KEYCHAIN_KEY_FOR_FPSESSION_IDENTITY_MEMENTO_SNAPSHOT)
+                                        break
                                     
                                     // Subsubcondition 2 -- Other failure.
                                     default:

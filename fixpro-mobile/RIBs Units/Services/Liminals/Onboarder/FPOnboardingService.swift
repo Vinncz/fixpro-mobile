@@ -90,8 +90,8 @@ extension FPOnboardingService {
         do {
             
             // Step 2 -- Attempt a network request to the Area.
-            let response = try await networkingClient.gateway.getEntryFormFields(.init(
-                query: .init(ref: areaJoinCode.referralTrackingIdentifier),
+            let response = try await networkingClient.gateway.getAreaJoinForm(.init(
+                query: .init(area_join_form_referral_tracking_identifier: areaJoinCode.referralTrackingIdentifier),
                 headers: .init(accept: [.init(contentType: .json)])
             ))
             
@@ -157,8 +157,8 @@ extension FPOnboardingService {
         
         let oneTimePrivateKey = P256.KeyAgreement.PrivateKey()
         do {
-            let response = try await networkingClient.gateway.submitEntryForm(.init(
-                query: .init(nonce: nonce),
+            let response = try await networkingClient.gateway.postAreaJoinForm(.init(
+                query: .init(area_join_form_submission_nonce: nonce),
                 headers: .init(accept: [.init(contentType: .json)]),
                 body: .init(.json(.init(
                     data: fields.map { label, answer in
@@ -174,14 +174,15 @@ extension FPOnboardingService {
                 case .json(let jsonBody):
                     guard 
                         let applicationId = jsonBody.data?.application_id,
-                        let applicationExpiryDate = jsonBody.data?.application_expiry_date
+                        let applicationExpiryDate = jsonBody.data?.application_expiry_date,
+                        let date = try? Date(applicationExpiryDate, strategy: .iso8601)
                     else { 
                         return .failure(.EMPTY_ARGUMENT)
                     }
                     
                     return .success((
                         applicationId: applicationId,
-                        applicationExpiryDate: applicationExpiryDate
+                        applicationExpiryDate: date
                     ))
                 }
                 
@@ -218,7 +219,7 @@ extension FPOnboardingService {
         }
         
         do {
-            let response =  try await networkingClient.gateway.checkForEntryVerdict(.init(
+            let response =  try await networkingClient.gateway.oauthAuthorization(.init(
                 headers: .init(accept: [.init(contentType: .json)]),
                 body: .json(.init(
                     application_id: applicationId

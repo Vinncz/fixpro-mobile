@@ -75,11 +75,7 @@ final class CrewRoleScopingRouter: ViewableRouter<CrewRoleScopingInteractable, C
         self.ticketNavigatorRouter = ticketNavigatorRouter
         attachChild(ticketNavigatorRouter)
         
-        let workCalendarNav = UINavigationController()
         let workCalendarRouter = workCalendarBuilder.build(withListener: interactor)
-        let workCalendarRouterUITabBarItem = UITabBarItem(title: "Calendar", image: UIImage(systemName: "calendar"), selectedImage: UIImage(systemName: "calendar.fill"))
-        workCalendarRouter.viewControllable.uiviewController.tabBarItem = workCalendarRouterUITabBarItem
-        workCalendarNav.viewControllers = [workCalendarRouter.viewControllable.uiviewController]
         attachChild(workCalendarRouter)
         self.workCalendarRouter = workCalendarRouter
         
@@ -103,7 +99,7 @@ final class CrewRoleScopingRouter: ViewableRouter<CrewRoleScopingInteractable, C
         
         (viewControllable.uiviewController as? UITabBarController)?.viewControllers = [
             ticketNavigatorRouter.viewControllable.uiviewController, 
-            workCalendarNav, 
+            workCalendarRouter.viewControllable.uiviewController, 
             nonViewOwningButton, 
             inboxNavigatorRouter.viewControllable.uiviewController, 
             preferencesNav

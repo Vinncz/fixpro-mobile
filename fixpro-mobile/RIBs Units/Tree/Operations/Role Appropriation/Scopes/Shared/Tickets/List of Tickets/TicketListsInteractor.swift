@@ -128,7 +128,7 @@ extension TicketListsInteractor {
             switch attemptedRequest {
                 case .ok(let response): 
                     let encoder = JSONEncoder()
-                    let decoder = JSONDecoder()
+                    let decoder = JSONDecoder()   
                     let encodedResponse = try encoder.encode(response.body.json.data)
                     let decodedResponse = try decoder.decode([FPLightweightIssueTicketDTO].self, from: encodedResponse)
                     
@@ -150,6 +150,13 @@ extension TicketListsInteractor {
     func didMake(ticket: FPLightweightIssueTicket) {
         presenter.viewModel?.tickets.append(ticket)
         VULogger.log("Did append the new ticket to the viewmodel")
+    }
+    
+    
+    func refreshList() {
+        Task { @MainActor in
+            presenter.viewModel?.tickets = try await self.fetchTicketList().get()
+        }
     }
     
 }
