@@ -79,15 +79,13 @@ struct TicketLogSwiftUIView: View {
             }
             
             Section("Committed by") {
-                HStack {
+                VStack(alignment: .leading) {
                     Text(viewModel.log.issuer.name)
                         .multilineTextAlignment(.leading)
-                    Spacer()
                     if let additionalInformation = viewModel.log.issuer.title {
                         Text(additionalInformation)
                             .foregroundStyle(.secondary)
                             .font(.callout)
-                            .multilineTextAlignment(.trailing)
                     }
                 }
             }

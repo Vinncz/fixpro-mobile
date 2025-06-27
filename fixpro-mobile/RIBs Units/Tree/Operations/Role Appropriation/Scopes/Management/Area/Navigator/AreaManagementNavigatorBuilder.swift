@@ -18,7 +18,14 @@ final class AreaManagementNavigatorComponent: Component<AreaManagementNavigatorD
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension AreaManagementNavigatorComponent: AreaManagementDependency, AreaManagmentIssueTypesWithSLARegistrarDependency, AreaManagementApplicationReviewAndManagementDependency, AreaManagementStatisticsDependency {
+extension AreaManagementNavigatorComponent: AreaManagementDependency, 
+                                            ManageMembershipsDependency,
+                                                ApplicantDetailDependency,
+                                                MemberDetailDependency,
+                                            IssueTypesRegistrarDependency, 
+                                            ManageSLADependency, 
+                                            StatisticsAndReportsDependency 
+{
     
     
     var authorizationContext: FPRoleContext {
@@ -71,9 +78,12 @@ final class AreaManagementNavigatorBuilder: Builder<AreaManagementNavigatorDepen
             interactor: interactor, 
             viewController: viewController,
             areaManagementBuilder: AreaManagementBuilder(dependency: component),
-            areaManagmentIssueTypesWithSLARegistrarBuilder: AreaManagmentIssueTypesWithSLARegistrarBuilder(dependency: component),
-            areaManagementApplicationReviewAndManagementBuilder: AreaManagementApplicationReviewAndManagementBuilder(dependency: component),
-            areaManagementStatisticsBuilder: AreaManagementStatisticsBuilder(dependency: component)
+            manageMembershipsBuilder: ManageMembershipsBuilder(dependency: component),
+            applicantDetailBuilder: ApplicantDetailBuilder(dependency: component),
+            memberDetailBuilder: MemberDetailBuilder(dependency: component),
+            issueTypesRegistrarBuilder: IssueTypesRegistrarBuilder(dependency: component),
+            manageSLABuilder: ManageSLABuilder(dependency: component),
+            statisticsAndReportsBuilder: StatisticsAndReportsBuilder(dependency: component)
         )
     }
     

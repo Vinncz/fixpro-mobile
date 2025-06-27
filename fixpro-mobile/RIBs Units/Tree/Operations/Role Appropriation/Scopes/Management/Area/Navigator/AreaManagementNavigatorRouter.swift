@@ -1,5 +1,6 @@
 import RIBs
 import UIKit
+import VinUtility
 
 
 
@@ -7,7 +8,14 @@ import UIKit
 /// that ``AreaManagementNavigatorRouter`` is allowed to access or invoke.
 /// 
 /// Conform this `Interactable` protocol with this RIB's children's `Listener` protocols.
-protocol AreaManagementNavigatorInteractable: Interactable, AreaManagementListener, AreaManagmentIssueTypesWithSLARegistrarListener, AreaManagementApplicationReviewAndManagementListener, AreaManagementStatisticsListener {
+protocol AreaManagementNavigatorInteractable: Interactable, 
+                                                AreaManagementListener, 
+                                                ManageMembershipsListener, 
+                                                    ApplicantDetailListener, 
+                                                    MemberDetailListener,
+                                                IssueTypesRegistrarListener, 
+                                                ManageSLAListener, 
+                                                StatisticsAndReportsListener {
     
     
     /// Reference to ``AreaManagementNavigatorRouter``.
@@ -61,24 +69,45 @@ final class AreaManagementNavigatorRouter: ViewableRouter<AreaManagementNavigato
     var areaManagementBuilder: AreaManagementBuildable
     var areaManagementRouter: AreaManagementRouting?
     
-    var areaManagmentIssueTypesWithSLARegistrarBuilder: AreaManagmentIssueTypesWithSLARegistrarBuildable
-    var areaManagmentIssueTypesWithSLARegistrarRouter: AreaManagmentIssueTypesWithSLARegistrarRouting?
+    var manageMembershipsBuilder: ManageMembershipsBuildable
+    var manageMembershipsRouter: ManageMembershipsRouting?
     
-    var areaManagementApplicationReviewAndManagementBuilder: AreaManagementApplicationReviewAndManagementBuildable
-    var areaManagementApplicationReviewAndManagementRouter: AreaManagementApplicationReviewAndManagementRouting?
+        var applicantDetailBuilder: ApplicantDetailBuildable
+        var applicantDetailRouter: ApplicantDetailRouting?
+        
+        var memberDetailBuilder: MemberDetailBuildable
+        var memberDetailRouter: MemberDetailRouting?
     
-    var areaManagementStatisticsBuilder: AreaManagementStatisticsBuildable
-    var areaManagementStatisticsRouter: AreaManagementStatisticsRouting?
+    var issueTypesRegistrarBuilder: IssueTypesRegistrarBuildable
+    var issueTypesRegistrarRouter: IssueTypesRegistrarRouting?
+    
+    var manageSLABuilder: ManageSLABuildable
+    var manageSLARouter: ManageSLARouting?
+    
+    var statisticsAndReportsBuilder: StatisticsAndReportsBuildable
+    var statisticsAndReportsRouter: StatisticsAndReportsRouting?
     
     
     /// Constructs an instance of ``AreaManagementNavigatorRouter``.
     /// - Parameter interactor: The interactor for this RIB.
     /// - Parameter viewController: The view controller for this RIB.
-    init(interactor: AreaManagementNavigatorInteractable, viewController: AreaManagementNavigatorViewControllable, areaManagementBuilder: AreaManagementBuildable, areaManagmentIssueTypesWithSLARegistrarBuilder: AreaManagmentIssueTypesWithSLARegistrarBuildable, areaManagementApplicationReviewAndManagementBuilder: AreaManagementApplicationReviewAndManagementBuildable, areaManagementStatisticsBuilder: AreaManagementStatisticsBuildable) {
+    init(interactor: AreaManagementNavigatorInteractable, 
+         viewController: AreaManagementNavigatorViewControllable, 
+         areaManagementBuilder: AreaManagementBuildable, 
+         manageMembershipsBuilder: ManageMembershipsBuildable,
+         applicantDetailBuilder: ApplicantDetailBuildable,
+         memberDetailBuilder: MemberDetailBuildable,
+         issueTypesRegistrarBuilder: IssueTypesRegistrarBuildable,
+         manageSLABuilder: ManageSLABuildable,
+         statisticsAndReportsBuilder: StatisticsAndReportsBuildable
+    ) {
         self.areaManagementBuilder = areaManagementBuilder
-        self.areaManagmentIssueTypesWithSLARegistrarBuilder = areaManagmentIssueTypesWithSLARegistrarBuilder
-        self.areaManagementApplicationReviewAndManagementBuilder = areaManagementApplicationReviewAndManagementBuilder
-        self.areaManagementStatisticsBuilder = areaManagementStatisticsBuilder
+        self.manageMembershipsBuilder = manageMembershipsBuilder
+            self.applicantDetailBuilder = applicantDetailBuilder
+            self.memberDetailBuilder = memberDetailBuilder
+        self.issueTypesRegistrarBuilder = issueTypesRegistrarBuilder
+        self.manageSLABuilder = manageSLABuilder
+        self.statisticsAndReportsBuilder = statisticsAndReportsBuilder
         
         super.init(interactor: interactor, viewController: viewController)
         
@@ -115,76 +144,182 @@ extension AreaManagementNavigatorRouter {
 extension AreaManagementNavigatorRouter: AreaManagementNavigatorRouting {
     
     
-    func navigateToApplicationReviewAndManagement() {
-        let router = areaManagementApplicationReviewAndManagementBuilder.build(withListener: interactor)
-        self.areaManagementApplicationReviewAndManagementRouter = router
+    func navigateToManageMemberships() {
+        let router = manageMembershipsBuilder.build(withListener: interactor)
+        self.manageMembershipsRouter = router
+        
+        self.attachChild(router)
+        self.viewController.push(router.viewControllable, animated: true)
+    }
+    
+            func navigateToApplicantDetail(_ applicant: FPEntryApplication) {
+                let router = applicantDetailBuilder.build(withListener: interactor, applicant: applicant)
+                self.applicantDetailRouter = router
+                
+                self.attachChild(router)
+                self.viewController.push(router.viewControllable, animated: true)
+            }
+            
+            func navigateToMemberDetail(_ member: FPPerson) {
+                let router = memberDetailBuilder.build(withListener: interactor, member: member)
+                self.memberDetailRouter = router
+                
+                self.attachChild(router)
+                self.viewController.push(router.viewControllable, animated: true)
+            }
+    
+    
+    func navigateToIssueTypesRegistrar() {
+        let router = issueTypesRegistrarBuilder.build(withListener: interactor)
+        self.issueTypesRegistrarRouter = router
         
         self.attachChild(router)
         self.viewController.push(router.viewControllable, animated: true)
     }
     
     
-    func navigateToIssueTypesWithSLARegistrar() {
-        let router = areaManagmentIssueTypesWithSLARegistrarBuilder.build(withListener: interactor)
-        self.areaManagmentIssueTypesWithSLARegistrarRouter = router
+    func navigateToManageSLA() {
+        let router = manageSLABuilder.build(withListener: interactor)
+        self.manageSLARouter = router
         
         self.attachChild(router)
         self.viewController.push(router.viewControllable, animated: true)
     }
     
     
-    func navigateToStatistics() {
-        let router = areaManagementStatisticsBuilder.build(withListener: interactor)
-        self.areaManagementStatisticsRouter = router
+    func navigateToStatisticsAndReports() {
+        let router = statisticsAndReportsBuilder.build(withListener: interactor)
+        self.statisticsAndReportsRouter = router
         
         self.attachChild(router)
         self.viewController.push(router.viewControllable, animated: true)
-    }
-    
-    
-    func toRoot() {
-        viewController.popToRoot(animated: true)
-        detachARAM()
-        detachITWSLAR()
-        detachStatistics()
-    }
-    
-    
-    /// Cleanses the view hierarchy of any `ViewControllable` instances this RIB may have added.
-    func cleanupViews() {
-        viewController.set([], animated: false)
-        detachARAM()
-        detachITWSLAR()
-        detachStatistics()
     }
     
 }
 
 
 
+/// Extension for backward navigation.
 extension AreaManagementNavigatorRouter {
     
     
-    func detachARAM() {
-        if let areaManagementApplicationReviewAndManagementRouter {
-            detachChild(areaManagementApplicationReviewAndManagementRouter)
-            self.areaManagementApplicationReviewAndManagementRouter = nil
+    func respondToNavigateBack(from origin: UIViewController) {
+        if origin === manageMembershipsRouter?.viewControllable.uiviewController {
+            VULogger.log("detachManageMemberships")
+            detachManageMemberships()
+        } else if origin === applicantDetailRouter?.viewControllable.uiviewController {
+            VULogger.log("detachApplicantDetail")
+            detachApplicantDetail()
+        } else if origin === memberDetailRouter?.viewControllable.uiviewController {
+            VULogger.log("detachMemberDetail")
+            detachMemberDetail()
+        } else if origin === issueTypesRegistrarRouter?.viewControllable.uiviewController {
+            VULogger.log("detachIssueTypesRegistrar")
+            detachIssueTypesRegistrar()
+        } else if origin === manageSLARouter?.viewControllable.uiviewController {
+            VULogger.log("detachManageSLA")
+            detachManageSLA()
+        } else if origin === statisticsAndReportsRouter?.viewControllable.uiviewController {
+            VULogger.log("detachStatisticsAndReports")
+            detachStatisticsAndReports()
+        }        
+    }
+    
+    
+    func toRoot() {
+        viewController.popToRoot(animated: true)
+        detachManageMemberships()
+        detachIssueTypesRegistrar()
+        detachManageSLA()
+        detachStatisticsAndReports()
+    }
+    
+    
+    /// Cleanses the view hierarchy of any `ViewControllable` instances this RIB may have added.
+    func cleanupViews() {
+        viewController.set([], animated: false)
+        detachAreaManagement()
+        detachManageMemberships()
+        detachIssueTypesRegistrar()
+        detachManageSLA()
+        detachStatisticsAndReports()
+    }
+    
+}
+
+
+
+/// Extension for RIBs detachments.
+extension AreaManagementNavigatorRouter {
+    
+    
+    func didRemove(applicant: FPEntryApplication) {
+        manageMembershipsRouter?.didRemove(applicant: applicant)
+        viewController.pop(animated: true)
+    }
+    
+    
+    func didRemove(member: FPPerson) {
+        manageMembershipsRouter?.didRemove(member: member)
+        viewController.pop(animated: true)
+    }
+    
+}
+
+
+
+/// Extension for RIBs detachments.
+extension AreaManagementNavigatorRouter {
+    
+    
+    func detachAreaManagement() {
+        if let areaManagementRouter {
+            detachChild(areaManagementRouter)
+            self.areaManagementRouter = nil
         }
     }
     
     
-    func detachITWSLAR() {
-        if let areaManagmentIssueTypesWithSLARegistrarRouter {
-            detachChild(areaManagmentIssueTypesWithSLARegistrarRouter)
-            self.areaManagmentIssueTypesWithSLARegistrarRouter = nil
+    func detachManageMemberships() {
+        if let manageMembershipsRouter {
+            detachChild(manageMembershipsRouter)
+            self.manageMembershipsRouter = nil
+        }
+    }
+    func detachApplicantDetail() {
+        if let applicantDetailRouter {
+            detachChild(applicantDetailRouter)
+            self.applicantDetailRouter = nil
+        }
+    }
+    func detachMemberDetail() {
+        if let memberDetailRouter {
+            detachChild(memberDetailRouter)
+            self.memberDetailRouter = nil
         }
     }
     
     
-    func detachStatistics() {
-        if let areaManagementStatisticsRouter {
-            detachChild(areaManagementStatisticsRouter)
-            self.areaManagementStatisticsRouter = nil
+    func detachIssueTypesRegistrar() {
+        if let issueTypesRegistrarRouter {
+            detachChild(issueTypesRegistrarRouter)
+            self.issueTypesRegistrarRouter = nil
+        }
+    }
+    
+    
+    func detachManageSLA() {
+        if let manageSLARouter {
+            detachChild(manageSLARouter)
+            self.manageSLARouter = nil
+        }
+    }
+    
+    
+    func detachStatisticsAndReports() {
+        if let statisticsAndReportsRouter {
+            detachChild(statisticsAndReportsRouter)
+            self.statisticsAndReportsRouter = nil
         }
     }
     

@@ -65,9 +65,10 @@ extension RoleAppropriationRouter: RoleAppropriationRouting {
     
     /// Transitions to role-scoped flow.
     func provisionMemberScope(component: RoleAppropriationComponent, triggerNotification: FPNotificationDigest?) {
-        component.authorizationContextProxy.back(with: .init(role: .member))
-        
         Task { @MainActor [weak self] in
+            let sessionIdentityService = component.sessionIdentityService
+            await component.authorizationContextProxy.back(with: .init(role: .member, capabilities: sessionIdentityService.capabilities, specialties: sessionIdentityService.specialties))
+            
             guard let self else { return }
             let builder = MemberRoleScopingBuilder(dependency: component)
             let router = builder.build(withListener: interactor, triggerNotification: triggerNotification)
@@ -81,9 +82,10 @@ extension RoleAppropriationRouter: RoleAppropriationRouting {
     
     /// Transitions to role-scoped flow.
     func provisionCrewScope(component: RoleAppropriationComponent, triggerNotification: FPNotificationDigest?) {
-        component.authorizationContextProxy.back(with: .init(role: .crew))
-        
         Task { @MainActor [weak self] in
+            let sessionIdentityService = component.sessionIdentityService
+            await component.authorizationContextProxy.back(with: .init(role: .crew, capabilities: sessionIdentityService.capabilities, specialties: sessionIdentityService.specialties))
+            
             guard let self else { return }
             let builder = CrewRoleScopingBuilder(dependency: component)
             let router = builder.build(withListener: interactor, triggerNotification: triggerNotification)
@@ -97,9 +99,10 @@ extension RoleAppropriationRouter: RoleAppropriationRouting {
     
     /// Transitions to role-scoped flow.
     func provisionManagementScope(component: RoleAppropriationComponent, triggerNotification: FPNotificationDigest?) {
-        component.authorizationContextProxy.back(with: .init(role: .management))
-        
         Task { @MainActor [weak self] in
+            let sessionIdentityService = component.sessionIdentityService
+            await component.authorizationContextProxy.back(with: .init(role: .management, capabilities: sessionIdentityService.capabilities, specialties: sessionIdentityService.specialties))
+            
             guard let self else { return }
             let builder = ManagementRoleScopingBuilder(dependency: component)
             let router = builder.build(withListener: interactor, triggerNotification: triggerNotification)

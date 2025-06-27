@@ -8,59 +8,24 @@ import Observation
 @Observable class TicketDetailSwiftUIViewModel {
     
     
-    var id: String?
-    
-    
-    var issueTypes: [FPIssueType] = []
-    
-    
-    var responseLevel: FPIssueTicketResponseLevel?
-    
-    
-    var raisedOn: String?
-    
-    
-    var status: FPIssueTicketStatus?
-    
-    
-    var executiveSummary: String?
-    
-    
-    var statedIssue: String?
-    
-    
-    var location: FPLocation?
-    
-    
-    var supportiveDocuments: [FPSupportiveDocument] = []
-    
-    
-    var issuer: FPContactInformation?
-    
-    
-    var logs: [FPTicketLog] = []
-    
-    
-    var handlers: [FPPerson] = []
-    
-    
-    var closedOn: String?
-    
-    
+    var role: FPTokenRole
+    var baseURL: URL?
+    var ticket: FPTicketDetail?
     init(role: FPTokenRole) {
         self.role = role
     }
     
     
-    var rejectionReason: String = .EMPTY
+    // MARK: -- View states
+    var shouldShowPrintView: Bool = false
+    var shouldShowCancellationAlert: Bool = false
+    var shouldShowRejectionAlert: Bool = false
     
     
-    var role: FPTokenRole
-    
-    
-    var didIntedToRefresh: (() async -> Void)?
-    
-    
+    // MARK: -- Invokables
+    var didIntedToRefresh: (() async throws -> Void)?
     var didTapTicketLog: ((_ log: FPTicketLog)->Void)?
+    var didCancelTicket: (() async throws -> Void)?
+    var didRejectTicket: ((String, [URL]) async throws -> Void)?
     
 }

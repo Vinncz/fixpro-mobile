@@ -17,6 +17,12 @@ enum FPIssueTicketStatus: String, CaseIterable, Codable, Hashable, Identifiable 
     case workEvaluation = "Work Evaluation"
     
     
+    case qualityControl = "Quality Control"
+    
+    
+    case ownerEvaluation = "Owner Evaluation"
+    
+    
     case closed = "Closed"
     
     
@@ -39,6 +45,10 @@ enum FPIssueTicketStatus: String, CaseIterable, Codable, Hashable, Identifiable 
                 return .orange.opacity(0.8)
             case .workEvaluation:
                 return .indigo
+            case .qualityControl:
+                return .orange.opacity(0.7)
+            case .ownerEvaluation:
+                return .blue
             case .closed:
                 return .green
             case .cancelled:
@@ -59,6 +69,10 @@ enum FPIssueTicketStatus: String, CaseIterable, Codable, Hashable, Identifiable 
                 return "On Prog"
             case .workEvaluation:
                 return "Work Eval"
+            case .qualityControl:
+                return "QC"
+            case .ownerEvaluation:
+                return "Ownr Eval"
             case .closed:
                 return "Closed"
             case .cancelled:

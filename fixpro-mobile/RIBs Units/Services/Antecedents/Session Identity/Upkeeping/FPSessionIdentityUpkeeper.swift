@@ -38,7 +38,9 @@ final class FPSessionIdentityUpkeeper: FPSessionIdentityUpkeeping {
                     guard 
                         let accessToken = jsonBody.data?.access_token,
                         let accessTokenExpirationDate = jsonBody.data?.access_expiry_interval,
-                        let role = FPTokenRole(rawValue: "\(jsonBody.data?.role_scope?.value ?? "")")
+                        let role = FPTokenRole(rawValue: "\(jsonBody.data?.role_scope?.value ?? "")"),
+                        let capabilities = jsonBody.data?.capabilities,
+                        let specialties = jsonBody.data?.specialties
                     else {
                         throw FPError.DECODE_FAILURE
                     }
@@ -48,6 +50,17 @@ final class FPSessionIdentityUpkeeper: FPSessionIdentityUpkeeping {
                     await storage.set(accessTokenExpirationDate: .now.addingTimeInterval(Double(accessTokenExpirationDate)))
                         
                     await storage.set(role: role)
+                    await storage.set(capabilities: capabilities.compactMap {
+                        .init(rawValue: "\($0.value ?? "")")
+                    })
+                    await storage.set(specialties: specialties.compactMap {
+                        guard let id = $0.id, let name = $0.name, let serviceLevelAgreementDurationHour = $0.service_level_agreement_duration_hour else { return nil }
+                        return .init(
+                            id: id, 
+                            name: name, 
+                            serviceLevelAgreementDurationHour: serviceLevelAgreementDurationHour
+                        )
+                    })
                     
                     
                     guard

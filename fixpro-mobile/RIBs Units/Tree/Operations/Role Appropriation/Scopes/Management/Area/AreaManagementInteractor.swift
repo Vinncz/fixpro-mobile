@@ -1,5 +1,6 @@
 import RIBs
 import RxSwift
+import VinUtility
 
 
 
@@ -42,9 +43,10 @@ protocol AreaManagementPresentable: Presentable {
 /// Contract adhered to by the Interactor of `AreaManagementRIB`'s parent, listing the attributes and/or actions
 /// that ``AreaManagementInteractor`` is allowed to access or invoke.
 protocol AreaManagementListener: AnyObject {
-    func navigateToApplicationReviewAndManagement()
-    func navigateToIssueTypesWithSLARegistrar()
-    func navigateToStatistics()
+    func navigateToManageMemberships()
+    func navigateToIssueTypesRegistrar()
+    func navigateToManageSLA()
+    func navigateToStatisticsAndReports()
 }
 
 
@@ -86,6 +88,7 @@ final class AreaManagementInteractor: PresentableInteractor<AreaManagementPresen
     override func didBecomeActive() {
         super.didBecomeActive()
         configureViewModel()
+        fetchAreaInformation()
     }
     
     
@@ -103,21 +106,80 @@ final class AreaManagementInteractor: PresentableInteractor<AreaManagementPresen
         viewModel.joinPolicy = .OPEN
         viewModel.didUpdateJoinPolicy = { [weak self] newPolicy in
             self?.viewModel.joinPolicy = newPolicy
+            self?.communicate(newJoinPolicy: newPolicy)
         }
-        viewModel.routeToManageMembers = { [weak self] in
-            self?.listener?.navigateToApplicationReviewAndManagement()
+        viewModel.routeToManageMemberships = { [weak self] in
+            self?.listener?.navigateToManageMemberships()
         }
-        viewModel.routeToSLAAndIssueTypesManagement = { [weak self] in
-            self?.listener?.navigateToIssueTypesWithSLARegistrar()
+        viewModel.routeToIssueTypesRegistrar = { [weak self] in
+            self?.listener?.navigateToIssueTypesRegistrar()
         }
-        viewModel.routeToStatisticView = { [weak self] in
-            self?.listener?.navigateToStatistics()
+        viewModel.routeToManageSLA = { [weak self] in
+            self?.listener?.navigateToManageSLA()
+        }
+        viewModel.routeToStatisticsAndReports = { [weak self] in
+            self?.listener?.navigateToStatisticsAndReports()
         }
         viewModel.areaJoinCodeEndpoint = { [weak self] in
             (self?.component.networkingClient.endpoint.absoluteString  ?? "") + "/area/join"
         }()
         
         presenter.bind(viewModel: self.viewModel)
+    }
+    
+}
+
+
+
+/// Extension for network calls.
+extension AreaManagementInteractor {
+    
+    
+    private func fetchAreaInformation() {
+        Task {
+            do {
+                let response = try await component.networkingClient.gateway.getArea(.init(headers: .init(accept: [.init(contentType: .json)])))
+                
+                switch response {
+                    case .ok(let response):
+                        switch response.body {
+                            case .json(let jsonBody):
+                                if let name = jsonBody.data?.name {
+                                    viewModel.areaName = name
+                                }
+                                if let jp = jsonBody.data?.join_policy {
+                                    viewModel.joinPolicy = .init(rawValue: "\(jp)")
+                                }
+                        }
+                    case .undocumented(statusCode: let code, let payload):
+                        VULogger.log(tag: .network, code, payload)
+                }
+                
+            } catch {
+                VULogger.log(tag: .error, error)
+            }
+        }
+    }
+    
+    
+    private func communicate(newJoinPolicy: FPAreaJoinPolicy) {
+        Task {
+            do {
+                let response = try await component.networkingClient.gateway.putAreaJoinPolicy(.init(
+                    headers: .init(accept: [.init(contentType: .json)]),
+                    body: .json(.init(data: .init(new_join_policy: .init(stringLiteral: newJoinPolicy.rawValue))))
+                ))
+                
+                switch response {
+                    case .ok(let response):
+                        break
+                    case .undocumented(statusCode: let code, let payload):
+                        VULogger.log(tag: .network, code, payload)
+                }
+            } catch {
+                VULogger.log(tag: .error, error)
+            }
+        }
     }
     
 }

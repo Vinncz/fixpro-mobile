@@ -39,6 +39,7 @@ protocol TicketListsPresentable: Presentable {
 /// that ``TicketListsInteractor`` is allowed to access or invoke.
 protocol TicketListsListener: AnyObject {
     func navigateToTicketDetail(forId ticketId: String)
+    func didIntendToOpenNewTicket()
 }
 
 
@@ -101,6 +102,9 @@ final class TicketListsInteractor: PresentableInteractor<TicketListsPresentable>
             didIntendToRefreshTicketList: {}, 
             didTapTicket: { [weak self] ticket in
                 self?.listener?.navigateToTicketDetail(forId: ticket.id)
+            },
+            didIntendToOpenNewTicket: { [weak self] in 
+                self?.listener?.didIntendToOpenNewTicket()
             }
         )
         

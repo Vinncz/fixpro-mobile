@@ -8,38 +8,47 @@ import Observation
 @Observable class CrewDelegatingSwiftUIViewModel {
     
     
+    var ticket: FPTicketDetail
+    
+    
+    var crewDelegatingDetails: [CrewDelegatingDetail]
+    
+    
     var availablePersonnel: [FPPerson] = []
     
     
-    var selectedPersonnel: [FPPerson] = [] {
-        didSet {
-            validationLabel = .EMPTY
+    var supportiveDocuments: [URL] = []
+    
+    
+    var didIntendToRefreshMemberList: (() async throws -> Void)?
+    
+    
+    var didIntendToCancel: (() -> Void)?
+    
+    
+    var didIntendToDelegate: (() async throws -> Void)?
+    
+    
+    init(ticket: FPTicketDetail) {
+        self.ticket = ticket
+        self.crewDelegatingDetails = ticket.issueTypes.map { issueType in
+            CrewDelegatingDetail(issueType: issueType, workDirective: "", personnel: [])
         }
     }
     
-    
-    var executiveSummary: String = .EMPTY {
-        didSet {
-            validationLabel = .EMPTY
-        }
-    }
-    
-    
-    func toggleSelection(for person: FPPerson) {
-        if selectedPersonnel.contains(person) {
-            selectedPersonnel.removeAll(where: {$0 == person})
-        } else {
-            selectedPersonnel.append(person)
-        }
-    }
+}
+
+
+
+struct CrewDelegatingDetail {
     
     
-    var validationLabel: String = .EMPTY
+    var issueType: FPIssueType
     
     
-    var didIntendToDismiss: (()->Void)?
+    var workDirective: String
     
     
-    var didIntendToDelegate: (()->Void)?
+    var personnel: [FPPerson]
     
 }

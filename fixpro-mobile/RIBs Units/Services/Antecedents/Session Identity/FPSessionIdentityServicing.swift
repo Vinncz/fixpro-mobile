@@ -19,6 +19,8 @@ protocol FPSessionIdentityServicing: VUStatefulServicing, Actor {
     
     /// Authorization level of the token.
     var role: FPTokenRole { get set }
+    var capabilities: [FPCapability] { get set }
+    var specialties: [FPIssueType] { get set }
     
     
     /// Instantiates a ``FPSessionIdentityService`` following a successful exchange of `Authentication Code` that grants both `Access` and `Refresh` tokens.
@@ -61,6 +63,16 @@ extension FPSessionIdentityServicing {
     
     func set(role: FPTokenRole) {
         self.role = role
+    }
+    
+    
+    func set(capabilities: [FPCapability]) {
+        self.capabilities = capabilities
+    }
+    
+    
+    func set(specialties: [FPIssueType]) {
+        self.specialties = specialties
     }
     
 }

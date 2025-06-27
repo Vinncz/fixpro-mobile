@@ -108,24 +108,20 @@ extension AreaJoinningFormFillingInteractor: AreaJoinningFormFillingPresentableL
         
         var continueOn = true
         
-        
-        // Step 2 -- Show spinner
-        VUPresentLoadingAlert(
-            on: router?.viewControllable.uiviewController,
-            title: "Submitting your application..", 
-            message: "Once approved, you can start using FixPro. Your progress is saved in case you cancel this submission.", 
-            cancelButtonCTA: "Cancel", 
-            delay: 20, 
-            cancelAction: {
-                continueOn = false
-            }
-        )
-        
-        
-        // Step 3 -- Perform admin jobs
         Task {
+            // Step 2 -- Show spinner
+            await VUPresentLoadingAlert(
+                on: router?.viewControllable.uiviewController,
+                title: "Submitting your application..", 
+                message: "Once approved, you can start using FixPro. Your progress is saved in case you cancel this submission.", 
+                cancelButtonCTA: "Cancel", 
+                delay: 20, 
+                cancelAction: {
+                    continueOn = false
+                }
+            )
             
-            
+            // Step 3 -- Perform admin jobs
             // Step 4 -- Make network call
             switch await self.component.onboardingService.submitApplicationForm(with: answers) {
                 case .success(let tuple):

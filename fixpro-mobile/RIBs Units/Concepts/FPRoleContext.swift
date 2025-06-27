@@ -10,7 +10,11 @@ struct FPRoleContext {
     
     
     /// 
-    let permissions: Set<FPRolePermission>
+    let capabilities: Set<FPCapability>
+    
+    
+    /// 
+    let specialties: Set<FPIssueType>
     
     
     /// 
@@ -21,9 +25,10 @@ struct FPRoleContext {
     let environment: FPAppEnvironment
     
     
-    init(role: FPTokenRole, permissions: Set<FPRolePermission>, featureFlags: Set<FPFeatureFlag>, environment: FPAppEnvironment) {
+    init(role: FPTokenRole, capabilities: Set<FPCapability>, specialties: Set<FPIssueType>, featureFlags: Set<FPFeatureFlag>, environment: FPAppEnvironment) {
         self.role = role
-        self.permissions = permissions
+        self.capabilities = capabilities
+        self.specialties = specialties
         self.featureFlags = featureFlags
         self.environment = environment
     }
@@ -35,22 +40,25 @@ struct FPRoleContext {
 extension FPRoleContext {
     
     
-    init(role: FPTokenRole) {
+    init(role: FPTokenRole, capabilities: [FPCapability], specialties: [FPIssueType]) {
         self.role = role
         
         switch role {
         case .member:
-            self.permissions = []
+            self.capabilities = Set(capabilities)
+            self.specialties = Set(specialties)
             self.featureFlags = []
             self.environment = AppConfig.environment
             
         case .crew:
-            self.permissions = []
+            self.capabilities = Set(capabilities)
+            self.specialties = Set(specialties)
             self.featureFlags = []
             self.environment = AppConfig.environment
             
         case .management:
-            self.permissions = []
+            self.capabilities = Set(capabilities)
+            self.specialties = Set(specialties)
             self.featureFlags = []
             self.environment = AppConfig.environment
             

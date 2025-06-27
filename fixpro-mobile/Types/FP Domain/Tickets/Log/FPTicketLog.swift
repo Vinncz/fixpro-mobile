@@ -11,7 +11,7 @@ struct FPTicketLog: Codable, Hashable, Identifiable {
     var owningTicketId: String
     
     
-    var type: FPTIcketLogType
+    var type: FPTicketLogType
     
     
     var issuer: FPPerson

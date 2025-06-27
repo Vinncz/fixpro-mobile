@@ -1,4 +1,5 @@
 import Foundation
+import VinUtility
 import RIBs
 import RxSwift
 import SwiftUI
@@ -24,8 +25,8 @@ final class AreaManagementNavigatorNavigationController: UINavigationController 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let tabBarItem: UITabBarItem = UITabBarItem(title: "Manage", 
-                                                    image: UIImage(systemName: "shield.lefthalf.filled"), 
+        let tabBarItem: UITabBarItem = UITabBarItem(title: "Area Management", 
+                                                    image: UIImage(systemName: "shield.pattern.checkered"), 
                                                     selectedImage: UIImage(systemName: "shield.fill"))
         self.tabBarItem = tabBarItem
     }
@@ -44,6 +45,7 @@ extension AreaManagementNavigatorNavigationController: AreaManagementNavigatorVi
     /// - Parameter animated: A Boolean value that indicates whether the transition should be animated.
     func push(_ viewControllable: ViewControllable, animated: Bool) {
         self.pushViewController(viewControllable.uiviewController, animated: animated)
+        VULogger.log(viewControllers)
     }
     
     
@@ -51,7 +53,8 @@ extension AreaManagementNavigatorNavigationController: AreaManagementNavigatorVi
     /// - Parameter animated: A Boolean value that indicates whether the transition should be animated.
     /// - Returns: An optional view controller that was popped.
     @discardableResult func pop(animated: Bool) -> UIViewController? {
-        self.popViewController(animated: animated)
+        VULogger.log(viewControllers)
+        return self.popViewController(animated: animated)
     }
     
     

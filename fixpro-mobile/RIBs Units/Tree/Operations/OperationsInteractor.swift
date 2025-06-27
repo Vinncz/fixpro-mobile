@@ -118,12 +118,18 @@ final class OperationsInteractor: PresentableInteractor<OperationsPresentable>, 
     
     /// Configures the view model.
     private func configureViewModel() {
+        viewModel.didIntendToLogOut = { [weak self] in
+            self?.didIntendToLogOut()
+        }
+        
         presenter.bind(viewModel: self.viewModel)
     }
     
     
     fileprivate func performLaunchBootstrapping() {
-        Task {
+        Task { [weak self] in
+            guard let self else { return }
+            
             self.viewModel.state = .normal("Establishing connection with Area..")
             
             let accessTokenExpiryDate = await self.component.sessionIdentityService.accessTokenExpirationDate!

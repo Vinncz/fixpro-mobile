@@ -7,7 +7,7 @@ import RIBs
 /// that ``TicketDetailRouter`` is allowed to access or invoke.
 /// 
 /// Conform this `Interactable` protocol with this RIB's children's `Listener` protocols.
-protocol TicketDetailInteractable: Interactable, CrewNewWorkLogListener, CrewDelegatingListener, WorkEvaluatingListener, TicketReportListener {
+protocol TicketDetailInteractable: Interactable, UpdateContributingListener, CrewDelegatingListener, CrewInvitingListener, WorkEvaluatingListener {
     var router: TicketDetailRouting? { get set }
     var listener: TicketDetailListener? { get set }
 }
@@ -46,24 +46,24 @@ protocol TicketDetailViewControllable: ViewControllable {
 final class TicketDetailRouter: ViewableRouter<TicketDetailInteractable, TicketDetailViewControllable> {
     
     
-    var crewNewWorkLogBuilder: CrewNewWorkLogBuildable
-    var crewNewWorkLogRouter: CrewNewWorkLogRouting?
+    var updateContributingBuilder: UpdateContributingBuildable
+    var updateContributingRouter: UpdateContributingRouting?
     var crewDelegatingBuilder: CrewDelegatingBuildable
     var crewDelegatingRouter: CrewDelegatingRouting?
+    var crewInvitingBuilder: CrewInvitingBuildable
+    var crewInvitingRouter: CrewInvitingRouting?
     var workEvaluatingBuilder: WorkEvaluatingBuildable
     var workEvaluatingRouter: WorkEvaluatingRouting?
-    var ticketReportBuilder: TicketReportBuildable
-    var ticketReportRouter: TicketReportRouting?
     
     
     /// Constructs an instance of ``TicketDetailRouter``.
     /// - Parameter interactor: The interactor for this RIB.
     /// - Parameter viewController: The view controller for this RIB.
-    init(interactor: TicketDetailInteractable, viewController: TicketDetailViewControllable, crewNewWorkLogBuilder: CrewNewWorkLogBuildable, crewDelegatingBuilder: CrewDelegatingBuildable, workEvaluatingBuilder: WorkEvaluatingBuildable, ticketReportBuilder: TicketReportBuildable) {
-        self.crewNewWorkLogBuilder = crewNewWorkLogBuilder
+    init(interactor: TicketDetailInteractable, viewController: TicketDetailViewControllable, updateContributingBuilder: UpdateContributingBuildable, crewDelegatingBuilder: CrewDelegatingBuildable, crewInvitingBuilder: CrewInvitingBuildable, workEvaluatingBuilder: WorkEvaluatingBuildable) {
+        self.updateContributingBuilder = updateContributingBuilder
         self.crewDelegatingBuilder = crewDelegatingBuilder
+        self.crewInvitingBuilder = crewInvitingBuilder
         self.workEvaluatingBuilder = workEvaluatingBuilder
-        self.ticketReportBuilder = ticketReportBuilder
         
         super.init(interactor: interactor, viewController: viewController)
         
@@ -80,18 +80,18 @@ extension TicketDetailRouter: TicketDetailRouting {
     
     
     func attachFlowAddWorkReport(ticketId: String) {
-        let router = crewNewWorkLogBuilder.build(withListener: interactor, ticketId: ticketId)
-        self.crewNewWorkLogRouter = router
+        let router = updateContributingBuilder.build(withListener: interactor, ticketId: ticketId)
+        self.updateContributingRouter = router
         
         self.attachChild(router)
         self.viewController.present(newFlow: router.viewControllable, completion: nil)
     }
     
     func detachFlowAddWorkReport() {
-        if let crewNewWorkLogRouter {
+        if let updateContributingRouter {
             self.viewController.cleanUp(completion: nil)
-            self.detachChild(crewNewWorkLogRouter)
-            self.crewNewWorkLogRouter = nil
+            self.detachChild(updateContributingRouter)
+            self.updateContributingRouter = nil
         }
     }
     
@@ -105,45 +105,49 @@ extension TicketDetailRouter: TicketDetailRouting {
     }
     
     func detachFlowDelegateTicket() {
-        if let crewDelegatingRouter {
-            self.viewController.cleanUp(completion: nil)
-            self.detachChild(crewDelegatingRouter)
-            self.crewDelegatingRouter = nil
+        Task { @MainActor in
+            if let crewDelegatingRouter {
+                self.viewController.cleanUp(completion: nil)
+                self.detachChild(crewDelegatingRouter)
+                self.crewDelegatingRouter = nil
+            }
         }
     }
     
     
-    func attachFlowEvaluateWorkReport(logs: [FPTicketLog]) {
-        let router = workEvaluatingBuilder.build(withListener: interactor, workLogs: logs)
+    func attachFlowInviteTicket(ticket: FPTicketDetail) {
+        let router = crewInvitingBuilder.build(withListener: interactor, ticket: ticket)
+        self.crewInvitingRouter = router
+        
+        self.attachChild(router)
+        self.viewController.present(newFlow: router.viewControllable, completion: nil)
+    }
+    
+    func detachFlowInviteTicket() {
+        Task { @MainActor in
+            if let crewInvitingRouter {
+                self.viewController.cleanUp(completion: nil)
+                self.detachChild(crewInvitingRouter)
+                self.crewInvitingRouter = nil
+            }
+        }
+    }
+    
+    
+    func attachFlowWorkEvaluating(ticket: FPTicketDetail) {
+        let router = workEvaluatingBuilder.build(withListener: interactor, ticket: ticket)
         self.workEvaluatingRouter = router
         
         self.attachChild(router)
         self.viewController.present(newFlow: router.viewControllable, completion: nil)
     }
     
-    func detachFlowEvaluateWorkReport() {
+    func detachWorkEvaluating() {
         if let workEvaluatingRouter {
             self.viewController.cleanUp(completion: nil)
             self.detachChild(workEvaluatingRouter)
             self.workEvaluatingRouter = nil
         }
-    }
-    
-    
-    func attachFlowTicketReport(urlToReport: URL) {
-        let router = ticketReportBuilder.build(withListener: interactor, urlToReport: urlToReport)
-        self.ticketReportRouter = router
-        
-        self.attachChild(router)
-        self.viewController.present(newFlow: router.viewControllable, completion: nil)
-    }
-    
-    func detachFlowTicketReport() {
-        if let ticketReportRouter {
-            self.viewController.cleanUp(completion: nil)
-            self.detachChild(ticketReportRouter)
-            self.ticketReportRouter = nil
-        }
-    }
+    } 
     
 }

@@ -125,30 +125,30 @@ fileprivate extension InboxInteractor {
                 switch unparsedResponse.body {
                     case .json(let jsonBody):
                         let receivedNotifications = jsonBody.data
-                        _ = receivedNotifications.map { notifications in
-                            notifications.map { notification in
-                                guard 
-                                    let title = notification.title, 
-                                    let body = notification.body, 
-                                    let actionable = notification.actionable,
-                                    let actionableGenus = FPRemoteNotificationActionable.Genus(rawValue: "\(actionable.genus?.value ?? "")"),
-                                    let actionableSpecies = FPRemoteNotificationActionable.Species(rawValue: "\(actionable.species?.value ?? "")")
-                                else { return }
-                                
-                                notifs.append(
-                                    FPNotificationDigest(
-                                        id: UUID().uuidString, 
-                                        title: title, 
-                                        body: body, 
-                                        actionable: FPRemoteNotificationActionable(
-                                            genus: actionableGenus, 
-                                            species: actionableSpecies,
-                                            destination: actionable.segue_destination
-                                        )
-                                    )
-                                )
-                            }
-                        }
+//                        _ = receivedNotifications.map { notifications in
+//                            notifications.map { notification in
+//                                guard 
+//                                    let title = notification.title, 
+//                                    let body = notification.body, 
+//                                    let actionable = notification.actionable,
+//                                    let actionableGenus = FPRemoteNotificationActionable.Genus(rawValue: "\(actionable.genus?.value ?? "")"),
+//                                    let actionableSpecies = FPRemoteNotificationActionable.Species(rawValue: "\(actionable.species?.value ?? "")")
+//                                else { return }
+//                                
+//                                notifs.append(
+//                                    FPNotificationDigest(
+//                                        id: UUID().uuidString, 
+//                                        title: title, 
+//                                        body: body, 
+//                                        actionable: FPRemoteNotificationActionable(
+//                                            genus: actionableGenus, 
+//                                            species: actionableSpecies,
+//                                            destination: actionable?.segue_destination
+//                                        )
+//                                    )
+//                                )
+//                            }
+//                        }
                 }
                 
             case .undocumented(statusCode: let code, let payload):

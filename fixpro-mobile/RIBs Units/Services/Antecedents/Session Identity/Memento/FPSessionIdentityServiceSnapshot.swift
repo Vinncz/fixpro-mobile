@@ -17,6 +17,8 @@ struct FPSessionIdentityServiceSnapshot: VUMementoSnapshot {
     var refreshToken: String
     var refreshTokenExpirationDate: Date
     var role: FPTokenRole
+    var capabilities: [FPCapability]
+    var specialties: [FPIssueType]
     
     
     init(id: UUID = UUID(), 
@@ -27,7 +29,9 @@ struct FPSessionIdentityServiceSnapshot: VUMementoSnapshot {
          accessTokenExpirationDate: Date, 
          refreshToken: String, 
          refreshTokenExpirationDate: Date,
-         role: FPTokenRole
+         role: FPTokenRole,
+         capabilities: [FPCapability],
+         specialties: [FPIssueType]
     ) {
         self.id = id
         self.tag = tag
@@ -38,6 +42,8 @@ struct FPSessionIdentityServiceSnapshot: VUMementoSnapshot {
         self.refreshToken = refreshToken
         self.refreshTokenExpirationDate = refreshTokenExpirationDate
         self.role = role
+        self.capabilities = capabilities
+        self.specialties = specialties
     }
     
 }

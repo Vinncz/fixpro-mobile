@@ -10,9 +10,7 @@ import UIKit
 
 /// Contract adhered to by ``CrewDelegatingInteractor``, listing the attributes and/or actions 
 /// that ``CrewDelegatingViewController`` is allowed to access or invoke.
-protocol CrewDelegatingPresentableListener: AnyObject {
-    func didGetDismissed()
-}
+protocol CrewDelegatingPresentableListener: AnyObject {}
  
  
 
@@ -37,16 +35,14 @@ final class CrewDelegatingViewController: UIViewController {
     
     
     deinit {
-        VULogger.log("Deinitialized.")
+        VULogger.log("Deinitialized")
     }
     
     
     /// Customization point that is invoked after self enters the view hierarchy.
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        self.isModalInPresentation = true
-        
+        isModalInPresentation = true
         if let presentationController = presentationController as? UISheetPresentationController {
             presentationController.detents = [
                 .medium(),
@@ -57,15 +53,6 @@ final class CrewDelegatingViewController: UIViewController {
         guard hostingController != nil else {
             buildHostingController()
             return
-        }
-    }
-    
-    
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
-        
-        if isBeingDismissed || isMovingFromParent {
-            presentableListener?.didGetDismissed()
         }
     }
     
@@ -100,42 +87,42 @@ final class CrewDelegatingViewController: UIViewController {
 extension CrewDelegatingViewController: CrewDelegatingViewControllable {
     
     
-    /// Inserts the given `ViewControllable` into the view hierarchy OVER the ``hostingViewController``.
-    /// - Parameter newFlow: The `ViewControllable` to be inserted.
-    /// - Parameter completion: A closure to be executed after the insertion is complete.
+    /// Attaches the given `ViewControllable` into the view hierarchy, becoming the top-most view controller.
+    /// - Parameter newFlow: The `ViewControllable` to be attached.
+    /// - Parameter completion: A closure to be executed after the operation is complete.
     /// 
-    /// The default implementation of this method adds the new `ViewControllable` as a child view controller
-    /// and adds its view as a subview of the current view controller's view.
-    /// - Note: The default implementation of this method REMOVES the previous `ViewControllable` from the view hierarchy.
-    func transition(to newFlow: any ViewControllable, completion: (() -> Void)?) {
-        Task { @MainActor in
-            self.activeFlow?.uiviewController.view.removeFromSuperview()
-            self.activeFlow?.uiviewController.removeFromParent()
-            
-            self.activeFlow = newFlow
-            
-            self.addChild(newFlow.uiviewController)
-            self.view.addSubview(newFlow.uiviewController.view)
-            newFlow.uiviewController.didMove(toParent: self)
-            
-            completion?()
-        }
+    /// > Note: You are responsible for removing the previous `ViewControllable` from the view hierarchy.
+    func attach(newFlow: ViewControllable, completion: (() -> Void)?) {
+        self.activeFlow = newFlow
+        
+        self.addChild(newFlow.uiviewController)
+        self.view.addSubview(newFlow.uiviewController.view)
+        newFlow.uiviewController.didMove(toParent: self)
+        
+        completion?()
     }
     
     
-    /// Clears any `ViewControllable` from the view hierarchy.
+    /// Clears the  `ViewControllable` from the view hierarchy.
     /// - Parameter completion: A closure to be executed after the cleanup is complete.
-    /// 
-    /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
-    func cleanUp(completion: (() -> Void)?) {
-        Task { @MainActor in
-            self.activeFlow?.uiviewController.view.removeFromSuperview()
-            self.activeFlow?.uiviewController.removeFromParent()
-            
-            self.activeFlow = nil
-            
-            completion?()
+    func clear(completion: (() -> Void)?) {
+        self.activeFlow?.uiviewController.view.removeFromSuperview()
+        self.activeFlow?.uiviewController.removeFromParent()
+        self.activeFlow = nil
+        
+        completion?()
+    }
+    
+    
+    /// Removes the hosting controller from the view hierarchy and deallocates it.
+    func nilHostingViewController() {
+        if let hostingController {
+            hostingController.view.removeFromSuperview()
+            hostingController.removeFromParent()
+            hostingController.didMove(toParent: nil)
         }
+        
+        self.hostingController = nil
     }
     
 }

@@ -11,7 +11,7 @@ struct FPIssueType: Codable, Hashable, Identifiable {
     var name: String
     
     
-    var serviceLevelAgreementDurationHour: Int
+    var serviceLevelAgreementDurationHour: String
     
     
     enum CodingKeys: String, CodingKey {
@@ -21,6 +21,6 @@ struct FPIssueType: Codable, Hashable, Identifiable {
     }
     
     
-    static let unselected = FPIssueType(id: "Select--", name: "Select", serviceLevelAgreementDurationHour: -1)
+    static let unselected = FPIssueType(id: "Select--", name: "Select", serviceLevelAgreementDurationHour: "-1")
     
 }

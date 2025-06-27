@@ -102,7 +102,6 @@ extension InboxNavigatorInteractor {
            let encodedTicketPayload = notification.actionable.destination
         {
             do {
-                let encoder = JSONEncoder()
                 let ticket = try decode(encodedTicketPayload.data(using: .utf8)!, to: VUExtrasPreservingDecodable<FPTicketDetail>.self).get()
                 let t = FPTicketDetail(id: ticket.model.id, issueTypes: ticket.model.issueTypes, responseLevel: ticket.model.responseLevel, raisedOn: ticket.model.raisedOn, status: ticket.model.status, statedIssue: ticket.model.statedIssue, location: ticket.model.location, supportiveDocuments: ticket.model.supportiveDocuments, issuer: ticket.model.issuer, logs: ticket.model.logs, handlers: ticket.model.handlers)
                 router?.deeplinkTo(ticket: t)

@@ -27,6 +27,8 @@ final actor FPSessionIdentityService: FPSessionIdentityServicing {
     
     /// Authorization level of the token.
     var role: FPTokenRole
+    var capabilities: [FPCapability]
+    var specialties: [FPIssueType]
     
     
     /// Initializes an instance of ``FPSessionIdentityService``.
@@ -35,13 +37,17 @@ final actor FPSessionIdentityService: FPSessionIdentityServicing {
         accessTokenExpirationDate: Date? = nil, 
         refreshToken: String, 
         refreshTokenExpirationDate: Date, 
-        role: FPTokenRole
+        role: FPTokenRole,
+        capabilities: [FPCapability],
+        specialties: [FPIssueType]
     ) {
         self.accessToken = accessToken
         self.accessTokenExpirationDate = accessTokenExpirationDate
         self.refreshToken = refreshToken
         self.refreshTokenExpirationDate = refreshTokenExpirationDate
         self.role = role
+        self.capabilities = capabilities
+        self.specialties = specialties
     }
     
     
@@ -69,16 +75,28 @@ final actor FPSessionIdentityService: FPSessionIdentityServicing {
                         let accessTokenExpirationDateString = jsonBody.data?.access_expiry_interval,
                         let refreshToken = jsonBody.data?.refresh_token,
                         let refreshTokenExpirationDateString = jsonBody.data?.refresh_expiry_interval,
-                        let role = FPTokenRole(rawValue: "\(jsonBody.data?.role_scope?.value ?? "")")
+                        let role = FPTokenRole(rawValue: "\(jsonBody.data?.role_scope?.value ?? "")"),
+                        let encodedCapabilities = jsonBody.data?.capabilities,
+                        let encodedSpecialties = jsonBody.data?.specialties
                     else {
                         throw FPError.DECODE_FAILURE
                     }
                     
+                    let capabilities = encodedCapabilities.compactMap {
+                        FPCapability(rawValue: "\($0.value ?? "")")
+                    }
+                    let specialties: [FPIssueType] = encodedSpecialties.compactMap {
+                        guard let id = $0.id, let name = $0.name, let slaDuration = $0.service_level_agreement_duration_hour else { return nil }
+                        return FPIssueType(id: id, name: name, serviceLevelAgreementDurationHour: slaDuration)
+                    }
+                        
                     let selfInstance = FPSessionIdentityService(accessToken: accessToken, 
                                                                 accessTokenExpirationDate: .now.addingTimeInterval(Double(accessTokenExpirationDateString)),
                                                                 refreshToken: refreshToken, 
                                                                 refreshTokenExpirationDate: .now.addingTimeInterval(Double(refreshTokenExpirationDateString)), 
-                                                                role: role)
+                                                                role: role, 
+                                                                capabilities: capabilities, 
+                                                                specialties: specialties)
                     return .success(selfInstance)
                 }
                     
@@ -117,7 +135,9 @@ extension FPSessionIdentityService: VUMementoSnapshotable, VUMementoSnapshotBoot
             accessTokenExpirationDate: accessTokenExpirationDate, 
             refreshToken: refreshToken, 
             refreshTokenExpirationDate: refreshTokenExpirationDate, 
-            role: role
+            role: role,
+            capabilities: capabilities,
+            specialties: specialties
         ))
     }
     
@@ -146,7 +166,9 @@ extension FPSessionIdentityService: VUMementoSnapshotable, VUMementoSnapshotBoot
             accessTokenExpirationDate: snapshot.accessTokenExpirationDate,
             refreshToken: snapshot.refreshToken, 
             refreshTokenExpirationDate: snapshot.refreshTokenExpirationDate, 
-            role: snapshot.role
+            role: snapshot.role,
+            capabilities: snapshot.capabilities,
+            specialties: snapshot.specialties
         ))
     }
     

@@ -1,4 +1,5 @@
 import RIBs
+import VinUtility
 import RxSwift
 import UIKit
 
@@ -13,16 +14,23 @@ protocol AreaManagementNavigatorRouting: ViewableRouting {
     func cleanupViews()
     
     
-    func navigateToApplicationReviewAndManagement()
+    // Forward Navigations
+    func navigateToManageMemberships()
+        func navigateToApplicantDetail(_ applicant: FPEntryApplication)
+        func navigateToMemberDetail(_ member: FPPerson)
     
+    func navigateToIssueTypesRegistrar()
+    func navigateToManageSLA()
+    func navigateToStatisticsAndReports()
     
-    func navigateToIssueTypesWithSLARegistrar()
-    
-    
-    func navigateToStatistics()
-    
-    
+    // Backward Navigations
+    func respondToNavigateBack(from origin: UIViewController)
     func toRoot()
+    
+    
+    // Communicate with RIBs
+    func didRemove(applicant: FPEntryApplication)
+    func didRemove(member: FPPerson)
     
 }
 
@@ -90,29 +98,71 @@ final class AreaManagementNavigatorInteractor: PresentableInteractor<AreaManagem
 
 
 
+/// Extension for forward navigations.
 extension AreaManagementNavigatorInteractor {
     
     
-    func navigateToApplicationReviewAndManagement() {
-        router?.navigateToApplicationReviewAndManagement()
+    func navigateToManageMemberships() {
+        router?.navigateToManageMemberships()
+    }
+    
+            func navigateTo(applicant: FPEntryApplication) {
+                router?.navigateToApplicantDetail(applicant)
+            }
+            
+            func navigateTo(member: FPPerson) {
+                router?.navigateToMemberDetail(member)
+            }
+    
+    
+    func navigateToIssueTypesRegistrar() {
+        router?.navigateToIssueTypesRegistrar()
     }
     
     
-    func navigateToIssueTypesWithSLARegistrar() {
-        router?.navigateToIssueTypesWithSLARegistrar()
+    func navigateToManageSLA() {
+        router?.navigateToManageSLA()
     }
     
     
-    func navigateToStatistics() {
-        router?.navigateToStatistics()
+    func navigateToStatisticsAndReports() {
+        router?.navigateToStatisticsAndReports()
+    }
+    
+}
+
+
+
+/// Extension for backward navigations.
+extension AreaManagementNavigatorInteractor {
+    
+    
+    // MARK: -- Coordinate with ManageMemberships
+    func didApprove(applicant: FPEntryApplication) {
+        router?.didRemove(applicant: applicant)
+        VULogger.log("didApprove")
+    }
+    func didReject(applicant: FPEntryApplication) {
+        router?.didRemove(applicant: applicant)
+        VULogger.log("didReject")
+    }
+    func didRemove(member: FPPerson) {
+        router?.didRemove(member: member)
+        VULogger.log("didRemove")
     }
     
     
-    func navigateBack() {
+    func respondToNavigateBack(from origin: UIViewController) {
+        router?.respondToNavigateBack(from: origin)
+    }
+    
+    
+    func toRoot() {
         router?.toRoot()
     }
     
 }
+
 
 
 

@@ -115,8 +115,10 @@ extension AreaJoinningCodeScanningInteractor: AreaJoinningCodeScanningPresentabl
             
             
             // Step 2 -- Show spinner
-            VUPresentLoadingAlert(
-                on: router?.viewControllable.uiviewController,
+            Task {
+            let topMostViewController = await topMostViewController()
+            await VUPresentLoadingAlert(
+                on: topMostViewController,
                 title: "Requesting Entry..", 
                 message: "This action shouldn't take more than 15 seconds.", 
                 cancelButtonCTA: "Cancel", 
@@ -130,13 +132,12 @@ extension AreaJoinningCodeScanningInteractor: AreaJoinningCodeScanningPresentabl
             
             
             // Step 3 -- Make first contact
-            Task {
                 do {
                     let firstContactAttempt = try await FPOnboardingService.makeFirstContactWithArea(areaJoinCode: areaJoinCode).get()
                     component.onboardingServiceProxy.back(with: firstContactAttempt.onboardingService)
                     
                     if continueOn {
-                        await router?.viewControllable.uiviewController.dismiss(animated: true)
+                        await topMostViewController?.dismiss(animated: true)
                         self.listener?.didContactAreaForTheirEntryForm(andCameUpWithTheFollowingFields: firstContactAttempt.fields)
                     }
                     

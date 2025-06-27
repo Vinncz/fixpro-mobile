@@ -2,11 +2,13 @@ import RIBs
 
 
 
-/// An empty set of properties. As the ancestral RIB, 
-/// `CrewDelegatingRIB` does not require any dependencies from its parent scope.
+/// A set of properties that are required by `CrewDelegatingRIB` to function, 
+/// supplied from the scope of its parent.
 protocol CrewDelegatingDependency: Dependency {
-    var authorizationContext: FPRoleContext { get }
+    
+    
     var networkingClient: FPNetworkingClient { get }
+    
 }
 
 
@@ -14,17 +16,6 @@ protocol CrewDelegatingDependency: Dependency {
 /// Concrete implementation of the ``CrewDelegatingDependency`` protocol. 
 /// Provides dependencies needed by all RIBs that will ever attach themselves to ``CrewDelegatingRouter``.
 final class CrewDelegatingComponent: Component<CrewDelegatingDependency> {
-    
-    
-    /// Constructs a singleton instance of ``CrewDelegatingViewController``.
-    var crewDelegatingViewController: CrewDelegatingViewControllable & CrewDelegatingPresentable {
-        shared { CrewDelegatingViewController() }
-    }
-    
-    
-    var authorizationContext: FPRoleContext {
-        dependency.authorizationContext
-    }
     
     
     var networkingClient: FPNetworkingClient {
@@ -67,13 +58,15 @@ final class CrewDelegatingBuilder: Builder<CrewDelegatingDependency>, CrewDelega
     /// Constructs the `CrewDelegatingRIB`.
     /// - Parameter listener: The `Interactor` of this RIB's parent.
     func build(withListener listener: CrewDelegatingListener, ticket: FPTicketDetail) -> CrewDelegatingRouting {
+        let viewController = CrewDelegatingViewController()
         let component  = CrewDelegatingComponent(dependency: dependency)
-        let interactor = CrewDelegatingInteractor(component: component, ticket: ticket)
-            interactor.listener = listener
+        let interactor = CrewDelegatingInteractor(component: component, presenter: viewController, ticket: ticket)
+        
+        interactor.listener = listener
         
         return CrewDelegatingRouter(
             interactor: interactor, 
-            viewController: component.crewDelegatingViewController
+            viewController: viewController
         )
     }
     

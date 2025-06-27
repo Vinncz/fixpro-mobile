@@ -14,4 +14,7 @@ import Observation
     
     var state: State = .normal("Wiring up...")
     
+    
+    var didIntendToLogOut: (()->Void)?
+    
 }

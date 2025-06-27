@@ -1,5 +1,8 @@
 openapi: 3.0.0
-servers: []
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: 'https://virtserver.swaggerhub.com/Skreeepsee/FixPro-Backend/2.0.0'
 info:
   version: 2.0.0
   title: FixPro Backend Endpoints Declaration
@@ -117,29 +120,63 @@ paths:
       operationId: patchTicket
       requestBody:
         $ref: '#/components/requestBodies/updating-ticket-attributes'
-  '/ticket/{ticket_id}/reject':
+  '/ticket/{ticket_id}/evaluate':
     parameters:
       - $ref: '#/components/parameters/ticket_id'
     post:
-      summary: Rejects a Ticket.
+      summary: Evaluates the specified ticket.
       tags: []
       responses:
         '200':
           $ref: '#/components/responses/newly-made-ticket-log'
-      operationId: postRejectTicket
+      operationId: postTicketEvaluation
       requestBody:
-        $ref: '#/components/requestBodies/rejecting-a-ticket'
-  '/ticket/{ticket_id}/cancel':
+        $ref: '#/components/requestBodies/evaluation-of-ticket'
+      description: Invoke this endpoint to finalize your evaluation.
+  '/ticket/{ticket_id}/evaluate/request':
     parameters:
       - $ref: '#/components/parameters/ticket_id'
     post:
-      summary: Cancels a Ticket.
+      summary: Requests an evaluation for the given Ticket.
       tags: []
       responses:
         '200':
           $ref: '#/components/responses/newly-made-ticket-log'
-      operationId: postCancelTicket
+      operationId: postTicketEvaluationRequest
+      requestBody:
+        $ref: '#/components/requestBodies/request-of-evaluation-for-ticket'
       description: ''
+      security:
+        - Authorization:
+            - Crew
+  '/ticket/{ticket_id}/close':
+    parameters:
+      - $ref: '#/components/parameters/ticket_id'
+    post:
+      summary: Closes the specified ticket gracefully.
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/newly-made-ticket-log'
+      operationId: postTicketClosure
+      requestBody:
+        $ref: '#/components/requestBodies/closing-of-ticket'
+      security:
+        - Authorization:
+            - Member
+            - Management
+  '/ticket/{ticket_id}/force-close':
+    parameters:
+      - $ref: '#/components/parameters/ticket_id'
+    post:
+      summary: Closes the specified ticket forcefully.
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/newly-made-ticket-log'
+      operationId: postTicketForceClosure
+      requestBody:
+        $ref: '#/components/requestBodies/force-closing-of-ticket'
   '/ticket/{ticket_id}/logs':
     parameters:
       - $ref: '#/components/parameters/ticket_id'
@@ -185,16 +222,16 @@ paths:
       security:
         - Authorization:
             - Management
-  '/ticket/{ticket_id}/print-view/download':
+  '/ticket/{ticket_id}/print-view':
     parameters:
       - $ref: '#/components/parameters/ticket_id'
     get:
-      summary: Downloads the PDF of the `Print View` of a Ticket.
+      summary: The PDF version of a Ticket.
       tags: []
       responses:
         '200':
-          $ref: '#/components/responses/ticket-printview-pdf'
-      operationId: getTicketPrintViewDownload
+          $ref: '#/components/responses/pdf-document'
+      operationId: getTicketPrintView
   /issue-types:
     get:
       summary: Lists every Issue Types (or Specialties) that this Area recognize as valid.
@@ -319,6 +356,7 @@ paths:
         '200':
           $ref: '#/components/responses/nothing-to-respond-with'
       operationId: deleteAreaPendingMembership
+      description: ''
   /inbox:
     get:
       summary: Lists every Notifications that FixPro Backend has ever send to a Person.
@@ -356,23 +394,48 @@ paths:
       tags: []
       responses:
         '200':
-          $ref: '#/components/responses/list-of-statistics'
+          $ref: '#/components/responses/list-of-month-and-avaliable-statistics'
       operationId: getStatistics
       security:
         - Authorization:
             - Management
-  /statistics/print-view/download:
+  '/statistics/{month}/tickets':
+    parameters:
+      - $ref: '#/components/parameters/month'
     get:
-      summary: Downloads the PDF of the `Print View` of the statistic page.
+      summary: PDF of tickets that are opened and closed within the specified month.
       tags: []
       responses:
         '200':
-          $ref: '#/components/responses/statistics-printview-pdf'
-      operationId: getStatisticsPrintViewDownload
-      security:
-        - Authorization:
-            - Management
-    parameters: []
+          $ref: '#/components/responses/pdf-document'
+      operationId: getMonthTicketListPDF
+  '/statistics/{month}/report':
+    parameters:
+      - $ref: '#/components/parameters/month'
+    get:
+      summary: PDF of periodic report for the given month.
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/pdf-document'
+      operationId: getMonthPeriodicReportPDF
+  /sla:
+    get:
+      summary: Retrieves Active SLAs
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/slas'
+      operationId: getSLAs
+    put:
+      summary: Renews the SLA values
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/slas'
+      operationId: putSLAs
+      requestBody:
+        $ref: '#/components/requestBodies/updating-of-slas'
 components:
   schemas:
     token-role:
@@ -474,6 +537,7 @@ components:
             $ref: '#/components/schemas/person'
         closed_on:
           $ref: '#/components/schemas/optional-datetime-iso8601'
+      description: ''
     LIGHTWEIGHT-ticket:
       title: LIGHTWEIGHT-ticket
       type: object
@@ -528,6 +592,8 @@ components:
         - In Assessment
         - On Progress
         - Work Evaluation
+        - Quality Control
+        - Owner Evaluation
         - Closed
         - Cancelled
         - Rejected
@@ -573,7 +639,6 @@ components:
     TOBEMADE-ticket-log:
       title: TOBEMADE-ticket-log
       type: object
-      x-examples: {}
       properties:
         news:
           $ref: '#/components/schemas/lorem-paragraph'
@@ -587,11 +652,16 @@ components:
       title: ticket-log-type
       enum:
         - Assessment
+        - Invitation
         - Work Progress
+        - Activity
         - Work Evaluation Request
         - Work Evaluation
-        - Activity
         - Time Extension
+        - Owner Evaluation Request
+        - Rejection
+        - Approval
+        - Force Closure
       default: Activity
     supportive-document:
       title: supportive-document
@@ -638,10 +708,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/issue-type'
+        capabilities:
+          type: array
+          x-stoplight:
+            id: boaw4njsn74p6
+          items:
+            $ref: '#/components/schemas/capability'
         member_since:
           $ref: '#/components/schemas/datetime-iso8601'
         member_until:
           $ref: '#/components/schemas/optional-datetime-iso8601'
+    capability:
+      title: capability
+      enum:
+        - InvitePeopleToTicket
+        - IssueSupervisorApproval
     actionable:
       title: actionable
       type: object
@@ -657,11 +738,19 @@ components:
             - TICKET
             - INERT
         segue_destination:
-          type: string
-          nullable: true
+          $ref: '#/components/schemas/ticket'
     issue-type:
       title: issue-type
       type: object
+      x-examples:
+        Plumbing:
+          id: QZWXECRVTYBUNIOMP1A2S3D4F5G6H7J8K90L
+          name: Plumbing
+          service_level_agreement_duration_hour: 48
+        Engineering:
+          id: 1A2S3D4F56G7H8J9K0LZQWXECRVTBYUNMOP
+          name: Engineering
+          service_level_agreement_duration_hour: 64
       properties:
         id:
           $ref: '#/components/schemas/uuid'
@@ -669,10 +758,7 @@ components:
           type: string
           default: '{{faker ''word.adjective''}}'
         service_level_agreement_duration_hour:
-          type: integer
-          minimum: 0
-          format: int32
-      description: ''
+          type: string
     TOBEMADE-issue-type:
       title: TOBEMADE-issue-type
       type: object
@@ -728,6 +814,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/area-join-form-answer'
+        submitted_on:
+          type: string
+          x-stoplight:
+            id: pumf7oe585yle
     calendar-event:
       title: calendar-event
       type: object
@@ -757,24 +847,38 @@ components:
           x-stoplight:
             id: u67pkdgc0n5mw
           format: uri
-    statistic-metrics:
-      title: statistic-metrics
+    statistic:
+      title: statistic
       type: object
       properties:
-        topic_name:
+        month:
           type: string
-        hero_value:
+        year:
+          type: string
+          x-stoplight:
+            id: n088rje1goitg
+        periodic_report:
           type: string
           x-stoplight:
             id: k6pjz2nb5hbj9
-        extras:
-          type: array
+          format: uri
+        ticket_summarization:
+          type: string
           x-stoplight:
-            id: 5vucffufn4bjb
-          items:
-            x-stoplight:
-              id: 713bez46kzw8j
-            type: object
+            id: oka1o52fo4sy3
+          format: uri
+    sla:
+      title: sla
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/uuid'
+        name:
+          type: string
+        duration:
+          type: string
+          x-stoplight:
+            id: n088rje1goitg
     _________________:
       title: ''
       type: object
@@ -785,8 +889,6 @@ components:
       title: datetime
       type: string
       default: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
-      x-examples:
-        Example 1: {}
     optional-datetime-iso8601:
       title: optional-datetime-iso8601
       type: string
@@ -918,6 +1020,18 @@ components:
                     default: Bearer
                   role_scope:
                     $ref: '#/components/schemas/token-role'
+                  capabilities:
+                    type: array
+                    x-stoplight:
+                      id: j0gv04hpnexm9
+                    items:
+                      $ref: '#/components/schemas/capability'
+                  specialties:
+                    type: array
+                    x-stoplight:
+                      id: 65j54k5mkvv8c
+                    items:
+                      $ref: '#/components/schemas/issue-type'
     oauth-refresh:
       description: 'A new acess token, with an optional refresh token; all alongside their respective expiry intervals.'
       content:
@@ -963,7 +1077,18 @@ components:
                     default: Bearer
                   role_scope:
                     $ref: '#/components/schemas/token-role'
-          examples: {}
+                  capabilities:
+                    type: array
+                    x-stoplight:
+                      id: dskmxc5r5ofv5
+                    items:
+                      $ref: '#/components/schemas/capability'
+                  specialties:
+                    type: array
+                    x-stoplight:
+                      id: pum41gs44q7re
+                    items:
+                      $ref: '#/components/schemas/issue-type'
     oauth-authorization:
       description: An `authentication_code` indicating approval; or a null due to being not decided upon.
       content:
@@ -1071,7 +1196,21 @@ components:
                   id: fzumcqyvjfpu9
                 items:
                   $ref: '#/components/schemas/LIGHTWEIGHT-ticket'
-          examples: {}
+          examples:
+            Example 1:
+              value:
+                message: string
+                data:
+                  - id: '{{faker ''string.uuid''}}'
+                    issue_types:
+                      - id: '{{faker ''string.uuid''}}'
+                        name: '{{faker ''word.adjective''}}'
+                        service_level_agreement_duration_hour: string
+                    response_level: 'Urgent, emergency'
+                    raised_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                    status: Open
+                    executive_summary: '{{faker ''lorem.sentence''}}'
+                    closed_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
     newly-made-ticket:
       description: 'The newly raised Ticket, returning only the minimum information.'
       content:
@@ -1107,7 +1246,88 @@ components:
                 type: string
               data:
                 $ref: '#/components/schemas/ticket'
-          examples: {}
+          examples:
+            Example 1:
+              value:
+                message: string
+                data:
+                  id: '{{faker ''string.uuid''}}'
+                  issue_types:
+                    - id: '{{faker ''string.uuid''}}'
+                      name: '{{faker ''word.adjective''}}'
+                      service_level_agreement_duration_hour: string
+                  response_level: 'Urgent, emergency'
+                  raised_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                  status: Open
+                  executive_summary: '{{faker ''lorem.sentence''}}'
+                  stated_issue: '{{faker ''lorem.paragraph''}}'
+                  location:
+                    stated_location: '{{faker ''lorem.sentence''}}'
+                    gps_location:
+                      latitude: -6.201637
+                      longitude: 106.782636
+                  supportive_documents:
+                    - id: '{{faker ''string.uuid''}}'
+                      resource_type: '{{faker ''system.commonFileType''}}'
+                      resource_name: '{{faker ''system.commonFileName''}}'
+                      resource_size: 127000
+                      previewable_on: 'https://picsum.photos/1200/1200'
+                  issuer:
+                    id: '{{faker ''string.uuid''}}'
+                    name: '{{faker ''person.fullName''}}'
+                    role: Member
+                    title: '{{faker ''person.jobTitle''}}'
+                    specialties:
+                      - id: '{{faker ''string.uuid''}}'
+                        name: '{{faker ''word.adjective''}}'
+                        service_level_agreement_duration_hour: string
+                    capabilities:
+                      - InvitePeopleToTicket
+                    member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                    member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                  logs:
+                    - id: '{{faker ''string.uuid''}}'
+                      owning_ticket_id: '{{faker ''string.uuid''}}'
+                      type: Activity
+                      issuer:
+                        id: '{{faker ''string.uuid''}}'
+                        name: '{{faker ''person.fullName''}}'
+                        role: Member
+                        title: '{{faker ''person.jobTitle''}}'
+                        specialties:
+                          - id: '{{faker ''string.uuid''}}'
+                            name: '{{faker ''word.adjective''}}'
+                            service_level_agreement_duration_hour: string
+                        capabilities:
+                          - InvitePeopleToTicket
+                        member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                        member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                      recorded_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                      news: '{{faker ''lorem.paragraph''}}'
+                      attachments:
+                        - id: '{{faker ''string.uuid''}}'
+                          resource_type: '{{faker ''system.commonFileType''}}'
+                          resource_name: '{{faker ''system.commonFileName''}}'
+                          resource_size: 127000
+                          previewable_on: 'https://picsum.photos/1200/1200'
+                      actionable:
+                        genus: SEGUE
+                        species: TICKET_LOG
+                        segue_destination: {}
+                  handlers:
+                    - id: '{{faker ''string.uuid''}}'
+                      name: '{{faker ''person.fullName''}}'
+                      role: Member
+                      title: '{{faker ''person.jobTitle''}}'
+                      specialties:
+                        - id: '{{faker ''string.uuid''}}'
+                          name: '{{faker ''word.adjective''}}'
+                          service_level_agreement_duration_hour: string
+                      capabilities:
+                        - InvitePeopleToTicket
+                      member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                      member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                  closed_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
     nothing-to-respond-with:
       description: Nothing to respond with.
       content:
@@ -1123,6 +1343,11 @@ components:
                 x-stoplight:
                   id: ujlt4rt71nuzq
                 nullable: true
+          examples:
+            Example 1:
+              value:
+                message: Ok.
+                data: {}
       headers: {}
     list-of-logs:
       description: A list of Logs associated with a specified Ticket.
@@ -1139,7 +1364,89 @@ components:
                   id: cjuv7xhxjaugx
                 items:
                   $ref: '#/components/schemas/ticket-log'
-          examples: {}
+          examples:
+            Example 1:
+              value:
+                message: string
+                data:
+                  - id: '{{faker ''string.uuid''}}'
+                    owning_ticket_id: '{{faker ''string.uuid''}}'
+                    type: Activity
+                    issuer:
+                      id: '{{faker ''string.uuid''}}'
+                      name: '{{faker ''person.fullName''}}'
+                      role: Member
+                      title: '{{faker ''person.jobTitle''}}'
+                      specialties:
+                        - id: '{{faker ''string.uuid''}}'
+                          name: '{{faker ''word.adjective''}}'
+                          service_level_agreement_duration_hour: string
+                      capabilities:
+                        - InvitePeopleToTicket
+                      member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                      member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                    recorded_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                    news: '{{faker ''lorem.paragraph''}}'
+                    attachments:
+                      - id: '{{faker ''string.uuid''}}'
+                        resource_type: '{{faker ''system.commonFileType''}}'
+                        resource_name: '{{faker ''system.commonFileName''}}'
+                        resource_size: 127000
+                        previewable_on: 'https://picsum.photos/1200/1200'
+                    actionable:
+                      genus: SEGUE
+                      species: TICKET_LOG
+                      segue_destination:
+                        id: '{{faker ''string.uuid''}}'
+                        issue_types:
+                          - id: '{{faker ''string.uuid''}}'
+                            name: '{{faker ''word.adjective''}}'
+                            service_level_agreement_duration_hour: string
+                        response_level: 'Urgent, emergency'
+                        raised_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                        status: Open
+                        executive_summary: '{{faker ''lorem.sentence''}}'
+                        stated_issue: '{{faker ''lorem.paragraph''}}'
+                        location:
+                          stated_location: '{{faker ''lorem.sentence''}}'
+                          gps_location:
+                            latitude: -6.201637
+                            longitude: 106.782636
+                        supportive_documents:
+                          - id: '{{faker ''string.uuid''}}'
+                            resource_type: '{{faker ''system.commonFileType''}}'
+                            resource_name: '{{faker ''system.commonFileName''}}'
+                            resource_size: 127000
+                            previewable_on: 'https://picsum.photos/1200/1200'
+                        issuer:
+                          id: '{{faker ''string.uuid''}}'
+                          name: '{{faker ''person.fullName''}}'
+                          role: Member
+                          title: '{{faker ''person.jobTitle''}}'
+                          specialties:
+                            - id: '{{faker ''string.uuid''}}'
+                              name: '{{faker ''word.adjective''}}'
+                              service_level_agreement_duration_hour: string
+                          capabilities:
+                            - InvitePeopleToTicket
+                          member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                          member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                        logs:
+                          - {}
+                        handlers:
+                          - id: '{{faker ''string.uuid''}}'
+                            name: '{{faker ''person.fullName''}}'
+                            role: Member
+                            title: '{{faker ''person.jobTitle''}}'
+                            specialties:
+                              - id: '{{faker ''string.uuid''}}'
+                                name: '{{faker ''word.adjective''}}'
+                                service_level_agreement_duration_hour: string
+                            capabilities:
+                              - InvitePeopleToTicket
+                            member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                            member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                        closed_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
     newly-made-ticket-log:
       description: A Log that is created in response to taking an action.
       content:
@@ -1151,7 +1458,89 @@ components:
                 type: string
               data:
                 $ref: '#/components/schemas/ticket-log'
-          examples: {}
+          examples:
+            Example 1:
+              value:
+                message: string
+                data:
+                  id: '{{faker ''string.uuid''}}'
+                  owning_ticket_id: '{{faker ''string.uuid''}}'
+                  type: Activity
+                  issuer:
+                    id: '{{faker ''string.uuid''}}'
+                    name: '{{faker ''person.fullName''}}'
+                    role: Member
+                    title: '{{faker ''person.jobTitle''}}'
+                    specialties:
+                      - id: '{{faker ''string.uuid''}}'
+                        name: '{{faker ''word.adjective''}}'
+                        service_level_agreement_duration_hour: string
+                    capabilities:
+                      - InvitePeopleToTicket
+                    member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                    member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                  recorded_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                  news: '{{faker ''lorem.paragraph''}}'
+                  attachments:
+                    - id: '{{faker ''string.uuid''}}'
+                      resource_type: '{{faker ''system.commonFileType''}}'
+                      resource_name: '{{faker ''system.commonFileName''}}'
+                      resource_size: 127000
+                      previewable_on: 'https://picsum.photos/1200/1200'
+                  actionable:
+                    genus: SEGUE
+                    species: TICKET_LOG
+                    segue_destination:
+                      id: '{{faker ''string.uuid''}}'
+                      issue_types:
+                        - id: '{{faker ''string.uuid''}}'
+                          name: '{{faker ''word.adjective''}}'
+                          service_level_agreement_duration_hour: string
+                      response_level: 'Urgent, emergency'
+                      raised_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                      status: Open
+                      executive_summary: '{{faker ''lorem.sentence''}}'
+                      stated_issue: '{{faker ''lorem.paragraph''}}'
+                      location:
+                        stated_location: '{{faker ''lorem.sentence''}}'
+                        gps_location:
+                          latitude: -6.201637
+                          longitude: 106.782636
+                      supportive_documents:
+                        - id: '{{faker ''string.uuid''}}'
+                          resource_type: '{{faker ''system.commonFileType''}}'
+                          resource_name: '{{faker ''system.commonFileName''}}'
+                          resource_size: 127000
+                          previewable_on: 'https://picsum.photos/1200/1200'
+                      issuer:
+                        id: '{{faker ''string.uuid''}}'
+                        name: '{{faker ''person.fullName''}}'
+                        role: Member
+                        title: '{{faker ''person.jobTitle''}}'
+                        specialties:
+                          - id: '{{faker ''string.uuid''}}'
+                            name: '{{faker ''word.adjective''}}'
+                            service_level_agreement_duration_hour: string
+                        capabilities:
+                          - InvitePeopleToTicket
+                        member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                        member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                      logs:
+                        - {}
+                      handlers:
+                        - id: '{{faker ''string.uuid''}}'
+                          name: '{{faker ''person.fullName''}}'
+                          role: Member
+                          title: '{{faker ''person.jobTitle''}}'
+                          specialties:
+                            - id: '{{faker ''string.uuid''}}'
+                              name: '{{faker ''word.adjective''}}'
+                              service_level_agreement_duration_hour: string
+                          capabilities:
+                            - InvitePeopleToTicket
+                          member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                          member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                      closed_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
       headers: {}
     list-of-ticket-handlers:
       description: A list of Handlers that tend to a Ticket.
@@ -1168,14 +1557,23 @@ components:
                   id: 66hgefd4v5sns
                 items:
                   $ref: '#/components/schemas/person'
-          examples: {}
-    ticket-printview-pdf:
-      description: The binary of the PDF to download.
-      content:
-        application/octet-stream:
-          schema:
-            type: string
-            format: binary
+          examples:
+            Example 1:
+              value:
+                message: string
+                data:
+                  - id: '{{faker ''string.uuid''}}'
+                    name: '{{faker ''person.fullName''}}'
+                    role: Member
+                    title: '{{faker ''person.jobTitle''}}'
+                    specialties:
+                      - id: '{{faker ''string.uuid''}}'
+                        name: '{{faker ''word.adjective''}}'
+                        service_level_agreement_duration_hour: string
+                    capabilities:
+                      - InvitePeopleToTicket
+                    member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                    member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
     list-of-issue-types:
       description: A list of issue types.
       content:
@@ -1192,6 +1590,14 @@ components:
                 type: array
                 items:
                   $ref: '#/components/schemas/issue-type'
+          examples:
+            Example 1:
+              value:
+                message: A list of issue types.
+                data:
+                  - id: '{{faker ''string.uuid''}}'
+                    name: '{{faker ''word.adjective''}}'
+                    service_level_agreement_duration_hour: string
     list-of-renewed-issue-types:
       description: List containing the henceforth-valid Issue Types.
       content:
@@ -1207,6 +1613,14 @@ components:
                   id: emv043jh5ey3g
                 items:
                   $ref: '#/components/schemas/issue-type'
+          examples:
+            Example 1:
+              value:
+                message: string
+                data:
+                  - id: '{{faker ''string.uuid''}}'
+                    name: '{{faker ''word.adjective''}}'
+                    service_level_agreement_duration_hour: string
     list-of-notifications:
       description: A list of Notifications.
       content:
@@ -1222,6 +1636,93 @@ components:
                   id: i7zje8ah089o6
                 items:
                   $ref: '#/components/schemas/notification'
+          examples:
+            Example 1:
+              value:
+                message: string
+                data:
+                  - id: '{{faker ''string.uuid''}}'
+                    title: '{{faker ''lorem.sentence''}}'
+                    body: '{{faker ''lorem.paragraph''}}'
+                    sent_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                    actionable:
+                      genus: SEGUE
+                      species: TICKET_LOG
+                      segue_destination:
+                        id: '{{faker ''string.uuid''}}'
+                        issue_types:
+                          - id: '{{faker ''string.uuid''}}'
+                            name: '{{faker ''word.adjective''}}'
+                            service_level_agreement_duration_hour: string
+                        response_level: 'Urgent, emergency'
+                        raised_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                        status: Open
+                        executive_summary: '{{faker ''lorem.sentence''}}'
+                        stated_issue: '{{faker ''lorem.paragraph''}}'
+                        location:
+                          stated_location: '{{faker ''lorem.sentence''}}'
+                          gps_location:
+                            latitude: -6.201637
+                            longitude: 106.782636
+                        supportive_documents:
+                          - id: '{{faker ''string.uuid''}}'
+                            resource_type: '{{faker ''system.commonFileType''}}'
+                            resource_name: '{{faker ''system.commonFileName''}}'
+                            resource_size: 127000
+                            previewable_on: 'https://picsum.photos/1200/1200'
+                        issuer:
+                          id: '{{faker ''string.uuid''}}'
+                          name: '{{faker ''person.fullName''}}'
+                          role: Member
+                          title: '{{faker ''person.jobTitle''}}'
+                          specialties:
+                            - id: '{{faker ''string.uuid''}}'
+                              name: '{{faker ''word.adjective''}}'
+                              service_level_agreement_duration_hour: string
+                          capabilities:
+                            - InvitePeopleToTicket
+                          member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                          member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                        logs:
+                          - id: '{{faker ''string.uuid''}}'
+                            owning_ticket_id: '{{faker ''string.uuid''}}'
+                            type: Activity
+                            issuer:
+                              id: '{{faker ''string.uuid''}}'
+                              name: '{{faker ''person.fullName''}}'
+                              role: Member
+                              title: '{{faker ''person.jobTitle''}}'
+                              specialties:
+                                - id: '{{faker ''string.uuid''}}'
+                                  name: '{{faker ''word.adjective''}}'
+                                  service_level_agreement_duration_hour: string
+                              capabilities:
+                                - InvitePeopleToTicket
+                              member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                              member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                            recorded_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                            news: '{{faker ''lorem.paragraph''}}'
+                            attachments:
+                              - id: '{{faker ''string.uuid''}}'
+                                resource_type: '{{faker ''system.commonFileType''}}'
+                                resource_name: '{{faker ''system.commonFileName''}}'
+                                resource_size: 127000
+                                previewable_on: 'https://picsum.photos/1200/1200'
+                            actionable: {}
+                        handlers:
+                          - id: '{{faker ''string.uuid''}}'
+                            name: '{{faker ''person.fullName''}}'
+                            role: Member
+                            title: '{{faker ''person.jobTitle''}}'
+                            specialties:
+                              - id: '{{faker ''string.uuid''}}'
+                                name: '{{faker ''word.adjective''}}'
+                                service_level_agreement_duration_hour: string
+                            capabilities:
+                              - InvitePeopleToTicket
+                            member_since: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                            member_until: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
+                        closed_on: '{{dateTimeShift date=(now) format=''yyyy-MM-dd\''T\''HH:mm:ssXXX''}}'
     area-information:
       description: Example response
       content:
@@ -1311,8 +1812,18 @@ components:
                   id: o4y85eeby9d1y
                 items:
                   $ref: '#/components/schemas/calendar-event'
-    list-of-statistics:
-      description: ' A list containing statistics.'
+    pdf-document:
+      description: A PDF Document.
+      content:
+        application/pdf:
+          schema:
+            type: string
+            format: binary
+          examples:
+            Example 1:
+              value: string
+    list-of-month-and-avaliable-statistics:
+      description: Example response
       content:
         application/json:
           schema:
@@ -1323,16 +1834,37 @@ components:
               data:
                 type: array
                 x-stoplight:
-                  id: elnj42crsiwu4
+                  id: 8kz5dyto9r3fj
                 items:
-                  $ref: '#/components/schemas/statistic-metrics'
-    statistics-printview-pdf:
-      description: The binary of the PDF to download.
+                  $ref: '#/components/schemas/statistic'
+    slas:
+      description: List of active SLAs.
       content:
-        application/octet-stream:
+        application/json:
           schema:
-            type: string
-            format: binary
+            type: object
+            properties:
+              message:
+                type: string
+              data:
+                type: object
+                x-stoplight:
+                  id: 70dfpwljr5tk2
+                properties:
+                  sla_to_respond:
+                    x-stoplight:
+                      id: mmevjyjwaoccg
+                    type: string
+                  sla_to_auto_close:
+                    x-stoplight:
+                      id: 13qrie3rank88
+                    type: string
+                  per_issue_types:
+                    type: array
+                    x-stoplight:
+                      id: q40jaoi2f2zqr
+                    items:
+                      $ref: '#/components/schemas/issue-type'
   requestBodies:
     oauth-refresh:
       content:
@@ -1382,7 +1914,6 @@ components:
             properties:
               data:
                 $ref: '#/components/schemas/TOBEMADE-ticket'
-          examples: {}
     contributing-to-a-ticket:
       content:
         application/json:
@@ -1397,25 +1928,44 @@ components:
           schema:
             type: object
             properties:
-              appointed_member_ids:
+              data:
                 type: array
                 x-stoplight:
-                  id: ppf8kxq6fsj9y
+                  id: vmn57jcrg7iwz
                 items:
-                  $ref: '#/components/schemas/uuid'
-              work_description:
-                $ref: '#/components/schemas/lorem-paragraph'
-              issue_types:
-                $ref: '#/components/schemas/uuid'
-          examples: {}
+                  x-stoplight:
+                    id: 2ir1ltz4kwgw8
+                  type: object
+                  properties:
+                    work_description:
+                      $ref: '#/components/schemas/lorem-paragraph'
+                    appointed_member_ids:
+                      type: array
+                      x-stoplight:
+                        id: 6j1k4xmr2kopo
+                      items:
+                        $ref: '#/components/schemas/uuid'
+                    issue_type:
+                      $ref: '#/components/schemas/uuid'
+                    supportive_documents:
+                      type: array
+                      x-stoplight:
+                        id: 783k8w2ezf7ev
+                      items:
+                        $ref: '#/components/schemas/TOBEMADE-supportive-document'
     change-of-area-join-policy:
       content:
         application/json:
           schema:
             type: object
             properties:
-              new_join_policy:
-                $ref: '#/components/schemas/area-join-policy'
+              data:
+                type: object
+                x-stoplight:
+                  id: izj0u5dtsbnpe
+                properties:
+                  new_join_policy:
+                    $ref: '#/components/schemas/area-join-policy'
     updating-of-information-of-area-member:
       content:
         application/json:
@@ -1484,6 +2034,147 @@ components:
                   $ref: '#/components/schemas/uuid'
               title:
                 $ref: '#/components/schemas/job-title'
+    evaluation-of-ticket:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                x-stoplight:
+                  id: 0knq51gnms958
+                properties:
+                  resolveToApprove:
+                    type: boolean
+                    x-stoplight:
+                      id: bb5b39anhsxf7
+                  requireOwnerApproval:
+                    type: boolean
+                    x-stoplight:
+                      id: 4efbhctw0o6fl
+                  reason:
+                    type: string
+                    x-stoplight:
+                      id: qn9lt58cqk0k8
+                    nullable: true
+                  supportive_documents:
+                    type: array
+                    x-stoplight:
+                      id: yvvg8stbpaqw4
+                    items:
+                      $ref: '#/components/schemas/TOBEMADE-supportive-document'
+    extending-of-ticket-sla-calculation:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                x-stoplight:
+                  id: svetq1ss3zvlx
+                properties:
+                  reason:
+                    type: string
+                    x-stoplight:
+                      id: zbcypcau4fzi9
+    request-of-evaluation-for-ticket:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                properties:
+                  remark:
+                    type: string
+                    x-stoplight:
+                      id: qn9lt58cqk0k8
+                    nullable: true
+                  supportive_documents:
+                    type: array
+                    x-stoplight:
+                      id: 7isdy4qsi2a0b
+                    items:
+                      $ref: '#/components/schemas/TOBEMADE-supportive-document'
+    force-closing-of-ticket:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                x-stoplight:
+                  id: xd0l5s2ltkthp
+                properties:
+                  reason:
+                    type: string
+                    x-stoplight:
+                      id: jyreh4n02um34
+                  supportive_documents:
+                    type: array
+                    x-stoplight:
+                      id: nfwb2i9fh9a0p
+                    items:
+                      $ref: '#/components/schemas/TOBEMADE-supportive-document'
+    closing-of-ticket:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                x-stoplight:
+                  id: nnhhr1fwtt9q7
+                properties:
+                  reason:
+                    type: string
+                    x-stoplight:
+                      id: byh9cci2019mf
+                  supportive_documents:
+                    type: array
+                    x-stoplight:
+                      id: 7mmqfr15yliiz
+                    items:
+                      $ref: '#/components/schemas/TOBEMADE-supportive-document'
+    updating-of-slas:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                x-stoplight:
+                  id: 8hh5d0qr6hybw
+                properties:
+                  sla_to_respond:
+                    x-stoplight:
+                      id: 5jg8ka8f2na4t
+                    type: string
+                  sla_to_auto_close:
+                    x-stoplight:
+                      id: do9wh3ii5n0jv
+                    type: string
+                  per_issue_types:
+                    type: array
+                    x-stoplight:
+                      id: au3ayzlhzmugw
+                    items:
+                      x-stoplight:
+                        id: 6ihe8oyzxmrs6
+                      type: object
+                      properties:
+                        id:
+                          $ref: '#/components/schemas/uuid'
+                        duration:
+                          type: string
+                          x-stoplight:
+                            id: h5vn6f3b47nf2
   parameters:
     area_join_form_referral_tracking_identifier:
       name: area_join_form_referral_tracking_identifier
@@ -1546,3 +2237,10 @@ components:
         minimum: 0
         format: int64
       description: The maxima of the scope of the request.
+    month:
+      name: month
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The full name of the month in PascalCase.

@@ -20,13 +20,16 @@ import Observation
     var didUpdateJoinPolicy: ((FPAreaJoinPolicy)->Void)?
     
     
-    var routeToManageMembers: (()->Void)?
+    var routeToManageMemberships: (()->Void)?
     
     
-    var routeToStatisticView: (()->Void)?
+    var routeToStatisticsAndReports: (()->Void)?
     
     
-    var routeToSLAAndIssueTypesManagement: (()->Void)?
+    var routeToIssueTypesRegistrar: (()->Void)?
+    
+    
+    var routeToManageSLA: (()->Void)?
     
     
     var ticketCount: Int?

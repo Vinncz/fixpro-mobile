@@ -33,13 +33,16 @@ extension AreaJoinCode {
             ))
             
         } catch let error as FPError {
+            VULogger.log(tag: .critical, "Caught here: \(json)")
             return .failure(error)
             
         } catch let error as DecodingError {
+            VULogger.log(tag: .critical, "Caught here: \(json)")
             VULogger.log(tag: .error, error)
             return .failure(.MALFORMED)
             
         } catch {
+            VULogger.log(tag: .critical, "Caught here: \(json)")
             VULogger.log(tag: .error, error)
             return .failure(.UNKNOWN)
             

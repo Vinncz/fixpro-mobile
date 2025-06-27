@@ -11,12 +11,12 @@ import UIKit
 /// Contract adhered to by ``TicketDetailInteractor``, listing the attributes and/or actions 
 /// that ``TicketDetailViewController`` is allowed to access or invoke.
 protocol TicketDetailPresentableListener: AnyObject {
+    var component: TicketDetailComponent { get }
     func navigateBack()
-    func didIntedToCloseTicket()
-    func didIntendToAddWorkReport()
+    func didIntendToContribute()
     func didIntendToDelegateTicket()
-    func didIntendToEvaluateWorkReport()
-    func didIntendToSeeTicketReport()
+    func didIntendToInviteTicket()
+    func didIntendToEvaluateWork()
 }
  
  
@@ -55,21 +55,22 @@ final class TicketDetailViewController: UIViewController {
     /// Customization point that is invoked after self enters the view hierarchy.
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         title = "Ticket Details"
-        
-        setupToolbar()
-        
+        self.hidesBottomBarWhenPushed = true
         guard hostingController != nil else {
             buildHostingController()
             return
         }
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        setupToolbar()
+        self.navigationController?.setToolbarHidden(false, animated: true)
+    }
+    
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.setToolbarHidden(false, animated: true)
     }
     
     
@@ -121,129 +122,195 @@ fileprivate extension TicketDetailViewController {
     
     
     func setupToolbar() {
-        guard let viewModel else { fatalError("ViewModel wasn't yet set.") }
-        
-        var items = [UIBarButtonItem]()
-        
-        switch viewModel.role {
-            case .member:
-                let cancelTicketButton = createToolbarButton(
-                    title: "Cancel ticket", 
-                    systemImage: "xmark.bin", 
-                    actionHandler: {  [weak self] in
-                        self?.presentableListener?.didIntedToCloseTicket()
-                    },
-                    isEnabled: viewModel.status == .open
-                )
-                items.append(cancelTicketButton)
-                
-                items.append(UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil))
-                
-                let printViewButton = createToolbarButton(
-                    title: "Print", 
-                    systemImage: "printer.inverse", 
-                    actionHandler: { [weak self] in
-                        self?.presentableListener?.didIntendToSeeTicketReport()
-                    },
-                    isEnabled: viewModel.status != nil
-                )
-                items.append(printViewButton)
-                
-            case .crew:
-                let addWorkReportButton = createToolbarButton(
-                    title: "Add work report", 
-                    systemImage: "document.viewfinder", 
-                    actionHandler: { [weak self] in
-                        self?.presentableListener?.didIntendToAddWorkReport()
-                    },
-                    isEnabled: ![.open, .inAssessment, .workEvaluation, .closed, .cancelled, .rejected].contains(viewModel.status) && viewModel.status != nil
-                )
-                items.append(addWorkReportButton)
-
-                items.append(UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil))
-                
-                let printViewButton =  createToolbarButton(
-                    title: "Print", 
-                    systemImage: "printer.inverse", 
-                    actionHandler: { [weak self] in 
-                        self?.presentableListener?.didIntendToSeeTicketReport()
-                    },
-                    isEnabled: viewModel.status != nil
-                )
-                items.append(printViewButton)
-                
-            case .management:
-                if viewModel.status == .workEvaluation {
-                    let evaluateWorkReportButton = createToolbarButton(
-                        title: "Evaluate work report(s)", 
-                        systemImage: "pencil.and.list.clipboard", 
-                        actionHandler: { [weak self] in 
-                            self?.presentableListener?.didIntendToEvaluateWorkReport()
-                        }
-                    )
-                    items.append(evaluateWorkReportButton)
-                } else {
-                    let delegateTicketButton = createToolbarButton(
-                        title: "Delegate ticket", 
-                        systemImage: "person.badge.plus", 
-                        actionHandler: {  [weak self] in
-                            self?.presentableListener?.didIntendToDelegateTicket()
-                        },
-                        isEnabled: ![.workEvaluation, .closed, .cancelled, .rejected].contains(viewModel.status) && viewModel.status != nil
-                    )
-                    items.append(delegateTicketButton)
-                }
-
-                items.append(UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil))
-                
-                let cancelTicketButton = createToolbarButton(
-                    title: "Cancel ticket", 
-                    systemImage: "xmark.bin", 
-                    actionHandler: {  [weak self] in
-                        self?.presentableListener?.didIntedToCloseTicket()
-                    },
-                    isEnabled: [.open, .inAssessment, .onProgress, .workEvaluation].contains(viewModel.status)
-                )
-                items.append(cancelTicketButton)
-                
-                items.append(UIBarButtonItem(barButtonSystemItem: .fixedSpace, target: nil, action: nil))
-                
-                let printViewButton =  createToolbarButton(
-                    title: "Print", 
-                    systemImage: "printer.inverse", 
-                    actionHandler: {  [weak self] in
-                        self?.presentableListener?.didIntendToSeeTicketReport()
-                    },
-                    isEnabled: viewModel.status != nil
-                )
-                items.append(printViewButton)
-        }
-        self.toolbarItems = items
-    }
-    
-    class ActionWrapper: NSObject {
-        let action: () -> Void
-
-        init(action: @escaping () -> Void) {
-            self.action = action
-        }
-
-        @objc func invoke() {
-            action()
+        if let viewModel {
+            switch viewModel.role {
+                case .member: self.toolbarItems = makeMemberToolbar()
+                case .crew: self.toolbarItems = makeCrewToolbar()
+                case .management: self.toolbarItems = makeManagementToolbar()
+            }
         }
     }
     
     
-    func createToolbarButton(title: String, systemImage: String, actionHandler: @escaping () -> Void, isEnabled: Bool = true) -> UIBarButtonItem {
-        let actionWrapper = ActionWrapper(action: actionHandler)
-        let button = UIBarButtonItem(title: title, style: .plain, target: actionWrapper, action: #selector(ActionWrapper.invoke))
-        button.image = UIImage(systemName: systemImage)
-        button.isEnabled = isEnabled
+    func makeMemberToolbar() -> [UIBarButtonItem] {
+        if let viewModel, let ticket = viewModel.ticket {
+            let cancelAction = makeToolbarButton(
+                title: "Cancel", 
+                systemImage: "xmark.bin", 
+                action: #selector(cancelTicket),
+                isEnabled: [.open, .inAssessment].contains(ticket.status)
+            )
+            let evaluateAction = makeToolbarButton(
+                title: "Evaluate works", 
+                systemImage: "checkmark.circle.badge.xmark", 
+                action: #selector(evaluateTicket),
+                isEnabled: ticket.status == .ownerEvaluation
+            )
+            let printViewAction =  makeToolbarButton(
+                title: "Print", 
+                systemImage: "printer", 
+                action: #selector(printViewTicket)
+            )
+            
+            return [
+                cancelAction, 
+                .init(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), 
+                evaluateAction,
+                .init(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), 
+                printViewAction
+            ]
+        }
         
-        // Strongly associate the action wrapper so it doesn't deallocate
-        objc_setAssociatedObject(button, "[\(UUID())]", actionWrapper, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-
-        return button
+        return []
+    }
+    
+    
+    func makeCrewToolbar() -> [UIBarButtonItem] {
+        if let viewModel, let ticket = viewModel.ticket {
+            let contributeAction = makeToolbarButton(
+                title: "Contribute", 
+                systemImage: "plus.square.on.square", 
+                action: #selector(contributeToTicket),
+                isEnabled: [.onProgress].contains(ticket.status)
+            )
+            let inviteAction = makeToolbarButton(
+                title: "Invite", 
+                systemImage: "person.2.badge.plus", 
+                action: #selector(inviteToTicket),
+                isEnabled: [.onProgress].contains(ticket.status)
+            )
+            let evaluateAction = makeToolbarButton(
+                title: "Evaluate works", 
+                systemImage: "checkmark.circle.badge.xmark", 
+                action: #selector(evaluateTicket),
+                isEnabled: [.workEvaluation].contains(ticket.status) 
+                           && (presentableListener?.component.authorizationContext.capabilities.contains(.IssueSupervisorApproval) ?? false)
+            )
+            let printViewAction =  makeToolbarButton(
+                title: "Print", 
+                systemImage: "printer", 
+                action: #selector(printViewTicket)
+            )
+            
+            return [
+                contributeAction, 
+                .init(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), 
+                inviteAction,
+                .init(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), 
+                evaluateAction,
+                .init(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), 
+                printViewAction
+            ]
+        }
+        
+        return []
+    }
+    
+    
+    func makeManagementToolbar() -> [UIBarButtonItem] {
+        if let viewModel, let ticket = viewModel.ticket {
+            let rejectAction = makeToolbarButton(
+                title: "Reject", 
+                systemImage: "xmark.bin", 
+                action: #selector(rejectTicket),
+                isEnabled: [.open, .inAssessment].contains(ticket.status)
+            )
+            let delegateAction = makeToolbarButton(
+                title: "Delegate", 
+                systemImage: "person.2.badge.plus", 
+                action: #selector(delegateTicket),
+                isEnabled: [.onProgress].contains(ticket.status)
+            )
+            let contributeAction = makeToolbarButton(
+                title: "Contribute", 
+                systemImage: "plus.square.on.square", 
+                action: #selector(contributeToTicket),
+                isEnabled: [.open, .inAssessment, .onProgress, .workEvaluation, .qualityControl].contains(ticket.status)
+            )
+            let evaluateAction = makeToolbarButton(
+                title: "Evaluate works", 
+                systemImage: "checkmark.circle.badge.xmark", 
+                action: #selector(evaluateTicket),
+                isEnabled: [.workEvaluation, .qualityControl].contains(ticket.status)
+            )
+            let printViewAction =  makeToolbarButton(
+                title: "Print", 
+                systemImage: "printer", 
+                action: #selector(printViewTicket)
+            )
+            
+            VULogger.log("ticket status: \([.workEvaluation].contains(ticket.status))")
+            VULogger.log("has enough capability: \((presentableListener?.component.authorizationContext.capabilities.contains(.IssueSupervisorApproval) == true))")
+            VULogger.log("Combined: \([.workEvaluation].contains(ticket.status) && (presentableListener?.component.authorizationContext.capabilities.contains(.IssueSupervisorApproval) == true))")
+            
+            return [
+                rejectAction,
+                .init(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), 
+                delegateAction,
+                .init(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), 
+                contributeAction, 
+                .init(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), 
+                evaluateAction,
+                .init(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), 
+                printViewAction
+            ]
+        }
+        
+        return []
+    }
+    
+    
+    func makeToolbarButton(title: String, systemImage: String, action: Selector, isEnabled: Bool = true) -> UIBarButtonItem {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: systemImage), for: .normal)
+//        button.setTitle(" " + title, for: .normal)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        button.sizeToFit()
+        
+        let barButton = UIBarButtonItem(customView: button)
+        barButton.isEnabled = isEnabled
+        return barButton
+    }
+    
+    
+    @objc func cancelTicket() {
+        if let viewModel {
+            viewModel.shouldShowCancellationAlert = true
+        }
+    }
+    
+    
+    @objc func rejectTicket() {
+        if let viewModel {
+            viewModel.shouldShowRejectionAlert = true
+        }
+    }
+    
+    
+    @objc func inviteToTicket() {
+        presentableListener?.didIntendToInviteTicket()
+    }
+    
+    
+    @objc func delegateTicket() {
+        presentableListener?.didIntendToDelegateTicket()
+    }
+    
+    
+    @objc func contributeToTicket() {
+        presentableListener?.didIntendToContribute()
+    }
+    
+    
+    @objc func evaluateTicket() {
+        presentableListener?.didIntendToEvaluateWork()
+    }
+    
+    
+    @objc func printViewTicket() {
+        if let viewModel {
+            viewModel.shouldShowPrintView = true
+        }
     }
     
 }

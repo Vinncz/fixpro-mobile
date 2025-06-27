@@ -9,6 +9,8 @@ import Observation
     
     var isScanning: Bool = false
     
+    var isInputingManually: Bool = false
+    
     var didScan: ((_ obfuscatedAreaJoinCodeInString: String) -> Void)?
     
     var scannerError: String = ""

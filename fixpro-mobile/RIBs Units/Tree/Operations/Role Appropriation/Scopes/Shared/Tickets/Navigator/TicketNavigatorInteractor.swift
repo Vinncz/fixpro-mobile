@@ -106,6 +106,17 @@ final class TicketNavigatorInteractor: PresentableInteractor<TicketNavigatorPres
 extension TicketNavigatorInteractor {
     
     
+    func didIntendToOpenNewTicket() {
+        // TODO: Link
+    }
+    
+}
+
+
+
+extension TicketNavigatorInteractor {
+    
+    
     func navigateTo(ticketDetail: FPTicketDetail) {
         router?.flowTo(ticket: ticketDetail)
     }

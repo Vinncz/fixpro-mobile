@@ -17,6 +17,8 @@ struct OperationsSwiftUIView: View {
     var body: some View {
         VUIndenterView(.one) {
             VStack(spacing: VUViewSize.xxxBig.val) {
+                Spacer()
+                
                 Image("fixpro-logo")
                 
                 Loader()
@@ -47,6 +49,17 @@ struct OperationsSwiftUIView: View {
                         
                     }
                 }
+                
+                Spacer()
+                
+                Button {
+                    viewModel.didIntendToLogOut?()
+                } label: {
+                    Text("Log out")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

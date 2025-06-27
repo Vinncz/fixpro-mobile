@@ -7,8 +7,15 @@ import RIBs
 /// 
 /// Conform this `Interactable` protocol with this RIB's children's `Listener` protocols.
 protocol CrewDelegatingInteractable: Interactable {
+    
+    
+    /// Reference to ``CrewDelegatingRouter``.
     var router: CrewDelegatingRouting? { get set }
+    
+    
+    /// Reference to this RIB's parent's Interactor.
     var listener: CrewDelegatingListener? { get set }
+    
 }
 
 
@@ -18,21 +25,21 @@ protocol CrewDelegatingInteractable: Interactable {
 protocol CrewDelegatingViewControllable: ViewControllable {
     
     
-    /// Inserts the given `ViewControllable` into the view hierarchy.
-    /// - Parameter newFlow: The `ViewControllable` to be inserted.
-    /// - Parameter completion: A closure to be executed after the insertion is complete.
+    /// Attaches the given `ViewControllable` into the view hierarchy, becoming the top-most view controller.
+    /// - Parameter newFlow: The `ViewControllable` to be attached.
+    /// - Parameter completion: A closure to be executed after the operation is complete.
     /// 
-    /// The default implementation of this method adds the new `ViewControllable` as a child view controller
-    /// and adds its view as a subview of the current view controller's view.
-    /// - Note: The default implementation of this method REMOVES the previous `ViewControllable` from the view hierarchy.
-    func transition(to newFlow: ViewControllable, completion: (() -> Void)?)
+    /// > Note: You are responsible for removing the previous `ViewControllable` from the view hierarchy.
+    func attach(newFlow: ViewControllable, completion: (() -> Void)?)
     
     
-    /// Clears any `ViewControllable` from the view hierarchy.
+    /// Clears the  `ViewControllable` from the view hierarchy.
     /// - Parameter completion: A closure to be executed after the cleanup is complete.
-    /// 
-    /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
-    func cleanUp(completion: (() -> Void)?)
+    func clear(completion: (() -> Void)?)
+    
+    
+    /// Removes the hosting controller from the view hierarchy and deallocates it.
+    func nilHostingViewController()
     
 }
 
@@ -50,6 +57,10 @@ final class CrewDelegatingRouter: ViewableRouter<CrewDelegatingInteractable, Cre
         interactor.router = self
     }
     
+    
+    /// Customization point that is invoked after self becomes active.
+    override func didLoad() {}
+    
 }
 
 
@@ -59,8 +70,24 @@ final class CrewDelegatingRouter: ViewableRouter<CrewDelegatingInteractable, Cre
 extension CrewDelegatingRouter: CrewDelegatingRouting {
     
     
+    /// Removes the view hierarchy from any `ViewControllable` instances this RIB may have added.
+    func clearViewControllers() {
+        viewController.clear(completion: nil)
+        // TODO: detach any child RIBs
+        // TODO: nullify any references to child RIBs
+    }
+    
+    
+    /// Removes the hosting controller (swiftui embed) from the view hierarchy and deallocates it.
+    func detachSwiftUI() {
+        viewController.nilHostingViewController()
+    }
+    
+    
     func dismiss() {
-        viewController.uiviewController.dismiss(animated: true)
+        Task { @MainActor in
+            viewController.uiviewController.dismiss(animated: true)
+        }
     }
     
 }

@@ -30,7 +30,7 @@ final class TicketDetailComponent: Component<TicketDetailDependency> {
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension TicketDetailComponent: CrewNewWorkLogDependency, CrewDelegatingDependency, WorkEvaluatingDependency, TicketReportDependency {}
+extension TicketDetailComponent: UpdateContributingDependency, CrewDelegatingDependency, CrewInvitingDependency, WorkEvaluatingDependency {}
 
 
 
@@ -69,10 +69,10 @@ final class TicketDetailBuilder: Builder<TicketDetailDependency>, TicketDetailBu
         return TicketDetailRouter(
             interactor: interactor, 
             viewController: viewController,
-            crewNewWorkLogBuilder: CrewNewWorkLogBuilder(dependency: component),
+            updateContributingBuilder: UpdateContributingBuilder(dependency: component),
             crewDelegatingBuilder: CrewDelegatingBuilder(dependency: component),
-            workEvaluatingBuilder: WorkEvaluatingBuilder(dependency: component),
-            ticketReportBuilder: TicketReportBuilder(dependency: component)
+            crewInvitingBuilder: CrewInvitingBuilder(dependency: component),
+            workEvaluatingBuilder: WorkEvaluatingBuilder(dependency: component)
         )
     }
     

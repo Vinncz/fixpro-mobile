@@ -43,6 +43,13 @@ final class TicketListsViewController: UIViewController {
         
         guard hostingController != nil else {
             buildHostingController()
+            if case .management = viewModel?.roleContext.role {
+                navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Open new ticket", 
+                                                                    style: .plain, 
+                                                                    target: self, 
+                                                                    action: #selector(didTapNewTicketButton))
+            }
+            
             return
         }
     }
@@ -67,6 +74,11 @@ final class TicketListsViewController: UIViewController {
         
         hostingController.didMove(toParent: self)
         self.hostingController = hostingController
+    }
+    
+    
+    @objc func didTapNewTicketButton() {
+        viewModel?.didIntendToOpenNewTicket()
     }
     
 }

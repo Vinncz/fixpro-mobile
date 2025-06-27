@@ -1,4 +1,14 @@
 import SwiftUI
+import VinUtility
+
+
+
+fileprivate enum TicketListTab: String, CaseIterable, Hashable, Identifiable {
+    case toDo = "To Do"
+    case contributed = "Contributed"
+    
+    var id: Self { self }
+}
 
 
 
@@ -8,37 +18,84 @@ struct TicketListSwiftUIViewForCrew: View {
     var viewModel: TicketListsSwiftUIViewModel
     
     
+    @State fileprivate var activeTab: TicketListTab = .toDo
+    
+    
     var body: some View {
-        Section {
-            if viewModel.assignedTickets.count <= 0 {
-                FPEmptyTicketRowView(systemImage: "checkmark", 
-                                     message: "You are not assigned to any tickets.")
-            } else {
-                AssignedTicketsView(viewModel.assignedTickets)
+        Picker("Tabs", selection: $activeTab) {
+            ForEach(TicketListTab.allCases) { tab in
+                Text(tab.rawValue)
             }
-            
-        } header: {
-            Text("Tickets assigned to you")
-            
-        } footer: {
-            Text("Tickets, depending on their response level, may require your attention. Plan your day accordingly. This is reflected in your calendar.")
-            
         }
+        .pickerStyle(.segmented)
+        .listRowInsets(.init())
+        .listRowSpacing(0)
+        .listRowBackground(Color.clear)
+        .listRowSeparatorTint(Color.clear)
         
-        Section {
-            if viewModel.pastContributedTickets.count <= 0 {
-                FPEmptyTicketRowView(systemImage: "checkmark.arrow.trianglehead.counterclockwise", 
-                                     message: "You are not associated with any tickets just yet.")
-            } else {
-                CompletedContributedToTicketView(viewModel.pastContributedTickets)
+        switch activeTab {
+            case .toDo:
+                SectionToDo()
+            case .contributed:
+                SectionContributed()
+        }
+    }
+    
+}
+
+
+
+extension TicketListSwiftUIViewForCrew {
+    
+    
+    @ViewBuilder func SectionToDo() -> some View {
+        if viewModel.assignedTickets.count <= 0 {
+            Section {
+                HStack(alignment: .top) {
+                    ContentUnavailableView("No Tickets", 
+                                           systemImage: "tray", 
+                                           description: Text("You have not been assigned to any tickets.\n\nWhen you are assigned to one,\nthey'll be shown here."))
+                }
+                .frame(height: 350)
+                .padding(.top, VUViewSize.xxxBig.val * 3)
+                .listRowInsets(.init())
+                .listRowBackground(Color.clear)
+                .listRowSeparatorTint(Color.clear)
             }
-            
-        } header: {
-            Text("Past tickets")
-            
-        } footer: {
-            Text(LocalizedStringResource("These are Tickets which you’ve contributed to, and are now addressed."))
-            
+        } else {
+            Section {
+                AssignedTicketsView(viewModel.assignedTickets)
+            } header: {
+                Text("Tickets assigned to you")
+            } footer: {
+                Text("Tickets, depending on their response level, may require your attention. Plan your day accordingly. This is reflected in your calendar.")
+            }
+        }
+    }
+    
+    
+    @ViewBuilder func SectionContributed() -> some View {
+        if viewModel.pastContributedTickets.count <= 0 {
+            Section {
+                HStack(alignment: .top) {
+                    ContentUnavailableView("No Tickets", 
+                                           systemImage: "checkmark.arrow.trianglehead.counterclockwise", 
+                                           description: Text("You have not contributed to any active ticket just yet.\n\nWhen you have, they'll be shown here."))
+                }
+                .frame(height: 350)
+                .padding(.top, VUViewSize.xxxBig.val * 3)
+                .listRowInsets(.init())
+                .listRowBackground(Color.clear)
+                .listRowSeparatorTint(Color.clear)
+            }
+        } else {
+            Section {
+                CompletedContributedToTicketView(viewModel.pastContributedTickets)
+            } header: {
+                Text("Past tickets")
+            } footer: {
+                Text(LocalizedStringResource("These are Tickets which you’ve contributed to, and are now addressed."))
+            }
         }
     }
     

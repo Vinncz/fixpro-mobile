@@ -41,6 +41,8 @@ final class AreaJoinningCodeScanningViewController: UIViewController {
         
         guard hostingController != nil else {
             buildCancelButtonInNavigationBar()
+            setToolbarItems([UIBarButtonItem(image: UIImage(systemName: "character.cursor.ibeam"), style: .plain, target: self, action: #selector(didTapManualEntryButton))], animated: true)
+            self.navigationController?.isToolbarHidden = false
             buildHostingController()
             return
         }
@@ -69,12 +71,16 @@ final class AreaJoinningCodeScanningViewController: UIViewController {
     }
     
     func buildCancelButtonInNavigationBar() {
-        let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(cancelTapped))
+        let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(didTapCancelScanButton))
         navigationItem.leftBarButtonItem = cancelButton
     }
     
-    @objc func cancelTapped() {
+    @objc func didTapCancelScanButton() {
         presentableListener?.viewDidRequestToBeDismissed()
+    }
+    
+    @objc func didTapManualEntryButton() {
+        viewModel?.isInputingManually = true
     }
     
 }
@@ -103,4 +109,9 @@ extension AreaJoinningCodeScanningViewController: AreaJoinningCodeScanningPresen
         self.viewModel = nil
     }
     
+}
+
+
+#Preview {
+    AreaJoinningCodeScanningViewController()
 }

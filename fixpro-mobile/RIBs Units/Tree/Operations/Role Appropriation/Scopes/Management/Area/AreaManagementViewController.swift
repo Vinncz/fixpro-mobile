@@ -37,7 +37,7 @@ final class AreaManagementViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.title = "Manage Area"
+        self.title = "Area Management"
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         

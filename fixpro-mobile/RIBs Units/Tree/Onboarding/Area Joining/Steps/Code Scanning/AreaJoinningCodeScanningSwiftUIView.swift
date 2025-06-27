@@ -11,6 +11,12 @@ struct AreaJoinningCodeScanningSwiftUIView: View {
     @Bindable var viewModel: AreaJoinningCodeScanningSwiftUIViewModel
     
     
+    @State var manualInputHostingAddress: String = ""
+    
+    
+    @State var manualInputReferralTrackingIdentifier: String = ""
+    
+    
     var body: some View {
         ScrollView {
             VUScannerView ([.captureMode: .wrap(VUScannerView.CaptureMode.continuous), .debounce: .wrap(TimeInterval(integerLiteral: 3))], error: $viewModel.scannerError, isScanning: $viewModel.isScanning) { result in
@@ -68,7 +74,40 @@ struct AreaJoinningCodeScanningSwiftUIView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
-            
+        }
+        .fullScreenCover(isPresented: $viewModel.isInputingManually) {
+            NavigationView {
+                Form {
+                    Section("Hosting Address") {
+                        TextField("https://...", text: $manualInputHostingAddress)
+                    }
+                    Section("Referral Tracking Indentifier") {
+                        TextField("6 digit code", text: $manualInputReferralTrackingIdentifier)
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) { 
+                        Button("Done") {
+                            viewModel.didScan?(
+                                """
+                                {"endpoint": "\(manualInputHostingAddress)", "referralTrackingIdentifier": "\(manualInputReferralTrackingIdentifier)"}
+                                """
+                            )
+                            viewModel.isInputingManually = false
+                            viewModel.isScanning = true
+                        }
+                    }
+                    ToolbarItem(placement: .cancellationAction) { 
+                        Button("Cancel") {
+                            viewModel.isInputingManually = false
+                            viewModel.isScanning = true
+                        }
+                    }
+                }
+            }
+                .onAppear {
+                    viewModel.isScanning = false
+                }
         }
         .onDisappear {
             viewModel.isScanning = false

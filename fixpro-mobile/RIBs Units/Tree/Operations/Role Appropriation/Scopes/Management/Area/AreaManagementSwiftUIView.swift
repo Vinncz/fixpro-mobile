@@ -19,7 +19,7 @@ struct AreaManagementSwiftUIView: View {
                 HStack {
                     Text("Area Name")
                     Spacer()
-                    Text("Bali Indah Beach")
+                    Text(viewModel.areaName ?? "Unnamed Area")
                         .foregroundStyle(.secondary)
                 }
             } header: {
@@ -49,14 +49,9 @@ struct AreaManagementSwiftUIView: View {
                 }
                 
                 FPChevronRowView{
-                    viewModel.routeToManageMembers?()
+                    viewModel.routeToManageMemberships?()
                 } children: { 
-                    HStack {
-                        Text("Manage Membership")
-                        Spacer()
-                        Text("0 people")
-                            .foregroundStyle(.secondary)
-                    }
+                    Text("Manage Membership")
                 }
             } header: {
                 Text("Membership controls")
@@ -66,32 +61,29 @@ struct AreaManagementSwiftUIView: View {
             
             Section {
                 FPChevronRowView {
-                    viewModel.routeToSLAAndIssueTypesManagement?()
+                    viewModel.routeToIssueTypesRegistrar?()
                 } children: {
-                    VStack(alignment: .leading) {
-                        Text("Issue Type Registrar")
-                        Text("Manage your Service Level Agreement for a given type of issue.")
-                            .foregroundStyle(.secondary)
-                            .font(.footnote)
-                    }
+                    Text("Issue Types Registrar")
+                }
+                FPChevronRowView {
+                    viewModel.routeToManageSLA?()
+                } children: {
+                    Text("Manage Service Level Agreements")
                 }
             } header: {
                 Text("Administration")
+            } footer: {
+                Text(LocalizedStringResource(stringLiteral: "Manage a variety of *issue categories* that can be handled via FixPro."))
             }
             
             Section {
                 DisclosureGroup(isExpanded: Binding(get: { 
                     false
                 }, set: { _ in
-                    viewModel.routeToStatisticView?()
+                    viewModel.routeToStatisticsAndReports?()
                 })) {} 
                 label: {
-                    VStack(alignment: .leading) {
-                        Text("Export Tickets as PDF")
-                        Text("Select among \(viewModel.ticketCount ?? 0) ticket(s) to process")
-                            .foregroundStyle(.secondary)
-                            .font(.footnote)
-                    }
+                    Text("Statistics and reports")
                 }
                 .tint(.secondary)
             } header: {

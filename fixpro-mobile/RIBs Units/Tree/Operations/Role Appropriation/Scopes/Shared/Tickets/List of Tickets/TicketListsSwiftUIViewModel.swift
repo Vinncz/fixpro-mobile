@@ -20,11 +20,15 @@ import Observation
     var didTapTicket: (FPLightweightIssueTicket)->Void
     
     
-    init(roleContext: FPRoleContext, tickets: [FPLightweightIssueTicket], didIntendToRefreshTicketList: @escaping () -> Void, didTapTicket: @escaping (FPLightweightIssueTicket) -> Void) {
+    var didIntendToOpenNewTicket: () -> Void
+    
+    
+    init(roleContext: FPRoleContext, tickets: [FPLightweightIssueTicket], didIntendToRefreshTicketList: @escaping () -> Void, didTapTicket: @escaping (FPLightweightIssueTicket) -> Void, didIntendToOpenNewTicket: @escaping () -> Void) {
         self.roleContext = roleContext
         self.tickets = tickets
         self.didIntendToRefreshTicketList = didIntendToRefreshTicketList
         self.didTapTicket = didTapTicket
+        self.didIntendToOpenNewTicket = didIntendToOpenNewTicket
     }
     
 }

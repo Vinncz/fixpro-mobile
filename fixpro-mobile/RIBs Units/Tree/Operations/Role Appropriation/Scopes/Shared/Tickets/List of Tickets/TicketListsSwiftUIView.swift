@@ -33,9 +33,10 @@ struct TicketListsSwiftUIView: View {
 
 
 #Preview {
-    @Previewable var viewModel = TicketListsSwiftUIViewModel(roleContext: .init(role: .member), 
+    @Previewable var viewModel = TicketListsSwiftUIViewModel(roleContext: .init(role: .member, capabilities: [], specialties: []), 
                                                              tickets: [], 
                                                              didIntendToRefreshTicketList: {}, 
-                                                             didTapTicket: {_ in})
+                                                             didTapTicket: {_ in}, 
+                                                             didIntendToOpenNewTicket: {})
     TicketListsSwiftUIView(viewModel: viewModel)
 }
