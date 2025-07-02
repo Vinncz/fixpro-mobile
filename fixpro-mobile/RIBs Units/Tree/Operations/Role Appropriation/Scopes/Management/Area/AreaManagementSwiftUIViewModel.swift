@@ -32,6 +32,9 @@ import Observation
     var routeToManageSLA: (()->Void)?
     
     
+    var didIntendToRefresh: (()->Void)?
+    
+    
     var ticketCount: Int?
     
 }

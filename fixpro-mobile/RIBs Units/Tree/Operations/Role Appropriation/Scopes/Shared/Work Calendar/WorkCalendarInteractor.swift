@@ -110,10 +110,6 @@ extension WorkCalendarInteractor {
     func refresh() async {
         do {
             let attemptedRequest = try await component.networkingClient.gateway.getCalendar(.init(
-                query: .init(
-                    from: -1,
-                    to: 4
-                ),
                 headers: .init(accept: [.init(contentType: .json)])
             ))
             

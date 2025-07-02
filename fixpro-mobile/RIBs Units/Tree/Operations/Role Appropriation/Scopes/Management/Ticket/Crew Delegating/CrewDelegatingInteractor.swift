@@ -120,9 +120,13 @@ final class CrewDelegatingInteractor: PresentableInteractor<CrewDelegatingPresen
         }
         viewModel.didIntendToDelegate = { [weak self] in 
             guard let self else { return }
-            if try await self.submitDelegation() {
-                router?.dismiss()
-                listener?.dismissCrewDelegating(didDelegate: true)
+            do {
+                if try await self.submitDelegation() {
+                    router?.dismiss()
+                    listener?.dismissCrewDelegating(didDelegate: true)
+                }
+            } catch {
+                VULogger.log(tag: .error, error)
             }
         }
         Task { [weak self] in

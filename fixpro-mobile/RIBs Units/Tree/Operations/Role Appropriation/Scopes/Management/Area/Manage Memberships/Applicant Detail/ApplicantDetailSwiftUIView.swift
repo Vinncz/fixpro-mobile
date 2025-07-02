@@ -21,6 +21,9 @@ struct ApplicantDetailSwiftUIView: View {
                     Text(answer.fieldValue)
                 }
             }
+            Section("Applicant Id") {
+                Text(viewModel.applicant.id)
+            }
         }
         .sheet(isPresented: $viewModel.didIntendToApprove) { 
             ApprovalDetailView(viewModel: viewModel)
@@ -55,6 +58,9 @@ fileprivate struct ApprovalDetailView: View {
     
     
     @State var specialties: [FPIssueType] = []
+    
+    
+    @State var capabilities: [FPCapability] = []
     
     
     var body: some View {
@@ -101,6 +107,35 @@ fileprivate struct ApprovalDetailView: View {
                         } footer: {
                             Text("Crews with matching specialties can be delegated to handle tickets where others can’t.")
                         }
+                        
+                        Section {
+                            ForEach(FPCapability.allCases) { capability in 
+                                MultiSelectPickerRow {
+                                    Text(capability.displayName)
+                                } callback: { isCurrentlyChecked in
+                                    if capabilities.contains(capability) {
+                                        capabilities.removeAll { $0 == capability }
+                                        return false
+                                    } else {
+                                        capabilities.append(capability)
+                                        return true
+                                    }
+                                }
+                            }
+                        } header: {
+                            Text("Capabilities")
+                        } footer: {
+                            Text(
+                                """
+                                Crews with abilities can perform tasks others can't.
+                                
+                                Use the *Invite People to Ticket* to let them add more people to work on a Tiket they have access to.
+                                
+                                Use the *Issue Supervisor Approval* for an extra eyes in making sure jobs are done correctly.
+                                """
+                            )
+                        }
+                        
                     } else {
                         Section {
                             ContentUnavailableView("No Issue Types", 
@@ -123,7 +158,7 @@ fileprivate struct ApprovalDetailView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) { 
                     Button("Approve") {
-                        viewModel.didApprove?(role, title, specialties)
+                        viewModel.didApprove?(role, title, specialties, capabilities)
                     }
                     .disabled(shouldAllowForSubmission())
                 }

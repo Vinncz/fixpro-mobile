@@ -23,7 +23,7 @@ struct FPPerson: Codable, Hashable, Identifiable {
     var capabilities: [FPCapability]
     
     
-    var memberSince: String
+    var memberSince: String?
     
     
     var memberUntil: String?

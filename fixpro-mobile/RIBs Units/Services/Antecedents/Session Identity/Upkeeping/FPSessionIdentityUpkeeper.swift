@@ -32,7 +32,7 @@ final class FPSessionIdentityUpkeeper: FPSessionIdentityUpkeeping {
             
             switch try await networkingClient.gateway.oauthRefresh(.init(
                 headers: .init(accept: [.init(contentType: .json)]),
-                body: .json(.init(refresh_token: storage.refreshToken))
+                body: .json(.init(data: .init(refresh_token: storage.refreshToken)))
             )) {
                 case .ok(let output): switch output.body { case .json(let jsonBody):
                     guard 

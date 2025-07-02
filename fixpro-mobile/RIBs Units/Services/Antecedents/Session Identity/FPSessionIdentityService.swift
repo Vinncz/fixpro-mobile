@@ -65,9 +65,9 @@ final actor FPSessionIdentityService: FPSessionIdentityServicing {
                 headers: .init(
                     accept: [.init(contentType: .json)]
                 ),
-                body: .json(.init(
+                body: .json(.init(data: .init(
                     authentication_code: authenticationCode
-                ))
+                )))
             )) {
                 case .ok(let output): switch output.body { case .json(let jsonBody):
                     guard

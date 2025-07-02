@@ -150,7 +150,7 @@ extension AreaJoinningFormFillingInteractor: AreaJoinningFormFillingPresentableL
                     
                 case .failure(let error):
                     VULogger.log(tag: .error, error)
-                    viewModel.filloutValidationLabel = error.localizedDescription
+                    viewModel.filloutValidationLabel = "\(error)"
             }
         }
     }

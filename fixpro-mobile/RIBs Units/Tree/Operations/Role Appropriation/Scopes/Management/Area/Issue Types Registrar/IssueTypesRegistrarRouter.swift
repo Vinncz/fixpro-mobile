@@ -83,4 +83,11 @@ extension IssueTypesRegistrarRouter: IssueTypesRegistrarRouting {
         viewController.nilHostingViewController()
     }
     
+    
+    func dismiss() {
+        Task { @MainActor in
+            viewController.uiviewController.parent?.dismiss(animated: true)
+        }
+    }
+    
 }

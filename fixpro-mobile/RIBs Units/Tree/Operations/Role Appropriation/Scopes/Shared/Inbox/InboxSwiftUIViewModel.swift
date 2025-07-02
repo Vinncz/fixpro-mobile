@@ -11,6 +11,18 @@ import Observation
     var notifications: [FPNotificationDigest] = []
     
     
+    var sortedNotifications: [FPNotificationDigest] {
+        notifications.sorted { lhs, rhs in
+            guard 
+                let lhsDate = lhs.sentOnDate,
+                let rhsDate = rhs.sentOnDate
+            else { return false }
+            
+            return lhsDate < rhsDate
+        }
+    }
+    
+    
     var didIntendToRefreshMailbox: (() async -> Void)?
     
     

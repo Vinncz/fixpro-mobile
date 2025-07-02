@@ -86,7 +86,8 @@ extension UpdateContributingRouter: UpdateContributingRouting {
     
     func dismiss() {
         Task { @MainActor in
-            viewController.uiviewController.dismiss(animated: true)
+            viewController.uiviewController.parent?.dismiss(animated: true)
+//            viewController.uiviewController.presentationController?.presentedViewController.dismiss(animated: true)
         }
     }
     

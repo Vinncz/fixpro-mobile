@@ -67,14 +67,14 @@ final class StatisticsAndReportsInteractor: PresentableInteractor<StatisticsAndR
     
     
     /// Bridge to the ``StatisticsAndReportsSwiftUIVIew``.
-    private var viewModel = StatisticsAndReportsSwiftUIViewModel()
+    private var viewModel: StatisticsAndReportsSwiftUIViewModel
     
     
     /// Constructs an instance of ``StatisticsAndReportsInteractor``.
     /// - Parameter component: The component of this RIB.
     init(component: StatisticsAndReportsComponent, presenter: StatisticsAndReportsPresentable) {
         self.component = component
-        
+        self.viewModel = StatisticsAndReportsSwiftUIViewModel(component: component, bundles: [])
         super.init(presenter: presenter)
         
         presenter.presentableListener = self

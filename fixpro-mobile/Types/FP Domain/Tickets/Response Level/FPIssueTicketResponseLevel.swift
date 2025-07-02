@@ -9,7 +9,7 @@ enum FPIssueTicketResponseLevel: String, CaseIterable, Codable, Hashable, Identi
     case select = "Select--"
     
     
-    case urgentEmergency = "Urgent, emergency"
+    case urgentEmergency = "Emergency"
     
     
     case urgent = "Urgent"
@@ -51,7 +51,7 @@ enum FPIssueTicketResponseLevel: String, CaseIterable, Codable, Hashable, Identi
     
     enum CodingKeys: String, CodingKey {
         case select = "Select--"
-        case urgentEmergency = "Urgent, emergency"
+        case urgentEmergency = "Emergency"
         case urgent = "Urgent"
         case normal = "Normal"
     }

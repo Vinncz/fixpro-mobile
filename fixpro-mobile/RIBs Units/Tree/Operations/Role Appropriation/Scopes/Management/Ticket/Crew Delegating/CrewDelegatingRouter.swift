@@ -86,7 +86,7 @@ extension CrewDelegatingRouter: CrewDelegatingRouting {
     
     func dismiss() {
         Task { @MainActor in
-            viewController.uiviewController.dismiss(animated: true)
+            viewController.uiviewController.parent?.dismiss(animated: true)
         }
     }
     

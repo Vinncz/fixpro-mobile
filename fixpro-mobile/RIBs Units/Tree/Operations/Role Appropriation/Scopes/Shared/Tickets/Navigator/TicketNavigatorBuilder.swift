@@ -7,6 +7,7 @@ import RIBs
 protocol TicketNavigatorDependency: Dependency {
     var authorizationContext: FPRoleContext { get }
     var networkingClient: FPNetworkingClient { get }
+    var identityService: FPSessionIdentityServicing { get }
 }
 
 
@@ -36,6 +37,11 @@ extension TicketNavigatorComponent: TicketListsDependency, TicketDetailDependenc
     
     var networkingClient: FPNetworkingClient {
         dependency.networkingClient
+    }
+    
+    
+    var identityService: FPSessionIdentityServicing {
+        dependency.identityService
     }
     
 }

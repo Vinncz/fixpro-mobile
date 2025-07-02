@@ -25,6 +25,7 @@ struct FPRoleContext {
     let environment: FPAppEnvironment
     
     
+    
     init(role: FPTokenRole, capabilities: Set<FPCapability>, specialties: Set<FPIssueType>, featureFlags: Set<FPFeatureFlag>, environment: FPAppEnvironment) {
         self.role = role
         self.capabilities = capabilities

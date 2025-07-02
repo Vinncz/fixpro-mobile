@@ -35,7 +35,8 @@ final class FPRemoteNotificationResponder: NSObject, FPRemoteNotificationRespond
            let alert = aps["alert"] as? [String: Any],
            let title = alert["title"] as? String,
            let body = alert["body"] as? String,
-           let backendId = payload["notification_id"] as? String
+           let backendId = payload["notification_id"] as? String,
+           let sentOn = payload["sent_on"] as? String
         {
             guard let actionableGenusString = payload["actionable_genus"] as? String,
                   let actionableSpeciesString = payload["actionable_species"] as? String,
@@ -50,6 +51,7 @@ final class FPRemoteNotificationResponder: NSObject, FPRemoteNotificationRespond
                 id: backendId,
                 title: title,
                 body: body,
+                sentOn: sentOn,
                 actionable: .init(genus: actionableGenus, 
                                   species: actionableSpecies, 
                                   destination: actionableSegueDestination)
@@ -151,8 +153,25 @@ struct FPNotificationDigest: Identifiable, Hashable {
     var body: String
     
     
+    /// When an object was made.
+    var sentOn: String
+    
+    
+    var sentOnDate: Date? {
+        try? Date(sentOn, strategy: .iso8601)
+    }
+    
+    
     /// Object that helps in deep-linking a notification to a screen.
     var actionable: FPRemoteNotificationActionable
+    
+    
+    enum CodingKeys: String, CodingKey {
+        case title
+        case body
+        case sentOn = "sent_on"
+        case actionable
+    }
     
 }
 

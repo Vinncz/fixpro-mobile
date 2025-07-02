@@ -27,14 +27,22 @@ struct AreaManagementSwiftUIView: View {
             }
             
             Section {
-                Picker("Join Policy", selection: Binding(get: { 
-                    viewModel.joinPolicy ?? .CLOSED
-                }, set: { newValue in
-                    viewModel.didUpdateJoinPolicy?(newValue)
-                })) {
-                    Text("Open").tag(FPAreaJoinPolicy.OPEN)
-                    Text("Approval-required").tag(FPAreaJoinPolicy.APPROVAL_NEEDED)
-                    Text("Closed").tag(FPAreaJoinPolicy.CLOSED)
+                if let joinPolicy = viewModel.joinPolicy {
+                    Picker("Join Policy", selection: Binding(get: { 
+                        joinPolicy
+                    }, set: { newValue in
+                        viewModel.didUpdateJoinPolicy?(newValue)
+                    })) {
+                        Text("Open").tag(FPAreaJoinPolicy.OPEN)
+                        Text("Approval-required").tag(FPAreaJoinPolicy.APPROVAL_NEEDED)
+                        Text("Closed").tag(FPAreaJoinPolicy.CLOSED)
+                    }
+                } else {
+                    Picker("Join Policy", selection: Binding(get: { 
+                        "Loading.."
+                    }, set: { _ in })) {
+                        Text("Loading..").tag("Loading..")
+                    }
                 }
                 
                 FPChevronRowView{
@@ -91,6 +99,9 @@ struct AreaManagementSwiftUIView: View {
             } footer: {
                 Text(LocalizedStringResource("Learn all the trends happening to your Area, by churning Tickets into actionable data."))
             }
+        }
+        .refreshable {
+            viewModel.didIntendToRefresh?()
         }
         .sheet(isPresented: $shouldShowAreaJoinCode) { 
             if let endpoint = URL(string: viewModel.areaJoinCodeEndpoint ?? "") {

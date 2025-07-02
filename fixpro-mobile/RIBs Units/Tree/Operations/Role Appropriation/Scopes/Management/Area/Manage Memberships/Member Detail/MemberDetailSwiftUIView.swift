@@ -33,8 +33,13 @@ struct MemberDetailSwiftUIView: View {
                     Text(pair.value)
                 }
             }
-            Section("Member Since") {
-                Text(viewModel.member.memberSince)
+            if viewModel.member.capabilities.count > 0 && !viewModel.member.capabilities.isEmpty {
+                Section("Capabilities") {
+                    Text(viewModel.member.capabilities.map{ "\($0.rawValue)" }.joined(separator: ", "))
+                }
+            }
+            Section("Membership Id") {
+                Text(viewModel.member.id)
             }
         }
         .alert(isPresented: $viewModel.didIntendToRemove) {

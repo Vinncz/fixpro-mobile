@@ -8,6 +8,7 @@ import RIBs
 protocol ManagementRoleScopingDependency: Dependency {
     var authorizationContext: FPRoleContext { get }
     var networkingClient: FPNetworkingClient { get }
+    var identityService: FPSessionIdentityServicing { get }
 }
 
 
@@ -31,7 +32,14 @@ final class ManagementRoleScopingComponent: Component<ManagementRoleScopingDepen
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension ManagementRoleScopingComponent: TicketNavigatorDependency, WorkCalendarDependency, AreaManagementNavigatorDependency, InboxNavigatorDependency, PreferencesDependency {}
+extension ManagementRoleScopingComponent: TicketNavigatorDependency, WorkCalendarDependency, AreaManagementNavigatorDependency, InboxNavigatorDependency, PreferencesDependency {
+    
+    
+    var identityService: FPSessionIdentityServicing {
+        dependency.identityService
+    }
+    
+}
 
 
 

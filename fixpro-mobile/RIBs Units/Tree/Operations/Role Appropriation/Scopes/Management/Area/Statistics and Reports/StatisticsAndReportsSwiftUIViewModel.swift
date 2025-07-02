@@ -8,7 +8,23 @@ import Observation
 @Observable class StatisticsAndReportsSwiftUIViewModel {
     
     
-    var bundles: [StatisticsAndReportsBundle] = []
+    var component: StatisticsAndReportsComponent
+    
+    
+    var bundles: [StatisticsAndReportsBundle]
+    
+    
+    init(component: StatisticsAndReportsComponent, bundles: [StatisticsAndReportsBundle]) {
+        self.component = component
+        self.bundles = bundles
+    }
+    
+    
+    func urlRequest (from url: URL) async -> URLRequest {
+        var req = URLRequest(url: url)
+        await req.setValue("Bearer \(component.identityService.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+        return req
+    }
     
     
     var didIntendToRefresh: (()async throws->Void)?

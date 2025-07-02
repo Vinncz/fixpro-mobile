@@ -26,7 +26,7 @@ struct FPTicketLog: Codable, Hashable, Identifiable {
     var attachments: [FPSupportiveDocument]
     
     
-    var actionable: FPRemoteNotificationActionable
+    var actionable: FPRemoteNotificationActionable?
     
     
     enum CodingKeys: String, CodingKey {

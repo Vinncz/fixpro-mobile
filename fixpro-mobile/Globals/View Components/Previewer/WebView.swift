@@ -1,4 +1,5 @@
 import Foundation
+import VinUtility
 import os
 import SwiftUI
 import WebKit
@@ -109,4 +110,77 @@ func classifyWebKitError ( _ error: Error ) -> WebViewErrorType {
     default:
         return .benign // god please forgive me for I have no idea what escaped the filter above.
     }
+}
+
+
+
+
+struct FPWebViewWithURLRequest : UIViewRepresentable {
+    
+    
+    let request: URLRequest
+    
+    
+    @Binding var previewFault: String?
+    
+    
+    var scrollEnabled: Bool
+    
+    
+    class Coordinator: NSObject, WKNavigationDelegate {
+        
+        
+        var parent: FPWebViewWithURLRequest
+        
+        
+        init ( _ parent: FPWebViewWithURLRequest ) {
+            self.parent = parent
+        }
+        
+        
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            handle(error: error)
+        }
+        
+        
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            handle(error: error)
+        }
+        
+        
+        private func handle(error: Error) {
+            switch classifyWebKitError(error) {
+                case .benign:
+                    VULogger.log(tag: .error, "\(error.localizedDescription)")
+                case .critical:
+                    Task { @MainActor in
+                        self.parent.previewFault = error.localizedDescription
+                    }
+            }
+        }
+        
+    }
+    
+    
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView()
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
+        webView.scrollView.isScrollEnabled = scrollEnabled
+        webView.scrollView.bounces = scrollEnabled
+        webView.navigationDelegate = context.coordinator
+        
+//        webView.loadFileURL(contentAddressToPreview, allowingReadAccessTo: contentAddressToPreview.deletingLastPathComponent())
+        webView.load(request)
+        print(urlRequest: request)
+        return webView
+    }
+    
+    
+    func updateUIView ( _ webView: WKWebView, context: Context ) {}
+    
+    
+    func makeCoordinator () -> Coordinator { Coordinator(self) }
+    
 }

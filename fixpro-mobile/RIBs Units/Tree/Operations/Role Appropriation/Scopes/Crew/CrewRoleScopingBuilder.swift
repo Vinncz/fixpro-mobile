@@ -10,6 +10,7 @@ protocol CrewRoleScopingDependency: Dependency {
     var authorizationContext: FPRoleContext { get }
     var locationBeacon: VULocationBeacon { get }
     var networkingClient: FPNetworkingClient { get }
+    var identityService: FPSessionIdentityServicing { get }
 }
 
 
@@ -38,7 +39,14 @@ final class CrewRoleScopingComponent: Component<CrewRoleScopingDependency> {
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension CrewRoleScopingComponent: TicketNavigatorDependency, WorkCalendarDependency, NewTicketDependency, InboxNavigatorDependency, PreferencesDependency {}
+extension CrewRoleScopingComponent: TicketNavigatorDependency, WorkCalendarDependency, NewTicketDependency, InboxNavigatorDependency, PreferencesDependency {
+    
+    
+    var identityService: FPSessionIdentityServicing {
+        dependency.identityService
+    }
+    
+}
 
 
 

@@ -127,9 +127,9 @@ extension TicketListsInteractor {
     
     func fetchTicketList() async -> Result<[FPLightweightIssueTicket], FPError> {
         do {
-            let attemptedRequest = try await component.networkingClient.gateway.getTickets(.init(headers: .init(accept: [.init(contentType: .json)])))
+            let request = try await component.networkingClient.gateway.getTickets(.init(headers: .init(accept: [.init(contentType: .json)])))
             
-            switch attemptedRequest {
+            switch request {
                 case .ok(let response): 
                     let encoder = JSONEncoder()
                     let decoder = JSONDecoder()   

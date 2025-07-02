@@ -7,6 +7,9 @@ import RIBs
 protocol WorkEvaluatingDependency: Dependency {
     
     
+    var authorizationContext: FPRoleContext { get }
+    
+    
     var networkingClient: FPNetworkingClient { get }
     
 }
@@ -16,6 +19,11 @@ protocol WorkEvaluatingDependency: Dependency {
 /// Concrete implementation of the ``WorkEvaluatingDependency`` protocol. 
 /// Provides dependencies needed by all RIBs that will ever attach themselves to ``WorkEvaluatingRouter``.
 final class WorkEvaluatingComponent: Component<WorkEvaluatingDependency> {
+    
+    
+    var authorizationContext: FPRoleContext {
+        dependency.authorizationContext
+    }
     
     
     var networkingClient: FPNetworkingClient {

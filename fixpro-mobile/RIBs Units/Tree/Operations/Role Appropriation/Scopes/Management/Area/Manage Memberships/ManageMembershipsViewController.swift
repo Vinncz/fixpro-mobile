@@ -40,6 +40,7 @@ final class ManageMembershipsViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
         title = "Manage Memberships"
         hidesBottomBarWhenPushed = true
+        self.navigationController?.setToolbarHidden(false, animated: true)
     }
     
     

@@ -2,15 +2,23 @@ import Foundation
 
 
 
-enum FPCapability: String, Codable, Equatable, Hashable, Identifiable, Sendable {
+enum FPCapability: String, CaseIterable, Codable, Equatable, Hashable, Identifiable, Sendable {
     
     
-    case InvitePeopleToTicket
+    case InvitePeopleToTicket = "InvitePeopleToTicket"
     
     
-    case IssueSupervisorApproval
+    case IssueSupervisorApproval = "IssueSupervisorApproval"
     
     
     var id: Self { self }
+    
+    
+    var displayName: String {
+        switch self {
+            case .InvitePeopleToTicket: return "Invite People to Ticket"
+            case .IssueSupervisorApproval: return "Issue Supervisor Approval"
+        }
+    }
     
 }

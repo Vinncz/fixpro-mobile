@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import VinUtility
 
 
 
@@ -17,7 +18,11 @@ import Observation
     var shouldShowFailureAlert: Bool = false
     
     
-    var didIntendToAddIssueTypes: Bool = false
+    var didIntendToAddIssueTypes: Bool = false {
+        didSet {
+            VULogger.log(tag: .debug, didIntendToAddIssueTypes)
+        }
+    }
     
     
     var didMakeNewIssueType: ((String, String)->Void)?

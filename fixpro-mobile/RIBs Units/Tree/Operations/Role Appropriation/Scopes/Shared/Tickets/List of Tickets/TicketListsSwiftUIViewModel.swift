@@ -40,7 +40,7 @@ extension TicketListsSwiftUIViewModel {
     
     var activeTickets: [FPLightweightIssueTicket] {
         tickets.filter { ticket in
-            [.open, .inAssessment, .onProgress, .workEvaluation].contains(ticket.status)
+            [.open, .inAssessment, .onProgress, .workEvaluation, .ownerEvaluation, .qualityControl].contains(ticket.status)
         }
     }
     
@@ -87,7 +87,7 @@ extension TicketListsSwiftUIViewModel {
     
     var ticketsToEvaluate: [FPLightweightIssueTicket] {
         tickets.filter { ticket in
-            ticket.status == .workEvaluation
+            [.workEvaluation, .qualityControl, .ownerEvaluation].contains(ticket.status)
         }
     }
     

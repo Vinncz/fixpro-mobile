@@ -116,8 +116,10 @@ final class UpdateContributingInteractor: PresentableInteractor<UpdateContributi
             Task { [weak self] in
                 guard let self else { return }
                 if try await self.submitMadeUpdate(news: news, supportiveDocuments: supportiveDocuments, updateType: updateType) {
-                    self.router?.dismiss()
-                    self.listener?.dismissUpdateContributing(didContribute: true)
+                    Task { @MainActor in
+                        self.router?.dismiss()
+                        self.listener?.dismissUpdateContributing(didContribute: true)
+                    }
                 }
             }
         }
@@ -138,6 +140,28 @@ extension UpdateContributingInteractor {
             resource_size: Double(inferFileSize(from: file) ?? 0), 
             resource_content: fileToBase64(on: file)
         )}
+        
+        if updateType == .workEvaluationRequest {
+            async let request = component.networkingClient.gateway.postTicketEvaluationRequest(.init(
+                path: .init(ticket_id: ticketId),
+                headers: .init(accept: [.init(contentType: .json)]),
+                body: .json(.init(data: .init(
+                    remark: news,
+                    supportive_documents: attachments,
+                )))
+            ))
+            
+            switch try await request {
+                case .ok:
+                    return true
+                    
+                case .undocumented(statusCode: let code, let payload):
+                    VULogger.log(tag: .network, code, payload)
+            }
+            
+            return false
+            
+        }
         
         async let request = component.networkingClient.gateway.postTicketLog(.init(
             path: .init(ticket_id: ticketId),

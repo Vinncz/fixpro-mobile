@@ -99,17 +99,20 @@ extension InboxNavigatorInteractor {
     func didTap(notification: FPNotificationDigest) {
         if case .SEGUE = notification.actionable.genus,
            case .TICKET = notification.actionable.species,
-           let encodedTicketPayload = notification.actionable.destination
+           let ticketId = notification.actionable.destination
         {
-            do {
-                let ticket = try decode(encodedTicketPayload.data(using: .utf8)!, to: VUExtrasPreservingDecodable<FPTicketDetail>.self).get()
-                let t = FPTicketDetail(id: ticket.model.id, issueTypes: ticket.model.issueTypes, responseLevel: ticket.model.responseLevel, raisedOn: ticket.model.raisedOn, status: ticket.model.status, statedIssue: ticket.model.statedIssue, location: ticket.model.location, supportiveDocuments: ticket.model.supportiveDocuments, issuer: ticket.model.issuer, logs: ticket.model.logs, handlers: ticket.model.handlers)
-                router?.deeplinkTo(ticket: t)
+            Task {
+                do {
+                    let ticket: FPTicketDetail = try await fetchTicketDetail(forId: ticketId).get()
+                    Task { @MainActor in
+                        router?.deeplinkTo(ticket: ticket)
+                    }
                 
-            } catch {
-                // Nothing bad will happen when there's a decode failure.
-                // Simply log them.
-                VULogger.log(tag: .error, error)
+                } catch {
+                    // Nothing bad will happen when there's a decode failure.
+                    // Simply log them.
+                    VULogger.log(tag: .error, error)
+                }
             }
             
         }
@@ -144,6 +147,40 @@ extension InboxNavigatorInteractor {
     
     func navigateBackToTicketDetail() {
         router?.navigateBackToTicketDetail()
+    }
+    
+}
+
+
+
+extension InboxNavigatorInteractor {
+    
+    
+    func fetchTicketDetail(forId ticketId: String) async -> Result<FPTicketDetail, FPError> {
+        do {
+            let attemptedRequest = try await component.networkingClient.gateway.getTicket(.init(
+                path: .init(ticket_id: ticketId),
+                headers: .init(accept: [.init(contentType: .json)])
+            ))
+            
+            switch attemptedRequest {
+                case .ok(let response):
+                    let encoder = JSONEncoder()
+                    let encodedData = try encoder.encode(response.body.json.data)
+                    let decodedData = try decode(encodedData, to: FPTicketDetail.self).get()
+                    
+                    return .success(decodedData)
+                    
+                case .undocumented(statusCode: let code, let payload):
+                    VULogger.log(tag: .error, "UNDOCUMENTED FOR TICKET DETAIL \(code) -- \(payload)")
+                    return .failure(.UNEXPECTED_RESPONSE)
+            }
+            
+        } catch {
+            VULogger.log(tag: .network, "UNREACHABLE \(error)")
+            return .failure(.UNREACHABLE)
+            
+        }
     }
     
 }

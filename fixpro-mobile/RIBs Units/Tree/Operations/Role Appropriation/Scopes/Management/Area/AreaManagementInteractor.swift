@@ -103,7 +103,9 @@ final class AreaManagementInteractor: PresentableInteractor<AreaManagementPresen
     
     /// Configures the view model.
     private func configureViewModel() {
-        viewModel.joinPolicy = .OPEN
+        Task { [weak self] in
+            self?.fetchAreaInformation()
+        }
         viewModel.didUpdateJoinPolicy = { [weak self] newPolicy in
             self?.viewModel.joinPolicy = newPolicy
             self?.communicate(newJoinPolicy: newPolicy)
@@ -123,6 +125,9 @@ final class AreaManagementInteractor: PresentableInteractor<AreaManagementPresen
         viewModel.areaJoinCodeEndpoint = { [weak self] in
             (self?.component.networkingClient.endpoint.absoluteString  ?? "") + "/area/join"
         }()
+        viewModel.didIntendToRefresh = { [weak self] in 
+            self?.fetchAreaInformation()
+        }
         
         presenter.bind(viewModel: self.viewModel)
     }
@@ -148,7 +153,7 @@ extension AreaManagementInteractor {
                                     viewModel.areaName = name
                                 }
                                 if let jp = jsonBody.data?.join_policy {
-                                    viewModel.joinPolicy = .init(rawValue: "\(jp)")
+                                    viewModel.joinPolicy = .init(rawValue: "\(jp.value ?? "")")
                                 }
                         }
                     case .undocumented(statusCode: let code, let payload):

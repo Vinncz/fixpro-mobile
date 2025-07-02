@@ -70,6 +70,11 @@ extension RoleAppropriationComponent: MemberRoleScopingDependency, CrewRoleScopi
         authorizationContextProxy.backing!
     }
     
+    
+    var identityService: FPSessionIdentityServicing {
+        dependency.sessionIdentityService
+    }
+    
 }
 
 

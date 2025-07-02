@@ -7,6 +7,7 @@ import RIBs
 protocol InboxNavigatorDependency: Dependency {
     var authorizationContext: FPRoleContext { get }
     var networkingClient: FPNetworkingClient { get }
+    var identityService: FPSessionIdentityServicing { get }
 }
 
 
@@ -36,7 +37,14 @@ final class InboxNavigatorComponent: Component<InboxNavigatorDependency> {
 
 
 /// Conformance to this RIB's children's `Dependency` protocols.
-extension InboxNavigatorComponent: InboxDependency, TicketDetailDependency, TicketLogDependency {}
+extension InboxNavigatorComponent: InboxDependency, TicketDetailDependency, TicketLogDependency {
+    
+    
+    var identityService: FPSessionIdentityServicing {
+        dependency.identityService
+    }
+    
+}
 
 
 

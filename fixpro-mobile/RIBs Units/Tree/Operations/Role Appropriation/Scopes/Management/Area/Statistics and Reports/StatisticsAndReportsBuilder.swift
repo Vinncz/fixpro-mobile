@@ -9,6 +9,9 @@ protocol StatisticsAndReportsDependency: Dependency {
     
     var networkingClient: FPNetworkingClient { get }
     
+    
+    var identityService: FPSessionIdentityServicing { get }
+    
 }
 
 
@@ -19,6 +22,11 @@ final class StatisticsAndReportsComponent: Component<StatisticsAndReportsDepende
     
     
     var networkingClient: FPNetworkingClient { dependency.networkingClient }
+    
+    
+    var identityService: FPSessionIdentityServicing {
+        dependency.identityService
+    }
     
 }
 

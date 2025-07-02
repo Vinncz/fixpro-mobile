@@ -159,7 +159,7 @@ extension OnboardingSwiftUIView {
         } label: {
             Text("Join an Area")
                 .padding(.vertical, VUViewSize.small.val)
-                .padding(.horizontal, VUViewSize.big.val * 6)
+                .padding(.horizontal, VUViewSize.big.val * 5)
         }
             .padding(.top, VUViewSize.small.val)
             .overlay(Rectangle().fill(.clear))

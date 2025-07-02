@@ -114,12 +114,20 @@ final class ManageMembershipsInteractor: PresentableInteractor<ManageMemberships
             self?.listener?.navigateTo(member: member)
         }
         viewModel.didRefresh = { [weak self] in
-            try? await self?.fetchApplicantsAndMembers()
+            do {
+                try await self?.fetchApplicantsAndMembers()
+            } catch {
+                VULogger.log(tag: .error, error)
+            }
         }
         presenter.bind(viewModel: self.viewModel)
         
         Task { [weak self] in 
-            try? await self?.fetchApplicantsAndMembers()
+            do {
+                try await self?.fetchApplicantsAndMembers()
+            } catch {
+                VULogger.log(tag: .error, error)
+            }
         }
     }
     
@@ -142,43 +150,58 @@ final class ManageMembershipsInteractor: PresentableInteractor<ManageMemberships
         var members: [FPPerson] = []
         
         switch try await applicantsRequest {
-            case .ok(let response): switch response.body {
-                case .json(let jsonBody):
-                    jsonBody.data?.forEach { applicant in 
-                        guard let applicantId = applicant.id, let submittedOn = applicant.submitted_on else { return }
+            case .ok(let response): 
+                if case let .json(body) = response.body {
+                    body.data?.forEach { applicant in 
+                        guard let applicantId = applicant.id, let submittedOn = applicant.submitted_on else { 
+                            return 
+                        }
                         
                         applicants.append(.init(
                             id: applicantId,
                             formAnswer: applicant.form_answer?.map { answer in
-                                return FPFormAnswer(fieldLabel: answer.field_label ?? "", 
+                                FPFormAnswer(fieldLabel: answer.field_label ?? "", 
                                                     fieldValue: answer.field_value ?? "")
                             } ?? [],
                             submittedOn: submittedOn
                         ))
                     }
                     
-                    viewModel.applicants = applicants
-            }
+                    VULogger.log("Dapet applicants")
+                    
+                } else  {
+                    VULogger.log("Meledak")
+                    
+                }
+                
             case .undocumented(statusCode: let code, let payload):
                 VULogger.log(tag: .network, code, payload)
         }
         
         switch try await membersRequest {
-            case .ok(let response): switch response.body {
-                case .json(let jsonBody):
-                    jsonBody.data?.forEach { member in 
+            case .ok(let response):
+                if case let .json(body) = response.body {
+                    body.data?.forEach { member in 
                         guard 
                             let memberId = member.id,
                             let name = member.name,
                             let encodedRole = member.role, let role: FPTokenRole = .init(rawValue: encodedRole.value as? String ?? ""),
                             let encodedSpecialties = member.specialties,
+                            let encodedCapabilities = member.capabilities,
                             let memberSince = member.member_since
-                        else { return }
+                        else { 
+                            VULogger.log("Kena cegat")
+                            return 
+                        }
                         
                         let specialties: [FPIssueType] = encodedSpecialties.map { specialty in
                             .init(id: specialty.id ?? UUID().uuidString, 
                                   name: specialty.name ?? "Unnamed specialty", 
                                   serviceLevelAgreementDurationHour: specialty.service_level_agreement_duration_hour ?? "-1")
+                        }
+                        
+                        let capabilities = encodedCapabilities.compactMap {
+                            FPCapability(rawValue: "\($0.value ?? "")")
                         }
                         
                         members.append(.init(
@@ -187,16 +210,22 @@ final class ManageMembershipsInteractor: PresentableInteractor<ManageMemberships
                             role: role, 
                             title: member.title,
                             specialties: specialties, 
-                            capabilities: [],
+                            capabilities: capabilities,
                             memberSince: memberSince
                         ))
-                        
-                        viewModel.members = members
                     }
-            }
+                    
+                } else {
+                    VULogger.log(tag: .error, "Meledak")
+                    
+                }
+                
             case .undocumented(statusCode: let code, let payload):
                 VULogger.log(tag: .network, code, payload)
         }
+        
+        viewModel.applicants = applicants
+        viewModel.members = members
     }
     
 }

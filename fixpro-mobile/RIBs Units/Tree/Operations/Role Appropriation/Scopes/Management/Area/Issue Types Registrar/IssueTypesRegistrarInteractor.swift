@@ -17,6 +17,9 @@ protocol IssueTypesRegistrarRouting: ViewableRouting {
     /// Removes the hosting controller (swiftui embed) from the view hierarchy and deallocates it.
     func detachSwiftUI()
     
+    
+    func dismiss()
+    
 }
 
 
@@ -100,13 +103,21 @@ final class IssueTypesRegistrarInteractor: PresentableInteractor<IssueTypesRegis
     /// Configures the view model.
     private func configureViewModel() {
         viewModel.didRefresh = { [weak self] in 
-            self?.viewModel.issueTypes = try await self?.getIssueTypes() ?? []
+            do {
+                self?.viewModel.issueTypes = try await self?.getIssueTypes() ?? []
+            } catch {
+                VULogger.log(tag: .error, error)
+            }
         }
         viewModel.didMakeNewIssueType = { [weak self] (name: String, slaDuration: String) in
             guard let self else { return }
             Task { 
-                if try await self.makeIssueType(name: name, slaDuration: slaDuration) {
-                    self.viewModel.shouldShowSuccessAlert = true
+                do {
+                    if try await self.makeIssueType(name: name, slaDuration: slaDuration) {
+                        self.viewModel.shouldShowSuccessAlert = true
+                    } 
+                } catch {
+                    VULogger.log(tag: .error, error)
                 }
             }
         }
@@ -114,17 +125,25 @@ final class IssueTypesRegistrarInteractor: PresentableInteractor<IssueTypesRegis
             guard let self else { return }
             
             Task {
-                if try await self.removeIssueType(issueType: issueType) {
-                    self.viewModel.issueTypes.removeAll { $0.id == issueType.id }
-                } else {
-                    self.viewModel.shouldShowFailureAlert = true
+                do {
+                    if try await self.removeIssueType(issueType: issueType) {
+                        self.viewModel.issueTypes.removeAll { $0.id == issueType.id }
+                    } else {
+                        self.viewModel.shouldShowFailureAlert = true
+                    } 
+                } catch {
+                    VULogger.log(tag: .error, error)
                 }
             }
         }
         presenter.bind(viewModel: self.viewModel)
         
         Task { [weak self] in
-            self?.viewModel.issueTypes = try await self?.getIssueTypes() ?? []
+            do {
+                self?.viewModel.issueTypes = try await self?.getIssueTypes() ?? []
+            } catch {
+                VULogger.log(tag: .error, error)
+            }
         }
     }
     
@@ -147,18 +166,20 @@ extension IssueTypesRegistrarInteractor {
         switch request {
             case .created(let response):
                 if case let .json(jsonBody) = response.body {
-                    var types: [FPIssueType] = []
+                    guard 
+                        let data = jsonBody.data, 
+                        let id = data.id, 
+                        let name = data.name, 
+                        let duration = data.service_level_agreement_duration_hour 
+                    else { return false }
                     
-                    jsonBody.data?.forEach { sla in 
-                        guard let id = sla.id, let name = sla.name, let duration = sla.service_level_agreement_duration_hour else { return }
-                        
-                        types.append(.init(id: id, name: name, serviceLevelAgreementDurationHour: duration))
-                    }
+                    let newIssueType = FPIssueType(id: id, name: name, serviceLevelAgreementDurationHour: duration)
+                    viewModel.issueTypes.append(newIssueType)
                     
-                    viewModel.issueTypes = types
                     viewModel.didIntendToAddIssueTypes = false
                     return true
                 }
+                
             case .undocumented(statusCode: let code, let payload):
                 VULogger.log(tag: .network, code, payload)
         }
@@ -199,7 +220,18 @@ extension IssueTypesRegistrarInteractor {
         
         switch request {
             case .ok(let response):
-                return true
+                if case let .json(jsonBody) = response.body {
+                    guard 
+                        let data = jsonBody.data, 
+                        let id = data.id, 
+                        let name = data.name, 
+                        let duration = data.service_level_agreement_duration_hour 
+                    else { return false }
+                    
+                    viewModel.issueTypes.removeAll { $0.id == id }
+                    
+                    return true
+                }
             case .undocumented(statusCode: let code, let payload):
                 VULogger.log(tag: .network, code, payload)
         }

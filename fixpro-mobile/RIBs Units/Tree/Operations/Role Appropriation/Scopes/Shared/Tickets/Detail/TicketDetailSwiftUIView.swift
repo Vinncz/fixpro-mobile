@@ -21,6 +21,9 @@ struct TicketDetailSwiftUIView: View {
     @State var previewFault: String?
     
     
+    @State var previewURLRequest: URLRequest?
+    
+    
     var body: some View {
         Form {
             SummaryView(viewModel: viewModel)
@@ -29,6 +32,7 @@ struct TicketDetailSwiftUIView: View {
             SupportiveDocumentListView(viewModel: viewModel)
             LogListView(viewModel: viewModel)
             HandlerListView(viewModel: viewModel)
+            OwnerView(viewModel: viewModel)
         }
         .refreshable { try? await viewModel.didIntedToRefresh?() }
         .alert("Are you sure?", isPresented: $viewModel.shouldShowCancellationAlert, actions: { 
@@ -43,11 +47,9 @@ struct TicketDetailSwiftUIView: View {
         })
         .scrollDismissesKeyboard(.immediately)
         .sheet(isPresented: $viewModel.shouldShowPrintView) {
-            if let ticket = viewModel.ticket, 
-               let previewURL = URL(string: "\(viewModel.baseURL?.absoluteString ?? "")/ticket/\(ticket.id)/print-view") 
-            {
+            if let previewURLRequest {
                 NavigationView {
-                    FPWebView(contentAddressToPreview: previewURL, previewFault: $previewFault, scrollEnabled: true)
+                    FPWebViewWithURLRequest(request: previewURLRequest, previewFault: $previewFault, scrollEnabled: true)
                         .toolbar {
                             ToolbarItem(placement: .topBarLeading) { 
                                 Button("Download") {
@@ -64,13 +66,32 @@ struct TicketDetailSwiftUIView: View {
                         .navigationBarTitleDisplayMode(.inline)
                 }
             } else {
-                ContentUnavailableView("Print View Is Unavailable", 
-                                       systemImage: "xmark", 
-                                       description: Text(previewFault ?? "Unknown error."))
+                NavigationView {
+                    ContentUnavailableView("Print View Is Unavailable", 
+                                           systemImage: "xmark", 
+                                           description: Text(previewFault ?? "Unknown error."))
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) { 
+                            Button("Refresh") {
+                                Task {
+                                    self.previewURLRequest = await self.viewModel.printViewURLRequest()
+                                }
+                            }
+                        }
+                        ToolbarItem(placement: .confirmationAction) { 
+                            Button("Done") {
+                                viewModel.shouldShowPrintView = false
+                            }
+                        }
+                    }
+                }
             }
         }
         .sheet(isPresented: $viewModel.shouldShowRejectionAlert) {
             TicketRejectionView(viewModel: viewModel)
+        }
+        .task {
+            previewURLRequest = await viewModel.printViewURLRequest()
         }
     }
     
@@ -197,6 +218,18 @@ fileprivate struct ReportedLocationView: Identifiable, View {
                 } label: {
                     Label("Open on maps", systemImage: "map")
                 }
+                
+            } else {
+                Text("XXX XXXXXXX XXXX XX XXXX")
+                    .redacted(reason: [.placeholder])
+                Button {} label: {
+                    Label("Open on maps", systemImage: "map")
+                        .foregroundStyle(.secondary)
+                }
+                .disabled(true)
+            }
+        } header: {
+            Text("Reported Location")
                 .sheet(item: $mapLocation) { location in
                     NavigationView {
                         LocationMapView(latitude: location.latitude, longitude: location.longitude, label: "")
@@ -216,17 +249,6 @@ fileprivate struct ReportedLocationView: Identifiable, View {
                     .interactiveDismissDisabled()
                     .presentationDetents([.medium])
                 }
-            } else {
-                Text("XXX XXXXXXX XXXX XX XXXX")
-                    .redacted(reason: [.placeholder])
-                Button {} label: {
-                    Label("Open on maps", systemImage: "map")
-                        .foregroundStyle(.secondary)
-                }
-                .disabled(true)
-            }
-        } header: {
-            Text("Reported Location")
         }
     }
     
@@ -260,27 +282,6 @@ fileprivate struct SupportiveDocumentListView: Identifiable, View {
                                 .font(.callout)
                         }
                     }
-                    .sheet(item: $previewedSupportiveDocument) { document in
-                        NavigationView {
-                            FPWebView(contentAddressToPreview: document.hostedOn, previewFault: .constant(""), scrollEnabled: true)
-                                .toolbar {
-                                    ToolbarItem(placement: .confirmationAction) { 
-                                        Button("Done") {
-                                            previewedSupportiveDocument = nil
-                                        }
-                                    }
-                                    ToolbarItem(placement: .topBarLeading) { 
-                                        Button("Copy link") {
-                                            VUCopyToClipboard(document.hostedOn)
-                                        }
-                                    }
-                                }
-                                .navigationTitle(document.filename)
-                                .navigationBarTitleDisplayMode(.inline)
-                        }
-                        .interactiveDismissDisabled()
-                        .presentationDetents([.medium, .large])
-                    }
                 }
             } else {
                 VStack(alignment: .leading) {
@@ -293,6 +294,27 @@ fileprivate struct SupportiveDocumentListView: Identifiable, View {
             }
         } header: {
             Text("Supportive Documents")
+                .sheet(item: $previewedSupportiveDocument) { document in
+                    NavigationView {
+                        FPWebView(contentAddressToPreview: document.hostedOn, previewFault: .constant(""), scrollEnabled: true)
+                            .toolbar {
+                                ToolbarItem(placement: .confirmationAction) { 
+                                    Button("Done") {
+                                        previewedSupportiveDocument = nil
+                                    }
+                                }
+                                ToolbarItem(placement: .topBarLeading) { 
+                                    Button("Copy link") {
+                                        VUCopyToClipboard(document.hostedOn)
+                                    }
+                                }
+                            }
+                            .navigationTitle(document.filename)
+                            .navigationBarTitleDisplayMode(.inline)
+                    }
+                    .interactiveDismissDisabled()
+                    .presentationDetents([.medium, .large])
+                }
         }
     }
     
@@ -309,11 +331,19 @@ fileprivate struct LogListView: Identifiable, View {
     @Bindable var viewModel: TicketDetailSwiftUIViewModel
     
     
+    func stringToDate(_ inputString: String) -> Date? {
+        try? Date(inputString, strategy: .iso8601)
+    }
+    
+    
     var body: some View {
         Section {
             if let ticket = viewModel.ticket {
-                ForEach(ticket.logs, id: \.self) { log in
-                    if case .INERT = log.actionable.genus, case .INERT = log.actionable.species {
+                ForEach(
+                    ticket.logs.sorted(by: { 
+                        (stringToDate($0.recordedOn) ?? .distantPast) < (stringToDate($1.recordedOn) ?? .distantPast) 
+                    }), id: \.self) { log in
+                    if let actionable = log.actionable, case .INERT = actionable.genus, case .INERT = actionable.species {
                         VStack(alignment: .leading) {
                             Text(log.news)
                                 .lineLimit(1)
@@ -385,26 +415,131 @@ fileprivate struct HandlerListView: Identifiable, View {
                     return mod
                 }
                 
-                ForEach(handlers, id: \.self) { handler in
-                    FPChevronRowView {
-                        previewedHandler = handler
-                    } children: {
-                        VStack(alignment: .leading) {
-                            Text(handler.name)
-                            Text(handler.title ?? "")
+                if handlers.count > 0 {
+                    ForEach(handlers, id: \.self) { handler in
+                        FPChevronRowView {
+                            previewedHandler = handler
+                        } children: {
+                            VStack(alignment: .leading) {
+                                Text(handler.name)
+                                if let title = handler.title {
+                                    Text(title)
+                                        .font(.callout)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .multilineTextAlignment(.leading)
+                        }
+                    }
+                    
+                } else {
+                    ContentUnavailableView("No Handlers Assigned Yet", systemImage: "person.2.slash", description: Text("When somebody has been assigned to work on this ticket, they'll show up here."))
+                        .scaleEffect(0.8)
+                }
+                
+            } else {
+                VStack(alignment: .leading) {
+                    Text("XXX XXXXXX")
+                        .redacted(reason: .placeholder)
+                    Text("No title")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+                .multilineTextAlignment(.leading)
+            }
+        } header: {
+            Text("Assigned Handlers")
+        } footer: {
+            Text(LocalizedStringResource("Tap on their name to access their contact information."))
+                .sheet(item: $previewedHandler) { handler in
+                    NavigationView {
+                        Form {
+                            Section("Name") {
+                                Text(handler.name)
+                            }
+                            Section("Role") {
+                                Text(handler.role.rawValue)
+                            }
+                            if let title = handler.title {
+                                Section("Title") {
+                                    Text(title)
+                                }
+                            }
+                            Section("Specialties") {
+                                Text(handler.specialtiesName)
+                            }
+                            ForEach(handler.extras.map({ ($0.key, $0.value) }).map({ Wrapper(key: $0, value: $1) })) { info in
+                                Section(info.key) {
+                                    HStack {
+                                        Text(info.value)
+                                        Spacer()
+                                        Button("Copy") {
+                                            VUCopyToClipboard(info.value)
+                                        }
+                                    }
+                                }
+                            }
+                            Section("Membership Id") {
+                                Text(handler.id)
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .navigationTitle("Contact information")
+                        .navigationBarTitleDisplayMode(.inline)
+                    }
+                    .presentationDetents([.medium, .large])
+                }
+        }
+    }
+    
+    
+    var id = UUID()
+    
+}
+
+
+
+fileprivate struct OwnerView: Identifiable, View {
+    
+    
+    @Bindable var viewModel: TicketDetailSwiftUIViewModel
+    
+    
+    @State var previewedHandler: FPPerson?
+    
+    
+    var body: some View {
+        if let ticket = viewModel.ticket {
+            Section {
+                FPChevronRowView {
+                    previewedHandler = ticket.issuer.model
+                } children: {
+                    VStack(alignment: .leading) {
+                        Text(ticket.issuer.model.name)
+                        if let title = ticket.issuer.model.title {
+                            Text(title)
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                         }
-                        .multilineTextAlignment(.leading)
                     }
+                    .multilineTextAlignment(.leading)
+                }
+            } header: {
+                Text("Ticket owner")
                     .sheet(item: $previewedHandler) { handler in
                         NavigationView {
                             Form {
                                 Section("Name") {
                                     Text(handler.name)
                                 }
-                                Section("Title") {
-                                    Text(handler.title ?? "")
+                                Section("Role") {
+                                    Text(handler.role.rawValue)
+                                }
+                                if let title = handler.title {
+                                    Section("Title") {
+                                        Text(title)
+                                    }
                                 }
                                 Section("Specialties") {
                                     Text(handler.specialtiesName)
@@ -420,27 +555,18 @@ fileprivate struct HandlerListView: Identifiable, View {
                                         }
                                     }
                                 }
+                                Section("Membership Id") {
+                                    Text(handler.id)
+                                        .font(.callout)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                             .navigationTitle("Contact information")
                             .navigationBarTitleDisplayMode(.inline)
                         }
                         .presentationDetents([.medium, .large])
                     }
-                }
-            } else {
-                VStack(alignment: .leading) {
-                    Text("XXX XXXXXX")
-                        .redacted(reason: .placeholder)
-                    Text("No title")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-                .multilineTextAlignment(.leading)
             }
-        } header: {
-            Text("Assigned Handlers")
-        } footer: {
-            Text(LocalizedStringResource("Tap on their name to access their contact information."))
         }
     }
     
@@ -530,15 +656,14 @@ fileprivate struct TicketRejectionView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) { 
-                    Button("Reject") {
+                    Button("Reject") { 
                         Task {
                             try await viewModel.didRejectTicket?(rejectionReason, supportiveDocuments)
                             viewModel.shouldShowRejectionAlert = false
                         }
                     }
                     .disabled(
-                        !(!rejectionReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        && !supportiveDocuments.isEmpty)
+                        !(!rejectionReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     )
                 }
             }
@@ -553,9 +678,9 @@ fileprivate struct TicketRejectionView: View {
 
 
 
-#Preview {
-    @Previewable var viewModel = TicketDetailSwiftUIViewModel(role: .member)
-    NavigationStack {
-        TicketDetailSwiftUIView(viewModel: viewModel)
-    }
-}
+//#Preview {
+//    @Previewable var viewModel = TicketDetailSwiftUIViewModel(role: .member)
+//    NavigationStack {
+//        TicketDetailSwiftUIView(viewModel: viewModel)
+//    }
+//}

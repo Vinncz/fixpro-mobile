@@ -111,7 +111,7 @@ final class NewTicketInteractor: PresentableInteractor<NewTicketPresentable>, Ne
                         VULogger.log(tag: .error, code, payload)
                 }
             } catch {
-                
+                VULogger.log(tag: .error, error)
             }
         }
         

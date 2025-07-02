@@ -106,13 +106,12 @@ final class ApplicantDetailInteractor: PresentableInteractor<ApplicantDetailPres
     
     /// Configures the view model.
     private func configureViewModel() {
-        viewModel.didApprove = { [weak self] (role: FPTokenRole, title: String, specialties: [FPIssueType]) in
+        viewModel.didApprove = { [weak self] (role: FPTokenRole, title: String, specialties: [FPIssueType], capabilities: [FPCapability]) in
             guard let self else { return }
             
-            viewModel.didIntendToApprove = false
-            
             Task { 
-                if try await self.approveApplicant(role: role, title: title, specialties: specialties) {
+                if try await self.approveApplicant(role: role, title: title, specialties: specialties, capabilities: capabilities) {
+                    self.viewModel.didIntendToApprove = false
                     Task { @MainActor in
                         self.listener?.didApprove(applicant: self.applicant)
                     }
@@ -144,15 +143,16 @@ final class ApplicantDetailInteractor: PresentableInteractor<ApplicantDetailPres
 extension ApplicantDetailInteractor {
     
     
-    func approveApplicant(role: FPTokenRole, title: String, specialties: [FPIssueType]) async throws -> Bool {
+    func approveApplicant(role: FPTokenRole, title: String, specialties: [FPIssueType], capabilities: [FPCapability]) async throws -> Bool {
         let request = try await component.networkingClient.gateway.postAreaPendingMembership(.init(
             headers: .init(accept: [.init(contentType: .json)]),
-            body: .json(.init(
+            body: .json(.init(data: .init(
                 application_id: applicant.id,
                 role: .init(stringLiteral: role.rawValue),
                 specialization: specialties.map { $0.id },
+                capabilities: capabilities.map { .init(stringLiteral: "\($0.rawValue)") },
                 title: title
-            ))
+            )))
         ))
         
         switch request {

@@ -82,7 +82,7 @@ final class WorkEvaluatingInteractor: PresentableInteractor<WorkEvaluatingPresen
     init(component: WorkEvaluatingComponent, presenter: WorkEvaluatingPresentable, ticket: FPTicketDetail) {
         self.component = component
         self.ticket = ticket
-        self.viewModel = WorkEvaluatingSwiftUIViewModel(ticket: ticket)
+        self.viewModel = WorkEvaluatingSwiftUIViewModel(ticket: ticket, component: component)
         super.init(presenter: presenter)
         
         presenter.presentableListener = self
@@ -113,11 +113,15 @@ final class WorkEvaluatingInteractor: PresentableInteractor<WorkEvaluatingPresen
         }
         viewModel.didIntendToEvaluate = { [weak self] in 
             guard let self else { return }
-            if try await self.evaluate(isApproved: viewModel.resolve == .Approved, shouldRequestOwnerConfirmation: viewModel.requireOwnerEvaluation, remarks: viewModel.remarks, supportiveDocuments: viewModel.supportiveDocuments) == true {
-                Task { @MainActor in
-                    self.router?.dismiss()
-                    self.listener?.detachWorkEvaluating(didEvaluate: true)
+            do {
+                if try await self.evaluate(isApproved: viewModel.resolve == .Approved, shouldRequestOwnerConfirmation: viewModel.requireOwnerEvaluation, remarks: viewModel.remarks, supportiveDocuments: viewModel.supportiveDocuments) == true {
+                    Task { @MainActor in
+                        self.router?.dismiss()
+                        self.listener?.detachWorkEvaluating(didEvaluate: true)
+                    }
                 }
+            } catch {
+                VULogger.log(tag: .error, error)
             }
         }
         presenter.bind(viewModel: self.viewModel)

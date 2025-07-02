@@ -17,6 +17,9 @@ struct StatisticsAndReportsSwiftUIView: View {
     @State var shouldShowTicketSummarization: StatisticsAndReportsBundle? = nil
     
     
+    @State var previewURLRequest: URLRequest?
+    
+    
     var body: some View {
         if viewModel.bundles.count > 0 {
             Form {
@@ -38,39 +41,107 @@ struct StatisticsAndReportsSwiftUIView: View {
             }
             .sheet(item: $shouldShowReport) { bundle in
                 NavigationView {
-                    FPWebView(contentAddressToPreview: bundle.periodicReportLink, previewFault: .constant(""), scrollEnabled: true)
+                    if let previewURLRequest {
+                        FPWebViewWithURLRequest(request: previewURLRequest, previewFault: .constant(""), scrollEnabled: true)
+                            .toolbar {
+                                ToolbarItem(placement: .topBarLeading) { 
+                                    Button("Refresh") {
+                                        Task {
+                                            self.previewURLRequest = await self.viewModel.urlRequest(from: bundle.periodicReportLink)
+                                        }
+                                    }
+                                }
+                                ToolbarItem(placement: .confirmationAction) { 
+                                    Button("Done") {
+                                        self.shouldShowReport = nil
+                                        self.previewURLRequest = nil
+                                    }
+                                }
+                            }
+                    } else {
+                        VStack {
+                            Spacer()
+                            ContentUnavailableView("Periodic Report is Loading..", 
+                                                   systemImage: "clock.badge", 
+                                                   description: Text("Once its loaded, we'll show it here."))
+                            Spacer()
+                        }
+                        .background(Color(.systemGroupedBackground))
                         .toolbar {
                             ToolbarItem(placement: .topBarLeading) { 
-                                Button("Download") {
-                                    
+                                Button("Refresh") {
+                                    Task {
+                                        self.previewURLRequest = await self.viewModel.urlRequest(from: bundle.ticketSummarizationLink)
+                                    }
                                 }
                             }
                             ToolbarItem(placement: .confirmationAction) { 
                                 Button("Done") {
-                                    shouldShowReport = nil
+                                    self.shouldShowTicketSummarization = nil
+                                    self.previewURLRequest = nil
                                 }
                             }
                         }
+                    }
                 }
                 .interactiveDismissDisabled()
+                .onAppear {
+                    Task {
+                        self.previewURLRequest = await self.viewModel.urlRequest(from: bundle.periodicReportLink)
+                    }
+                }
             }
             .sheet(item: $shouldShowTicketSummarization) { bundle in
                 NavigationView {
-                    FPWebView(contentAddressToPreview: bundle.ticketSummarizationLink, previewFault: .constant(""), scrollEnabled: true)
+                    if let previewURLRequest {
+                        FPWebViewWithURLRequest(request: previewURLRequest, previewFault: .constant(""), scrollEnabled: true)
+                            .toolbar {
+                                ToolbarItem(placement: .topBarLeading) { 
+                                    Button("Refresh") {
+                                        Task {
+                                            self.previewURLRequest = await self.viewModel.urlRequest(from: bundle.ticketSummarizationLink)
+                                        }
+                                    }
+                                }
+                                ToolbarItem(placement: .confirmationAction) { 
+                                    Button("Done") {
+                                        self.shouldShowTicketSummarization = nil
+                                        self.previewURLRequest = nil
+                                    }
+                                }
+                            }
+                    } else {
+                        VStack {
+                            Spacer()
+                            ContentUnavailableView("Ticket Summarization is Loading..", 
+                                                   systemImage: "clock.badge", 
+                                                   description: Text("Once its loaded, we'll show it here."))
+                            Spacer()
+                        }
+                        .background(Color(.systemGroupedBackground))
                         .toolbar {
                             ToolbarItem(placement: .topBarLeading) { 
-                                Button("Download") {
-                                    
+                                Button("Refresh") {
+                                    Task {
+                                        self.previewURLRequest = await self.viewModel.urlRequest(from: bundle.ticketSummarizationLink)
+                                    }
                                 }
                             }
                             ToolbarItem(placement: .confirmationAction) { 
                                 Button("Done") {
-                                    shouldShowTicketSummarization = nil
+                                    self.shouldShowTicketSummarization = nil
+                                    self.previewURLRequest = nil
                                 }
                             }
                         }
+                    }
                 }
                 .interactiveDismissDisabled()
+                .onAppear {
+                    Task {
+                        self.previewURLRequest = await self.viewModel.urlRequest(from: bundle.ticketSummarizationLink)
+                    }
+                }
             }
             .refreshable {
                 try? await viewModel.didIntendToRefresh?()
@@ -92,13 +163,13 @@ struct StatisticsAndReportsSwiftUIView: View {
 
 
 
-#Preview {
-    @Previewable var viewModel = {
-        let vm = StatisticsAndReportsSwiftUIViewModel()
-        vm.bundles = [
-//            .init(month: "January", year: "2025", periodicReportLink: URL("http://localhost")!, ticketSummarizationLink: URL("http://localhost")!)
-        ]
-        return vm
-    }()
-    StatisticsAndReportsSwiftUIView(viewModel: viewModel)
-}
+//#Preview {
+//    @Previewable var viewModel = {
+//        let vm = StatisticsAndReportsSwiftUIViewModel()
+//        vm.bundles = [
+////            .init(month: "January", year: "2025", periodicReportLink: URL("http://localhost")!, ticketSummarizationLink: URL("http://localhost")!)
+//        ]
+//        return vm
+//    }()
+//    StatisticsAndReportsSwiftUIView(viewModel: viewModel)
+//}

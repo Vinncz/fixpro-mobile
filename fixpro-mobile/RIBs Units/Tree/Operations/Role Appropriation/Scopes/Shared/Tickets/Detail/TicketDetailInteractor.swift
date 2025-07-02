@@ -102,7 +102,7 @@ final class TicketDetailInteractor: PresentableInteractor<TicketDetailPresentabl
         self.component = component
         self.ticket = ticket
         self.ticketId = ticketId
-        self.viewModel = .init(role: component.authorizationContext.role)
+        self.viewModel = .init(component: component)
         
         super.init(presenter: presenter)
         
@@ -192,17 +192,24 @@ final class TicketDetailInteractor: PresentableInteractor<TicketDetailPresentabl
                 cancelAction: {}
             )
             
-            if 
-                try await self?.didIntendToRejectTicket(reason: reason, supportiveDocuments: supportiveDocuments) == true,
-                let ticket = self?.viewModel.ticket
-            {
-                if let newTicket = try await self?.fetchTicketDetails(ticketId: ticket.id) {
-                    self?.viewModel.ticket = newTicket
-                    Task { @MainActor in 
-                        self?.presenter.updateToolbar() 
-                        topMostViewController?.dismiss(animated: true)
+            do {
+                if 
+                    try await self?.didIntendToRejectTicket(reason: reason, supportiveDocuments: supportiveDocuments) == true,
+                    let ticket = self?.viewModel.ticket
+                {
+                    if let newTicket = try await self?.fetchTicketDetails(ticketId: ticket.id) {
+                        Task { @MainActor in 
+                            DispatchQueue.main.async {
+                                topMostViewController?.dismiss(animated: true)
+                            }
+                            self?.viewModel.shouldShowRejectionAlert = false
+                            self?.viewModel.ticket = newTicket
+                            self?.presenter.updateToolbar() 
+                        }
                     }
                 }
+            } catch {
+                VULogger.log(tag: .error, "\(error)")
             }
         }
         
@@ -235,17 +242,21 @@ extension TicketDetailInteractor {
             headers: .init(accept: [.init(contentType: .json)])
         ))
         
-        switch try await request {
-            case let .ok(response):
-                if case let .json(body) = response.body {
-                    let encoder = JSONEncoder()
-                    let encodedData = try encoder.encode(body.data)
-                    let decodedData = try decode(encodedData, to: FPTicketDetail.self).get()
-                    
-                    return decodedData
-                }
-            case .undocumented(statusCode: let code, let payload):
-                VULogger.log(tag: .network, code, payload)
+        do {
+            switch try await request {
+                case let .ok(response):
+                    if case let .json(body) = response.body {
+                        let encoder = JSONEncoder()
+                        let encodedData = try encoder.encode(body.data)
+                        let decodedData = try decode(encodedData, to: FPTicketDetail.self).get()
+                        
+                        return decodedData
+                    }
+                case .undocumented(statusCode: let code, let payload):
+                    VULogger.log(tag: .network, code, payload)
+            }
+        } catch {
+            VULogger.log(tag: .network, error)
         }
         
         return nil

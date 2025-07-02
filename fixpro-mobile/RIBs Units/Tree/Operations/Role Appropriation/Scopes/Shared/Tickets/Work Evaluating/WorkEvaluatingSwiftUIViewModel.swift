@@ -8,6 +8,9 @@ import Observation
 @Observable class WorkEvaluatingSwiftUIViewModel {
     
     
+    var component: WorkEvaluatingComponent
+    
+    
     var ticket: FPTicketDetail
     
     
@@ -17,8 +20,9 @@ import Observation
     var didIntendToEvaluate: (() async throws -> Void)?
     
     
-    init(ticket: FPTicketDetail) {
+    init(ticket: FPTicketDetail, component: WorkEvaluatingComponent) {
         self.ticket = ticket
+        self.component = component
     }
     
     

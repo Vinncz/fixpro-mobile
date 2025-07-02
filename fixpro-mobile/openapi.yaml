@@ -215,7 +215,22 @@ paths:
       tags: []
       responses:
         '200':
-          $ref: '#/components/responses/newly-made-ticket-log'
+          description: Shared Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 1dfl8jbe4z1vv
+                  data:
+                    type: array
+                    x-stoplight:
+                      id: fwk4zvu56515d
+                    items:
+                      $ref: '#/components/schemas/ticket-log'
       operationId: postTicketHandlers
       requestBody:
         $ref: '#/components/requestBodies/delegating-a-ticket'
@@ -385,9 +400,7 @@ paths:
           $ref: '#/components/responses/list-of-calendar-events'
       operationId: getCalendar
       description: 'Defaults to the range of a week back, and 4 weeks forward.'
-      parameters:
-        - $ref: '#/components/parameters/unsigned_int_minima'
-        - $ref: '#/components/parameters/unsigned_int_maxima'
+      parameters: []
   /statistics:
     get:
       summary: Lists every metrics that goes toward statistic calculation.
@@ -738,7 +751,7 @@ components:
             - TICKET
             - INERT
         segue_destination:
-          $ref: '#/components/schemas/ticket'
+          $ref: '#/components/schemas/uuid'
     issue-type:
       title: issue-type
       type: object
@@ -847,6 +860,11 @@ components:
           x-stoplight:
             id: u67pkdgc0n5mw
           format: uri
+        affected_ticket:
+          x-stoplight:
+            id: 4hg5aiqy84qk5
+          type: string
+          nullable: true
     statistic:
       title: statistic
       type: object
@@ -1608,19 +1626,8 @@ components:
               message:
                 type: string
               data:
-                type: array
-                x-stoplight:
-                  id: emv043jh5ey3g
-                items:
-                  $ref: '#/components/schemas/issue-type'
-          examples:
-            Example 1:
-              value:
-                message: string
-                data:
-                  - id: '{{faker ''string.uuid''}}'
-                    name: '{{faker ''word.adjective''}}'
-                    service_level_agreement_duration_hour: string
+                $ref: '#/components/schemas/issue-type'
+          examples: {}
     list-of-notifications:
       description: A list of Notifications.
       content:
@@ -1837,6 +1844,15 @@ components:
                   id: 8kz5dyto9r3fj
                 items:
                   $ref: '#/components/schemas/statistic'
+          examples:
+            Example 1:
+              value:
+                message: string
+                data:
+                  - month: January
+                    year: '2025'
+                    periodic_report: 'APP_URL/api/statistics/{month}/report'
+                    ticket_summarization: 'APP_URL/api/statistics/{month}/report'
     slas:
       description: List of active SLAs.
       content:
@@ -1865,6 +1881,19 @@ components:
                       id: q40jaoi2f2zqr
                     items:
                       $ref: '#/components/schemas/issue-type'
+    issue-type-name-already-taken:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              data:
+                type: object
+                x-stoplight:
+                  id: 0m50p95l0z0ha
   requestBodies:
     oauth-refresh:
       content:
@@ -1872,24 +1901,39 @@ components:
           schema:
             type: object
             properties:
-              refresh_token:
-                $ref: '#/components/schemas/uuid'
+              data:
+                type: object
+                x-stoplight:
+                  id: y95acen25bt1o
+                properties:
+                  refresh_token:
+                    $ref: '#/components/schemas/uuid'
     oauth-token:
       content:
         application/json:
           schema:
             type: object
             properties:
-              authentication_code:
-                $ref: '#/components/schemas/uuid'
+              data:
+                type: object
+                x-stoplight:
+                  id: srp69r1aew51r
+                properties:
+                  authentication_code:
+                    $ref: '#/components/schemas/uuid'
     oauth-authorization:
       content:
         application/json:
           schema:
             type: object
             properties:
-              application_id:
-                $ref: '#/components/schemas/uuid'
+              data:
+                type: object
+                x-stoplight:
+                  id: dk71lj56ttrot
+                properties:
+                  application_id:
+                    $ref: '#/components/schemas/uuid'
     submission-of-area-join-form-answers:
       content:
         application/json:
@@ -2014,26 +2058,42 @@ components:
           schema:
             type: object
             properties:
-              new_fcm_token:
-                $ref: '#/components/schemas/uuid'
+              data:
+                type: object
+                x-stoplight:
+                  id: 9174e8v99af8u
+                properties:
+                  new_fcm_token:
+                    $ref: '#/components/schemas/uuid'
     approving-of-area-join-application:
       content:
         application/json:
           schema:
             type: object
             properties:
-              application_id:
-                $ref: '#/components/schemas/uuid'
-              role:
-                $ref: '#/components/schemas/token-role'
-              specialization:
-                type: array
+              data:
+                type: object
                 x-stoplight:
-                  id: 5nhdtl1fx1g92
-                items:
-                  $ref: '#/components/schemas/uuid'
-              title:
-                $ref: '#/components/schemas/job-title'
+                  id: cft2ce36u9z0y
+                properties:
+                  application_id:
+                    $ref: '#/components/schemas/uuid'
+                  role:
+                    $ref: '#/components/schemas/token-role'
+                  specialization:
+                    type: array
+                    x-stoplight:
+                      id: 5nhdtl1fx1g92
+                    items:
+                      $ref: '#/components/schemas/uuid'
+                  capabilities:
+                    type: array
+                    x-stoplight:
+                      id: 6ytvpgqhzmy53
+                    items:
+                      $ref: '#/components/schemas/capability'
+                  title:
+                    $ref: '#/components/schemas/job-title'
     evaluation-of-ticket:
       content:
         application/json:

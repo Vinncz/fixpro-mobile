@@ -81,10 +81,13 @@ fileprivate struct EvaluationSection: View {
                 }
             }
             .frame(height: 24)
-            Toggle(isOn: $viewModel.requireOwnerEvaluation) { 
-                Text("Request ticket owner's evaluation")
+            if viewModel.component.authorizationContext.role == .management {
+                Toggle(isOn: $viewModel.requireOwnerEvaluation) { 
+                    Text("Request ticket owner's evaluation")
+                }
+                .disabled(viewModel.ticket.issuer.model.role != .member)
+                .frame(height: 24)
             }
-            .frame(height: 24)
             TextField("Remarks..", text: $viewModel.remarks, axis: .vertical)
                 .lineLimit(2...4)
         } header: {
@@ -101,7 +104,9 @@ fileprivate struct EvaluationSection: View {
                 """
                 Use the *remark field* to elaborate about the work result; whether it has achieved its objective. 
                 
-                You may also point out where something went wrong so your colleagues can have another go at fixing them.
+                You can also point out where something fell short, so your colleagues can have another go at fixing them.
+                
+                Should the ticket owner's role is other than a member, you cannot request for their evaluation.
                 """
             )
         }
@@ -242,11 +247,12 @@ fileprivate struct TicketLogCurationSection: View {
                             }
                             .listRowSeparator(.hidden)
                             
-                            FPWebView(contentAddressToPreview: att.hostedOn, previewFault: .constant(""), scrollEnabled: false)
-                                .frame(minHeight: 200)
-                                .background()
+                            AsyncImageWithContextMenu(url: att.hostedOn)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .padding(.bottom, VUViewSize.normal.val)
+                                .frame(idealHeight: 216, maxHeight: 216)
+                                .background(Color.secondary)
+//                                .padding(.bottom, VUViewSize.normal.val)
+                                .listRowInsets(.init())
                         }
                     }
                 } else {
@@ -263,11 +269,12 @@ fileprivate struct TicketLogCurationSection: View {
                             }
                             .listRowSeparator(.hidden)
                             
-                            FPWebView(contentAddressToPreview: att.hostedOn, previewFault: .constant(""), scrollEnabled: false)
-                                .frame(minHeight: 200)
-                                .background()
+                            AsyncImageWithContextMenu(url: att.hostedOn)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .padding(.bottom, VUViewSize.normal.val)
+                                .frame(idealHeight: 216, maxHeight: 216)
+                                .background(Color.secondary)
+//                                .padding(.bottom, VUViewSize.normal.val)
+                                .listRowInsets(.init())
                         }
                     } header: {
                         EmptyView()
@@ -303,80 +310,80 @@ fileprivate struct TicketLogCurationSection: View {
 
 
 
-#Preview {
-    @Previewable var viewModel = WorkEvaluatingSwiftUIViewModel(ticket: .init(
-        id: "", 
-        issueTypes: [
-            .init(id: "IT1", name: "Engineering", serviceLevelAgreementDurationHour: "72"),
-            .init(id: "IT2", name: "Housekeeping", serviceLevelAgreementDurationHour: "48")
-        ], 
-        responseLevel: .normal, 
-        raisedOn: "\(Date.now.formatted())", 
-        status: .onProgress, 
-        statedIssue: "Lorem ipsum", 
-        location: .init(
-            reportedLocation: "Lift entrance, 5th floor", 
-            gpsCoordinates: .init(latitude: 0, longitude: 0)
-        ), 
-        supportiveDocuments: [
-            .init(id: "SD1", filename: "Preview.png", mimetype: "image/png", filesize: 2_000_000, hostedOn: URL(string: "https://picsum.photos/1200/1200")!)
-        ], 
-        issuer: VUExtrasPreservingDecodable<FPPerson>(from: .init(
-            id: "P1", 
-            name: "Andrew Benjamin", 
-            role: .member, 
-            specialties: [], 
-            capabilities: [], 
-            memberSince: "\(Date.now.ISO8601Format())"
-        )), 
-        logs: [
-            .init(
-                id: "L1", 
-                owningTicketId: "T1", 
-                type: .workEvaluationRequest, 
-                issuer: .init(
-                    id: "P1", 
-                    name: "Andrew Benjamin", 
-                    role: .member, 
-                    title: "Head Janitor",
-                    specialties: [], 
-                    capabilities: [], 
-                    memberSince: "\(Date.now.ISO8601Format())"
-                ), 
-                recordedOn: "\(Date.now.ISO8601Format())", 
-                news: "Ticket was opened.", 
-                attachments: [
-                    .init(id: "F1", filename: "Rickroll.mp4", mimetype: "video/mp4", filesize: 2_000_000, hostedOn: URL(string: "https://picsum.photos/1200/1200")!)
-                ], 
-                actionable: .init(
-                    genus: .SEGUE, 
-                    species: .TICKET_LOG, 
-                    destination: "L1"
-                )
-            ),
-            .init(
-                id: "L2", 
-                owningTicketId: "T1", 
-                type: .workProgress, 
-                issuer: .init(
-                    id: "P1", 
-                    name: "Andrew Benjamin", 
-                    role: .member, 
-                    specialties: [], 
-                    capabilities: [], 
-                    memberSince: "\(Date.now.ISO8601Format())"
-                ), 
-                recordedOn: "\(Date.now.ISO8601Format())", 
-                news: "Ticket was opened.", 
-                attachments: [], 
-                actionable: .init(
-                    genus: .SEGUE, 
-                    species: .TICKET_LOG, 
-                    destination: "L1"
-                )
-            )
-        ], 
-        handlers: []
-    ))
-    WorkEvaluatingSwiftUIView(viewModel: viewModel)
-}
+//#Preview {
+//    @Previewable var viewModel = WorkEvaluatingSwiftUIViewModel(ticket: .init(
+//        id: "", 
+//        issueTypes: [
+//            .init(id: "IT1", name: "Engineering", serviceLevelAgreementDurationHour: "72"),
+//            .init(id: "IT2", name: "Housekeeping", serviceLevelAgreementDurationHour: "48")
+//        ], 
+//        responseLevel: .normal, 
+//        raisedOn: "\(Date.now.formatted())", 
+//        status: .onProgress, 
+//        statedIssue: "Lorem ipsum", 
+//        location: .init(
+//            reportedLocation: "Lift entrance, 5th floor", 
+//            gpsCoordinates: .init(latitude: 0, longitude: 0)
+//        ), 
+//        supportiveDocuments: [
+//            .init(id: "SD1", filename: "Preview.png", mimetype: "image/png", filesize: 2_000_000, hostedOn: URL(string: "https://picsum.photos/1200/1200")!)
+//        ], 
+//        issuer: VUExtrasPreservingDecodable<FPPerson>(from: .init(
+//            id: "P1", 
+//            name: "Andrew Benjamin", 
+//            role: .member, 
+//            specialties: [], 
+//            capabilities: [], 
+//            memberSince: "\(Date.now.ISO8601Format())"
+//        )), 
+//        logs: [
+//            .init(
+//                id: "L1", 
+//                owningTicketId: "T1", 
+//                type: .workEvaluationRequest, 
+//                issuer: .init(
+//                    id: "P1", 
+//                    name: "Andrew Benjamin", 
+//                    role: .member, 
+//                    title: "Head Janitor",
+//                    specialties: [], 
+//                    capabilities: [], 
+//                    memberSince: "\(Date.now.ISO8601Format())"
+//                ), 
+//                recordedOn: "\(Date.now.ISO8601Format())", 
+//                news: "Ticket was opened.", 
+//                attachments: [
+//                    .init(id: "F1", filename: "Rickroll.mp4", mimetype: "video/mp4", filesize: 2_000_000, hostedOn: URL(string: "https://picsum.photos/1200/1200")!)
+//                ], 
+//                actionable: .init(
+//                    genus: .SEGUE, 
+//                    species: .TICKET_LOG, 
+//                    destination: "L1"
+//                )
+//            ),
+//            .init(
+//                id: "L2", 
+//                owningTicketId: "T1", 
+//                type: .workProgress, 
+//                issuer: .init(
+//                    id: "P1", 
+//                    name: "Andrew Benjamin", 
+//                    role: .member, 
+//                    specialties: [], 
+//                    capabilities: [], 
+//                    memberSince: "\(Date.now.ISO8601Format())"
+//                ), 
+//                recordedOn: "\(Date.now.ISO8601Format())", 
+//                news: "Ticket was opened.", 
+//                attachments: [], 
+//                actionable: .init(
+//                    genus: .SEGUE, 
+//                    species: .TICKET_LOG, 
+//                    destination: "L1"
+//                )
+//            )
+//        ], 
+//        handlers: []
+//    ))
+//    WorkEvaluatingSwiftUIView(viewModel: viewModel)
+//}

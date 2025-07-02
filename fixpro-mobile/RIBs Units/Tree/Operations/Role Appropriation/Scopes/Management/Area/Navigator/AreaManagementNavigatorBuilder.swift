@@ -7,6 +7,7 @@ import RIBs
 protocol AreaManagementNavigatorDependency: Dependency {
     var authorizationContext: FPRoleContext { get }
     var networkingClient: FPNetworkingClient { get }
+    var identityService: FPSessionIdentityServicing { get }
 }
 
 
@@ -35,6 +36,11 @@ extension AreaManagementNavigatorComponent: AreaManagementDependency,
     
     var networkingClient: FPNetworkingClient {
         dependency.networkingClient
+    }
+    
+    
+    var identityService: FPSessionIdentityServicing {
+        dependency.identityService
     }
     
 }

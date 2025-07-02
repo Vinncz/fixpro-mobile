@@ -177,7 +177,7 @@ fileprivate extension TicketDetailViewController {
                 title: "Invite", 
                 systemImage: "person.2.badge.plus", 
                 action: #selector(inviteToTicket),
-                isEnabled: [.onProgress].contains(ticket.status)
+                isEnabled: [.onProgress].contains(ticket.status) && presentableListener?.component.authorizationContext.capabilities.contains(.InvitePeopleToTicket) == true
             )
             let evaluateAction = makeToolbarButton(
                 title: "Evaluate works", 
@@ -219,7 +219,7 @@ fileprivate extension TicketDetailViewController {
                 title: "Delegate", 
                 systemImage: "person.2.badge.plus", 
                 action: #selector(delegateTicket),
-                isEnabled: [.onProgress].contains(ticket.status)
+                isEnabled: [.inAssessment].contains(ticket.status)
             )
             let contributeAction = makeToolbarButton(
                 title: "Contribute", 
@@ -351,9 +351,9 @@ extension TicketDetailViewController: TicketDetailViewControllable {
     /// The default implementation of this method removes the current `ViewControllable` from the view hierarchy.
     func cleanUp(completion: (() -> Void)?) {
         Task { @MainActor in
+            self.activeFlow?.uiviewController.dismiss(animated: true)
             self.activeFlow?.uiviewController.view.removeFromSuperview()
             self.activeFlow?.uiviewController.removeFromParent()
-            self.activeFlow?.uiviewController.dismiss(animated: true)
             
             self.activeFlow = nil
             

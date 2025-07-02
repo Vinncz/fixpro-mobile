@@ -162,7 +162,7 @@ extension ManageSLAInteractor {
         ))
         
         switch try await request {
-            case .ok(let response):
+            case .ok:
                 return true
             case .undocumented(statusCode: let code, let payload):
                 VULogger.log(tag: .network, code, payload)

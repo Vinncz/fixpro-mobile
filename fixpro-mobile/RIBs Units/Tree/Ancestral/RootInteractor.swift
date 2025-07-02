@@ -91,7 +91,8 @@ final class RootInteractor: PresentableInteractor<RootPresentable>, RootInteract
                
             // Substep 2 -- Boot the networking client.
                let sessionIdentityMiddleware = FPSessionIdentityMiddleware(storage: sessionIdentityServicing)
-               let networkingClient = FPNetworkingClient(endpoint: snapshots.networkingClient.endpoint, middlewares: [sessionIdentityMiddleware])
+               let loggerMiddleware = FPLoggerMiddleware()
+               let networkingClient = FPNetworkingClient(endpoint: snapshots.networkingClient.endpoint, middlewares: [sessionIdentityMiddleware, loggerMiddleware])
                component.networkingClientProxy.back(with: networkingClient)
                    
                    

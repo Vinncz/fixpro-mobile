@@ -183,8 +183,9 @@ extension OnboardingInteractor {
                                 await sessionIdentityServiceMementoAgent.snap()
                                 
                                 let sessionIdentityMiddleware = FPSessionIdentityMiddleware(storage: sessionIdentityService)
+                                let loggerMiddleware = FPLoggerMiddleware()
                                 
-                                let nc = FPNetworkingClient(endpoint: networkingClient.endpoint, middlewares: [sessionIdentityMiddleware])
+                                let nc = FPNetworkingClient(endpoint: networkingClient.endpoint, middlewares: [sessionIdentityMiddleware, loggerMiddleware])
                                 self.component.networkingClientProxy.back(with: nc)
                                 sessionIdentityServiceUpkeeper.networkingClient = nc
                                 // </Prep for flow change>

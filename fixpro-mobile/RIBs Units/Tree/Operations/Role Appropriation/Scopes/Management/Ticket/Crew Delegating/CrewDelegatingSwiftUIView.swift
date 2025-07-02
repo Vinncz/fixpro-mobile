@@ -140,8 +140,11 @@ fileprivate struct IssueTypeSpecificDelegatingDetailView: View {
             let matchingPersonnel: [FPPerson] = viewModel.availablePersonnel.filter { individualPersonnel in 
                 individualPersonnel.specialties.contains { $0.id == delegatingDetails.issueType.id }
             }
+            
             ForEach(matchingPersonnel, id: \.self) { individualPersonnel in 
-                MultiSelectPickerRow {
+                let shouldShowChcekmark: Bool = viewModel.ticket.handlers.map({ $0.model }).map({ $0.id }).contains(individualPersonnel.id)
+                
+                MultiSelectPickerRow(isSelected: shouldShowChcekmark) {
                     VStack(alignment: .leading) {
                         Text(individualPersonnel.name)
                         if let title = individualPersonnel.title {

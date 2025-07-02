@@ -47,7 +47,8 @@ extension FPNetworkingClient: VUMementoSnapshotable, VUMementoSnapshotBootable {
     
     
     func restore(toSnapshot snapshot: FPNetworkingClientSnapshot) async -> Result<Void, Never> {
-        self.gateway = Client(serverURL: snapshot.endpoint, transport: URLSessionTransport(), middlewares: [])
+        let loggerMiddleware = FPLoggerMiddleware()
+        self.gateway = Client(serverURL: snapshot.endpoint, transport: URLSessionTransport(), middlewares: [loggerMiddleware])
         self.endpoint = snapshot.endpoint
         
         return .success(())
@@ -55,7 +56,8 @@ extension FPNetworkingClient: VUMementoSnapshotable, VUMementoSnapshotBootable {
     
     
     static func boot(fromSnapshot snapshot: FPNetworkingClientSnapshot) -> Result<FPNetworkingClient, Never> {
-        .success(FPNetworkingClient(endpoint: snapshot.endpoint, middlewares: []))
+        let loggerMiddleware = FPLoggerMiddleware()
+        return .success(FPNetworkingClient(endpoint: snapshot.endpoint, middlewares: [loggerMiddleware]))
     }
     
 }

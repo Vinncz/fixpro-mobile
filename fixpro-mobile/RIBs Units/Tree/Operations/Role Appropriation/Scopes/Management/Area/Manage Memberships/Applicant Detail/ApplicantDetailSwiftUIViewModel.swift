@@ -20,7 +20,7 @@ import Observation
     var didIntendToReject: Bool = false
     
     
-    var didApprove: ((FPTokenRole, String, [FPIssueType])->Void)?
+    var didApprove: ((FPTokenRole, String, [FPIssueType], [FPCapability])->Void)?
     
     
     var didReject: (()->Void)?

@@ -87,6 +87,7 @@ extension WorkEvaluatingRouter: WorkEvaluatingRouting {
     func dismiss() {
         Task { @MainActor in
             viewController.uiviewController.parent?.dismiss(animated: true)
+            viewController.uiviewController.presentingViewController?.dismiss(animated: true)
         }
     }
     

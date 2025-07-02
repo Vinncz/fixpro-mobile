@@ -13,7 +13,7 @@ import Observation
     
     init(ticket: FPTicketDetail, authContext: FPRoleContext) {
         self.ticket = ticket
-        let filtered = ticket.issueTypes.filter { authContext.specialties.contains($0) }
+        let filtered = ticket.issueTypes.filter { authContext.specialties.map({ $0.id }).contains($0.id) }
         self.crewInvitingDetails = filtered.map { issueType in
             CrewInvitingDetail(issueType: issueType, workDirective: "", personnel: [])
         }

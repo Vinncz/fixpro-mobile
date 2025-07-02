@@ -46,20 +46,38 @@ struct WorkCalendarSwiftUIView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(groupedByMonth(), id: \.key) { month, monthEvents in
-                    Section(header: Text(month.prefix(month.count - 5))) {
-                        ForEach(groupedByDay(events: monthEvents), id: \.key) { day, dayEvents in
-                            SectionView(day: day, events: dayEvents)
+            if viewModel.events.count > 0 {
+                List {
+                    ForEach(groupedByMonth(), id: \.key) { month, monthEvents in
+                        Section(header: Text(month.prefix(month.count - 5))) {
+                            ForEach(groupedByDay(events: monthEvents), id: \.key) { day, dayEvents in
+                                SectionView(day: day, events: dayEvents)
+                            }
                         }
                     }
                 }
+                .refreshable { 
+                    await viewModel.didIntendToRefresh?()
+                }
+                .navigationTitle("Work Calendar")
+                .navigationBarTitleDisplayMode(.large)
+                
+            } else {
+                List {
+                    ContentUnavailableView("No Event Planned", 
+                                           systemImage: "calendar.badge.checkmark", 
+                                           description: Text(
+                                            """
+                                            When an important event occur, we'll make an event through this calendar, so you can add them to your own.
+                                            """
+                                            ))
+                }
+                .refreshable { 
+                    await viewModel.didIntendToRefresh?()
+                }
+                .navigationTitle("Work Calendar")
+                .navigationBarTitleDisplayMode(.large)
             }
-            .refreshable { 
-                await viewModel.didIntendToRefresh?()
-            }
-            .navigationTitle("Work Calendar")
-            .navigationBarTitleDisplayMode(.large)
         }
     }
     

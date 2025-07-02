@@ -1,4 +1,5 @@
 import CryptoKit
+import OpenAPIRuntime
 import Foundation
 import VinUtility
 
@@ -84,7 +85,8 @@ extension FPOnboardingService {
         
         // Step 1 -- Make a rudimentary networking client with an empty middleware. 
         //           We have no need for credentials in this stage.
-        let networkingClient = FPNetworkingClient(endpoint: areaJoinCode.endpoint, middlewares: [])
+        let loggerMiddleware = FPLoggerMiddleware()
+        let networkingClient = FPNetworkingClient(endpoint: areaJoinCode.endpoint, middlewares: [loggerMiddleware])
         
         
         do {
@@ -160,12 +162,12 @@ extension FPOnboardingService {
             let response = try await networkingClient.gateway.postAreaJoinForm(.init(
                 query: .init(area_join_form_submission_nonce: nonce),
                 headers: .init(accept: [.init(contentType: .json)]),
-                body: .init(.json(.init(
+                body: .json(.init(
                     data: fields.map { label, answer in
                         .init(field_label: label, field_value: answer)
                     },
                     encryption_key: oneTimePrivateKey.publicKey.pemRepresentation
-                )))
+                ))
             ))
             
             switch response {
@@ -222,7 +224,7 @@ extension FPOnboardingService {
             let response =  try await networkingClient.gateway.oauthAuthorization(.init(
                 headers: .init(accept: [.init(contentType: .json)]),
                 body: .json(.init(
-                    application_id: applicationId
+                    data: .init(application_id: applicationId)
                 ))
             ))
             
